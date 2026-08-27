@@ -1,39 +1,59 @@
 @echo off
 REM ============================================================================
-REM GestPlan - aplica as migracoes num Postgres local e roda as duas suites.
+REM GestPlan - aplica as migracoes num Postgres descartavel e roda as suites.
 REM
-REM Uso:  rodar_testes.bat            (banco "gestplan_teste" em localhost)
+REM Acha sozinho com que Postgres falar, nesta ordem:
+REM   1. psql no PATH          (Postgres instalado no Windows)
+REM   2. o container do Supabase local (precisa de "supabase start" rodando)
+REM
+REM Uso:  rodar_testes.bat            (banco "gestplan_teste")
 REM       rodar_testes.bat meubanco
 REM
-REM Precisa do psql no PATH. O banco e APAGADO e recriado a cada execucao -
-REM nao aponte para producao.
+REM O banco de teste e APAGADO e recriado a cada execucao. Ele nao tem nada a
+REM ver com o seu banco de producao no Supabase - roda so na sua maquina.
 REM ============================================================================
-setlocal
+setlocal enabledelayedexpansion
 
 if "%~1"=="" (set BANCO=gestplan_teste) else (set BANCO=%~1)
 if "%PGUSER%"=="" set PGUSER=postgres
 
-echo.
+set MODO=
+set CONTAINER=
+
+where psql >nul 2>&1
+if %errorlevel%==0 set MODO=LOCAL
+
+if not defined MODO (
+  where docker >nul 2>&1
+  if !errorlevel!==0 (
+    for /f "delims=" %%c in ('docker ps --filter "name=supabase_db" --format "{{.Names}}" 2^>nul') do set CONTAINER=%%c
+    if defined CONTAINER set MODO=DOCKER
+  )
+)
+
+if not defined MODO goto :semPostgres
+
+if "%MODO%"=="LOCAL"  echo  Postgres: psql local, usuario %PGUSER%
+if "%MODO%"=="DOCKER" echo  Postgres: container %CONTAINER% (Supabase local)
 echo  Banco de teste: %BANCO%
 echo.
 
-dropdb --if-exists %BANCO% 2>nul
-createdb %BANCO% || goto :erro
+call :recriar || goto :erro
 
 echo  [1/4] stub do Supabase (auth.users, papeis)
-psql -q -d %BANCO% -v ON_ERROR_STOP=1 -f testes\00_stub_supabase.sql || goto :erro
+call :roda "testes\00_stub_supabase.sql" || goto :erro
 
 echo  [2/4] migracoes
 for %%f in (supabase\migrations\*.sql) do (
   echo        %%~nxf
-  psql -q -d %BANCO% -v ON_ERROR_STOP=1 -f "%%f" || goto :erro
+  call :roda "%%f" || goto :erro
 )
 
 echo  [3/4] regras de negocio
-psql -q -d %BANCO% -v ON_ERROR_STOP=1 -f testes\01_regras.sql || goto :erro
+call :roda "testes\01_regras.sql" || goto :erro
 
 echo  [4/4] permissao
-psql -q -d %BANCO% -v ON_ERROR_STOP=1 -f testes\02_permissao.sql || goto :erro
+call :roda "testes\02_permissao.sql" || goto :erro
 
 echo.
 echo  ==========================================
@@ -42,6 +62,50 @@ echo  ==========================================
 echo.
 exit /b 0
 
+
+REM ---------------------------------------------------------------------------
+:recriar
+if "%MODO%"=="LOCAL" (
+  psql -q -U %PGUSER% -d postgres -c "drop database if exists %BANCO%" >nul 2>&1
+  psql -q -U %PGUSER% -d postgres -c "create database %BANCO%"
+) else (
+  docker exec -i %CONTAINER% psql -q -U postgres -d postgres -c "drop database if exists %BANCO%" >nul 2>&1
+  docker exec -i %CONTAINER% psql -q -U postgres -d postgres -c "create database %BANCO%"
+)
+exit /b %errorlevel%
+
+REM ---------------------------------------------------------------------------
+:roda
+if "%MODO%"=="LOCAL" (
+  psql -q -U %PGUSER% -d %BANCO% -v ON_ERROR_STOP=1 -f "%~1"
+) else (
+  docker exec -i %CONTAINER% psql -q -U postgres -d %BANCO% -v ON_ERROR_STOP=1 < "%~1"
+)
+exit /b %errorlevel%
+
+REM ---------------------------------------------------------------------------
+:semPostgres
+echo.
+echo  Nao achei com que Postgres falar. Duas saidas, qualquer uma serve:
+echo.
+echo  A) Subir o Supabase local (usa o Docker, nao instala Postgres no Windows):
+echo.
+echo       supabase start
+echo.
+echo     Da primeira vez ele baixa as imagens e demora alguns minutos. Depois
+echo     e so rodar este .bat de novo.
+echo.
+echo  B) Instalar o Postgres no Windows, se preferir psql a mao:
+echo.
+echo       winget install -e --id PostgreSQL.PostgreSQL.17
+echo.
+echo     Depois acrescente ao PATH:
+echo       C:\Program Files\PostgreSQL\17\bin
+echo     e abra um terminal NOVO (PATH so vale em terminal aberto depois).
+echo.
+exit /b 1
+
+REM ---------------------------------------------------------------------------
 :erro
 echo.
 echo  !! FALHOU - veja a mensagem acima.
