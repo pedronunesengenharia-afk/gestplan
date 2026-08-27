@@ -103,6 +103,11 @@
 }
 
 .linha-grupo td { font-weight: 600; background: var(--superficie-2); }
+
+/* Critério desligado: a nota fica à vista, esmaecida — sumir seria perder a
+   informação de que alguém já avaliou aquilo. */
+.linha-inativa td { color: var(--apagado); }
+tfoot td { font-weight: 600; border-top: 1px solid var(--linha); border-bottom: none; }
 td.direita, th.direita { text-align: right; }
 .justificativa { color: var(--tinta-2); font-size: .82rem; max-width: 32rem; }
 

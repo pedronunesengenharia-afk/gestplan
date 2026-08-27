@@ -203,15 +203,27 @@ export type Tarefa = {
   ordem: number
 }
 
-/** Uma linha de vw_pontuacao: o critério, a nota dada e quanto ela pesa. */
+/**
+ * Uma linha de vw_pontuacao: o critério, a nota dada e quanto ela pesa.
+ *
+ * `pontos` é a contribuição REAL ao total do projeto — zero quando o critério
+ * está desligado. `pontos_se_ligado` é o que a mesma nota valeria se ele
+ * contasse. A nota de critério desligado continua na lista: alguém a deu.
+ */
 export type LinhaPontuacao = {
   projeto_id: string
   criterio: string
   criterio_nome: string
+  criterio_descricao: string | null
+  ordem: number
+  ativo: boolean
   nota: number
+  minimo: number
   maximo: number
   peso: number
   pontos: number
+  pontos_se_ligado: number
+  pontos_maximos: number
   justificativa: string | null
 }
 
@@ -276,6 +288,7 @@ export async function pontuacaoDoProjeto(projetoId: string): Promise<LinhaPontua
     .from('vw_pontuacao')
     .select('*')
     .eq('projeto_id', projetoId)
+    .order('ordem')
   erro('Não foi possível carregar a pontuação', error)
   return (data ?? []) as LinhaPontuacao[]
 }

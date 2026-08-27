@@ -3468,16 +3468,31 @@ export type Database = {
       }
       vw_pontuacao: {
         Row: {
+          ativo: boolean | null
           criterio: string | null
+          criterio_descricao: string | null
           criterio_nome: string | null
+          em: string | null
           justificativa: string | null
           maximo: number | null
+          minimo: number | null
           nota: number | null
+          ordem: number | null
           peso: number | null
+          pessoa_id: string | null
           pontos: number | null
+          pontos_maximos: number | null
+          pontos_se_ligado: number | null
           projeto_id: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "projeto_pontuacao_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoa"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "projeto_pontuacao_projeto_id_fkey"
             columns: ["projeto_id"]

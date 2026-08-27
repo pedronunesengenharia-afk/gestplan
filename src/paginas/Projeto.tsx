@@ -50,18 +50,27 @@ function emOrdemDaArvore(etapas: Etapa[]): { etapa: Etapa; profundidade: number 
   }
 
   const linhas: { etapa: Etapa; profundidade: number }[] = []
+  // O banco impede a etapa de ser pai de si mesma, mas não impede A→B→A.
+  // Sem esta marca, um ciclo desses trava a aba do navegador em vez de
+  // aparecer como dado estranho na tela.
+  const vistas = new Set<string>()
   const descer = (pai: string | null, profundidade: number) => {
     for (const e of filhos.get(pai) ?? []) {
+      if (vistas.has(e.id)) continue
+      vistas.add(e.id)
       linhas.push({ etapa: e, profundidade })
       descer(e.id, profundidade + 1)
     }
   }
   descer(null, 0)
 
-  // Etapa cujo pai a RLS não devolveu não pode sumir da tela.
-  if (linhas.length < etapas.length) {
-    const vistas = new Set(linhas.map((l) => l.etapa.id))
-    for (const e of etapas) if (!vistas.has(e.id)) linhas.push({ etapa: e, profundidade: 0 })
+  // Etapa cujo pai a RLS não devolveu — ou que ficou presa num ciclo — não
+  // pode sumir da tela.
+  for (const e of etapas) {
+    if (!vistas.has(e.id)) {
+      vistas.add(e.id)
+      linhas.push({ etapa: e, profundidade: 0 })
+    }
   }
   return linhas
 }
@@ -146,6 +155,11 @@ export function Projeto({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
   // escondendo dinheiro de quem não alcança — nos dois casos, a coluna some.
   const mostraOrcamento = (tipo?.usa_orcamento ?? false) && etapas.some((e) => e.valor !== null)
   const mostraValorDoProjeto = projeto.valor_orcado !== null || projeto.valor_estimado !== null
+
+  // A view garante que `pontos` some o total do projeto. Somar aqui e comparar
+  // é o que faz a tela avisar caso um dia pare de garantir.
+  const somaPontos = pontos.reduce((t, p) => t + p.pontos, 0)
+  const desligados = pontos.filter((p) => !p.ativo).length
 
   return (
     <>
@@ -305,30 +319,60 @@ export function Projeto({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
           {pontos.length === 0 ? (
             <p className="vazio">Projeto ainda não pontuado.</p>
           ) : (
-            <div className="tabela-rolavel">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Critério</th>
-                    <th className="direita">Nota</th>
-                    <th className="direita">Peso</th>
-                    <th className="direita">Pontos</th>
-                    <th>Justificativa</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pontos.map((p) => (
-                    <tr key={p.criterio}>
-                      <td>{p.criterio_nome}</td>
-                      <td className="num direita">{p.nota} / {p.maximo}</td>
-                      <td className="num direita">{p.peso}</td>
-                      <td className="num direita">{p.pontos}</td>
-                      <td className="justificativa">{p.justificativa ?? '—'}</td>
+            <>
+              <div className="tabela-rolavel">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Critério</th>
+                      <th className="direita">Nota</th>
+                      <th className="direita">Peso</th>
+                      <th className="direita">Pontos</th>
+                      <th>Justificativa</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {pontos.map((p) => (
+                      <tr key={p.criterio} className={p.ativo ? undefined : 'linha-inativa'}>
+                        <td>
+                          {p.criterio_nome}
+                          {!p.ativo && (
+                            <span
+                              className="marca-etapa"
+                              title={`A nota está guardada e valeria ${p.pontos_se_ligado} pontos, mas este critério não entra na fila enquanto estiver desligado`}
+                            >
+                              não conta hoje
+                            </span>
+                          )}
+                        </td>
+                        <td className="num direita">{p.nota} / {p.maximo}</td>
+                        <td className="num direita">{p.peso}</td>
+                        <td className="num direita">
+                          {p.ativo ? p.pontos : <span title={`valeria ${p.pontos_se_ligado}`}>0</span>}
+                        </td>
+                        <td className="justificativa">{p.justificativa ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan={3}>
+                        Total{desligados > 0 && ` — ${desligados} critério${desligados === 1 ? '' : 's'} desligado${desligados === 1 ? '' : 's'} não somam`}
+                      </td>
+                      <td className="num direita">{somaPontos}</td>
+                      <td />
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              {somaPontos !== projeto.pontuacao_total && (
+                <div className="aviso">
+                  A soma dos critérios dá {somaPontos}, mas o projeto está gravado com{' '}
+                  {projeto.pontuacao_total}. Alguma nota mudou sem o total ser recalculado —
+                  vale rodar <code>select app.recalcular_prioridade(id) from projeto</code>.
+                </div>
+              )}
+            </>
           )}
         </section>
       )}
