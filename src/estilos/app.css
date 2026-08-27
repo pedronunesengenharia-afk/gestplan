@@ -1,0 +1,61 @@
+/* Casca do aplicativo: barra lateral fixa e área de conteúdo. */
+
+.app { display: grid; grid-template-columns: 15rem 1fr; min-height: 100%; }
+
+.lateral {
+  background: var(--petroleo);
+  color: #EAF2F4;
+  padding: var(--e5) var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+}
+.marca { display: flex; align-items: center; gap: .55rem; }
+.marca i {
+  width: 1.35rem; height: 1.35rem; background: var(--laranja);
+  display: grid; place-items: center; flex: none;
+}
+.marca i b { display: block; width: .44rem; height: .44rem; background: var(--petroleo-fundo); }
+.marca span {
+  font-family: var(--fonte-titulo); font-weight: 700; font-stretch: 112%;
+  font-size: .95rem; letter-spacing: .06em; text-transform: uppercase;
+}
+
+.menu { display: flex; flex-direction: column; gap: 1px; }
+.menu button {
+  font: inherit; text-align: left; background: none; border: none;
+  color: #8FB0B9; padding: var(--e2) var(--e3); border-radius: var(--raio);
+  cursor: pointer; border-left: 2px solid transparent;
+}
+.menu button:hover { color: #EAF2F4; background: rgba(255,255,255,.04); }
+.menu button[aria-current='page'] {
+  color: #EAF2F4; background: rgba(255,255,255,.06); border-left-color: var(--laranja);
+}
+
+.rodape-lateral {
+  margin-top: auto; font-family: var(--fonte-dado); font-size: .7rem;
+  color: #8FB0B9; line-height: 1.7;
+}
+.rodape-lateral button {
+  font: inherit; background: none; border: none; color: var(--laranja-claro);
+  padding: 0; cursor: pointer; text-decoration: underline;
+}
+
+.conteudo { padding: var(--e6) var(--e6) var(--e7); max-width: 1200px; }
+.cabecalho-pagina { margin-bottom: var(--e5); }
+.cabecalho-pagina p { color: var(--apagado); margin: var(--e1) 0 0; }
+
+.entrar { display: grid; place-items: center; min-height: 100vh; padding: var(--e4); }
+.entrar form { width: min(24rem, 100%); display: flex; flex-direction: column; gap: var(--e3); }
+.entrar .marca { color: var(--tinta); margin-bottom: var(--e2); }
+.entrar .marca i b { background: #fff; }
+
+.vazio { color: var(--apagado); padding: var(--e6) 0; text-align: center; }
+
+@media (max-width: 780px) {
+  .app { grid-template-columns: 1fr; }
+  .lateral { flex-direction: row; align-items: center; gap: var(--e4); padding: var(--e3) var(--e4); flex-wrap: wrap; }
+  .menu { flex-direction: row; flex-wrap: wrap; }
+  .rodape-lateral { margin-top: 0; }
+  .conteudo { padding: var(--e4); }
+}

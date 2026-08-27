@@ -1,0 +1,213 @@
+/* ============================================================================
+   GestPlan · tokens
+   Identidade: profissional, cores fortes, impacto.
+   Toda cor da aplicação sai daqui. Nenhum componente escreve hexadecimal.
+   ========================================================================= */
+
+:root {
+  /* --- marca ------------------------------------------------------------ */
+  --petroleo:      #08313D;
+  --petroleo-fundo:#04212A;
+  --laranja:       #F25C05;   /* sinal: ação, número, o que precisa de atenção */
+  --laranja-claro: #FF7A2E;
+  --ciano:         #009DB0;   /* estrutura, gráfico, apoio */
+  --verde:         #1F7A55;   /* concluído, aprovado */
+  --vermelho:      #C0392B;   /* atrasado, reprovado */
+
+  /* --- superfícies ------------------------------------------------------ */
+  --fundo:      #EFF3F4;
+  --superficie: #FFFFFF;
+  --superficie-2:#E2E9EB;
+  --linha:      #CBD6D9;
+  --linha-suave:#DEE6E8;
+
+  /* --- texto ------------------------------------------------------------ */
+  --tinta:    #0B222A;
+  --tinta-2:  #37505A;
+  --apagado:  #647C85;
+
+  /* --- fundos de aviso -------------------------------------------------- */
+  --laranja-fundo: #FCE6D8;
+  --ciano-fundo:   #D7EDF0;
+  --verde-fundo:   #DCEDE4;
+  --vermelho-fundo:#F8E0DD;
+
+  /* --- tipografia ------------------------------------------------------- */
+  --fonte-titulo: 'Archivo Variable', Archivo, system-ui, sans-serif;
+  --fonte-texto:  'Public Sans', -apple-system, 'Segoe UI', sans-serif;
+  --fonte-dado:   'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
+
+  /* --- espaço e forma --------------------------------------------------- */
+  --e1: .25rem;  --e2: .5rem;   --e3: .75rem;
+  --e4: 1rem;    --e5: 1.5rem;  --e6: 2rem;   --e7: 3rem;
+  --raio: 2px;                  /* quase reto: ferramenta, não brinquedo */
+  --sombra: 0 1px 2px rgba(8, 49, 61, .08), 0 4px 12px rgba(8, 49, 61, .06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) {
+    --fundo:      #061920;
+    --superficie: #0D2A34;
+    --superficie-2:#123641;
+    --linha:      #1E4A57;
+    --linha-suave:#173A46;
+    --tinta:      #E4EFF1;
+    --tinta-2:    #AEC7CE;
+    --apagado:    #7C9AA3;
+    --laranja:    #FF7A2E;
+    --laranja-claro:#FF9455;
+    --ciano:      #2ABDD0;
+    --verde:      #5FBF95;
+    --vermelho:   #E8756A;
+    --laranja-fundo: #3A1E0F;
+    --ciano-fundo:   #0A2E34;
+    --verde-fundo:   #0F2E23;
+    --vermelho-fundo:#3A1917;
+    --sombra: 0 1px 2px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.25);
+  }
+}
+
+:root[data-tema='escuro'] {
+  --fundo:      #061920;
+  --superficie: #0D2A34;
+  --superficie-2:#123641;
+  --linha:      #1E4A57;
+  --linha-suave:#173A46;
+  --tinta:      #E4EFF1;
+  --tinta-2:    #AEC7CE;
+  --apagado:    #7C9AA3;
+  --laranja:    #FF7A2E;
+  --laranja-claro:#FF9455;
+  --ciano:      #2ABDD0;
+  --verde:      #5FBF95;
+  --vermelho:   #E8756A;
+  --laranja-fundo: #3A1E0F;
+  --ciano-fundo:   #0A2E34;
+  --verde-fundo:   #0F2E23;
+  --vermelho-fundo:#3A1917;
+  --sombra: 0 1px 2px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.25);
+}
+
+/* ============================================================================
+   base
+   ========================================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #raiz { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--tinta);
+  font-family: var(--fonte-texto);
+  font-size: 15.5px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  letter-spacing: -.018em;
+  line-height: 1.15;
+  margin: 0;
+  text-wrap: balance;
+}
+h1 { font-size: 1.9rem; font-stretch: 108%; }
+h2 { font-size: 1.35rem; font-stretch: 104%; }
+h3 { font-size: 1.05rem; font-weight: 600; }
+
+a { color: var(--laranja); }
+:focus-visible { outline: 2px solid var(--laranja); outline-offset: 2px; }
+
+/* Números em coluna têm de alinhar. Sempre. */
+.dado, td.num, .moeda {
+  font-family: var(--fonte-dado);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+   peças reaproveitadas
+   ========================================================================= */
+.botao {
+  font: inherit;
+  font-weight: 600;
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: var(--tinta);
+  cursor: pointer;
+}
+.botao:hover:not(:disabled) { border-color: var(--apagado); }
+.botao:disabled { opacity: .5; cursor: not-allowed; }
+.botao--acao {
+  background: var(--laranja);
+  border-color: var(--laranja);
+  color: #fff;
+}
+.botao--acao:hover:not(:disabled) { background: var(--laranja-claro); border-color: var(--laranja-claro); }
+
+.campo {
+  font: inherit;
+  width: 100%;
+  padding: var(--e2) var(--e3);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: var(--tinta);
+}
+.campo:focus { border-color: var(--ciano); }
+
+.cartao {
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: var(--e4);
+}
+
+.selo {
+  display: inline-block;
+  font-family: var(--fonte-dado);
+  font-size: .68rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: .18rem .42rem;
+  border-radius: var(--raio);
+  background: var(--superficie-2);
+  color: var(--tinta-2);
+}
+.selo--urgente     { background: var(--laranja-fundo);  color: var(--laranja); }
+.selo--importante  { background: var(--ciano-fundo);    color: var(--ciano); }
+.selo--planejamento{ background: var(--superficie-2);   color: var(--apagado); }
+.selo--ok          { background: var(--verde-fundo);    color: var(--verde); }
+.selo--atrasado    { background: var(--vermelho-fundo); color: var(--vermelho); }
+
+.aviso {
+  border: 1px solid var(--linha-suave);
+  border-left: 3px solid var(--laranja);
+  background: var(--laranja-fundo);
+  padding: var(--e3) var(--e4);
+  border-radius: var(--raio);
+  font-size: .93rem;
+}
+
+/* Tabela larga rola dentro de si; a página nunca rola de lado. */
+.tabela-rolavel { overflow-x: auto; border: 1px solid var(--linha); background: var(--superficie); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: var(--e2) var(--e3); border-bottom: 1px solid var(--linha-suave); }
+th {
+  font-family: var(--fonte-dado);
+  font-size: .66rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--apagado);
+  font-weight: 500;
+  background: var(--superficie-2);
+  border-bottom: 1px solid var(--linha);
+}
+tbody tr:last-child td { border-bottom: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
