@@ -153,11 +153,19 @@ select teste_recusa('sem orçamento não sai da viabilidade', $q$
    where id = 'dddddddd-0000-0000-0000-000000000001' $q$);
 
 -- Com orçamento e campos, sai.
-insert into etapa (projeto_id, codigo, nome, unidade, quantidade, preco_unitario, peso_percentual, categoria_id)
-values ('dddddddd-0000-0000-0000-000000000001','1','Estrutura metálica','vb',1,180000,60,
-        (select id from categoria_custo where codigo='EQUIP')),
-       ('dddddddd-0000-0000-0000-000000000001','2','Obra civil','vb',1,70000,40,
-        (select id from categoria_custo where codigo='OBRA'));
+-- O dinheiro da etapa mora em etapa_valor desde a migração das três regras:
+-- a estrutura entra primeiro, o trigger cria a linha de valor, e o preço vai
+-- nela. É o mesmo desenho de projeto / projeto_valor.
+insert into etapa (id, projeto_id, codigo, nome, peso_percentual) values
+  ('88880000-0000-0000-0000-000000000001','dddddddd-0000-0000-0000-000000000001','1','Estrutura metálica',60),
+  ('88880000-0000-0000-0000-000000000002','dddddddd-0000-0000-0000-000000000001','2','Obra civil',40);
+
+update etapa_valor set unidade='vb', quantidade=1, preco_unitario=180000,
+       categoria_id=(select id from categoria_custo where codigo='EQUIP')
+ where etapa_id='88880000-0000-0000-0000-000000000001';
+update etapa_valor set unidade='vb', quantidade=1, preco_unitario=70000,
+       categoria_id=(select id from categoria_custo where codigo='OBRA')
+ where etapa_id='88880000-0000-0000-0000-000000000002';
 
 update projeto set campos = campos || jsonb_build_object(
     'vi_situacao_atual','Galpão sem cobertura na expedição.',

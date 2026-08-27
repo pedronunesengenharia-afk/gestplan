@@ -40,20 +40,24 @@ echo.
 
 call :recriar || goto :erro
 
-echo  [1/4] stub do Supabase (auth.users, papeis)
+echo  [1/3] stub do Supabase (auth.users, papeis)
 call :roda "testes\00_stub_supabase.sql" || goto :erro
 
-echo  [2/4] migracoes
+echo  [2/3] migracoes
 for %%f in (supabase\migrations\*.sql) do (
   echo        %%~nxf
   call :roda "%%f" || goto :erro
 )
 
-echo  [3/4] regras de negocio
-call :roda "testes\01_regras.sql" || goto :erro
-
-echo  [4/4] permissao
-call :roda "testes\02_permissao.sql" || goto :erro
+echo  [3/3] suites
+REM Roda toda suite testes\0N_*.sql em ordem, menos o stub. Suite nova entra
+REM so criando o arquivo — nada a alterar aqui.
+for %%f in (testes\0*.sql) do (
+  if /i not "%%~nxf"=="00_stub_supabase.sql" (
+    echo        %%~nxf
+    call :roda "%%f" || goto :erro
+  )
+)
 
 echo.
 echo  ==========================================

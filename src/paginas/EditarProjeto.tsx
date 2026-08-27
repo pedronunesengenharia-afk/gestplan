@@ -73,6 +73,7 @@ export function EditarProjeto({
   const [salvando, setSalvando] = useState(false)
   const [carregando, setCarregando] = useState(true)
 
+  const [erroTransicao, setErroTransicao] = useState<string | null>(null)
   const [transicaoEscolhida, setTransicaoEscolhida] = useState<string>('')
   const [motivo, setMotivo] = useState('')
   const [confirmarTransicao, setConfirmarTransicao] = useState(false)
@@ -308,6 +309,7 @@ export function EditarProjeto({
     setSalvando(true)
     setErros({})
     setErroTopo(null)
+    setErroTransicao(null)
     setRecado(null)
     try {
       await mudarFase(idAtual, transicao.para_fase_id, motivo.trim() || undefined)
@@ -317,7 +319,12 @@ export function EditarProjeto({
       setConfirmarTransicao(false)
       setRecado(`Projeto movido para ${faseDestino?.nome}.`)
     } catch (e) {
+      // O erro vai para o campo que o causou, como sempre — mas a recusa de
+      // uma mudança de fase precisa aparecer TAMBÉM aqui: o campo culpado
+      // pode estar a dois mil pixels de distância do botão que a pessoa
+      // acabou de clicar, e feedback que ninguém vê é feedback que não existe.
       mostrarErro(e)
+      setErroTransicao(e instanceof ErroDoBanco ? e.mensagem : e instanceof Error ? e.message : String(e))
       setConfirmarTransicao(false)
     } finally {
       setSalvando(false)
@@ -674,6 +681,7 @@ export function EditarProjeto({
                   onChange={(e) => {
                     setTransicaoEscolhida(e.target.value)
                     setConfirmarTransicao(false)
+                    setErroTransicao(null)
                   }}
                 >
                   <option value="">—</option>
@@ -714,6 +722,12 @@ export function EditarProjeto({
 
           {transicao && !temPendencia && (
             <p className="ajuda">Nada pendente: esta mudança deve passar.</p>
+          )}
+
+          {erroTransicao && (
+            <div className="aviso">
+              <strong>O banco recusou:</strong> {erroTransicao}
+            </div>
           )}
 
           <p className="acoes">
