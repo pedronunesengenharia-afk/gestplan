@@ -874,6 +874,32 @@ export async function cortesDePrioridade(): Promise<{ urgente: number; important
   return { urgente: Number(v?.urgente ?? 0.7), importante: Number(v?.importante ?? 0.25) }
 }
 
+/** As decisoes possiveis, do CHECK `aprovacao_decisao_check`. */
+export const DECISOES = ['CIENTE', 'APROVADO', 'REPROVADO', 'POSTERGADO'] as const
+
+/**
+ * Registra o parecer de um setor sobre o projeto na fase.
+ *
+ * Upsert por (projeto, fase, setor): e a chave unica da tabela, e refazer o
+ * parecer de um setor e revisao, nao linha nova. O banco ainda cobra parecer
+ * escrito em REPROVADO e data em POSTERGADO — a tela pergunta antes, mas quem
+ * decide continua sendo o CHECK.
+ */
+export async function registrarParecer(p: {
+  projeto_id: string
+  fase_id: string
+  setor_codigo: string
+  pessoa_id: string | null
+  decisao: string
+  parecer: string | null
+  postergado_para: string | null
+}): Promise<void> {
+  const { error } = await supabase
+    .from('aprovacao')
+    .upsert(p, { onConflict: 'projeto_id,fase_id,setor_codigo' })
+  erroDeEscrita('Nao foi possivel registrar o parecer', error)
+}
+
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */
 export async function eu(): Promise<Pessoa | null> {
   const { data: sessao } = await supabase.auth.getUser()

@@ -17,6 +17,7 @@ const SELO: Record<string, string> = {
 
 export function Projeto({
   id, aoVoltar, aoEditar, aoAbrirEtapas, aoAbrirTarefas, aoAbrirPontuacao,
+  aoAbrirAvaliacao,
 }: {
   id: string
   aoVoltar: () => void
@@ -24,6 +25,7 @@ export function Projeto({
   aoAbrirEtapas: () => void
   aoAbrirTarefas: () => void
   aoAbrirPontuacao: () => void
+  aoAbrirAvaliacao: () => void
 }) {
   const [projeto, setProjeto] = useState<ProjetoDado | null>(null)
   const [tipo, setTipo] = useState<TipoProjeto | null>(null)
@@ -109,6 +111,7 @@ export function Projeto({
           <button className="botao" onClick={aoEditar}>Editar</button>
           <button className="botao" onClick={aoAbrirEtapas}>Etapas</button>
           <button className="botao" onClick={aoAbrirTarefas}>Tarefas</button>
+          <button className="botao" onClick={aoAbrirAvaliacao}>Avaliação</button>
           <span
             className="selo"
             style={{ background: projeto.tipo_cor + '22', color: projeto.tipo_cor }}

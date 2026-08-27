@@ -9,6 +9,7 @@ import { EditarProjeto } from './paginas/EditarProjeto'
 import { Etapas } from './paginas/Etapas'
 import { Tarefas } from './paginas/Tarefas'
 import { Pontuacao } from './paginas/Pontuacao'
+import { Avaliacao } from './paginas/Avaliacao'
 import { Empresas } from './paginas/Empresas'
 import { Equipe } from './paginas/Equipe'
 
@@ -32,6 +33,7 @@ export function App() {
   const [etapasDe, setEtapasDe] = useState<string | null>(null)
   const [tarefasDe, setTarefasDe] = useState<string | null>(null)
   const [pontuacaoDe, setPontuacaoDe] = useState<string | null>(null)
+  const [avaliacaoDe, setAvaliacaoDe] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -74,6 +76,7 @@ export function App() {
                 setEtapasDe(null)
                 setTarefasDe(null)
                 setPontuacaoDe(null)
+                setAvaliacaoDe(null)
               }}
               aria-current={pagina === p.chave ? 'page' : undefined}
             >
@@ -122,6 +125,8 @@ export function App() {
             <Tarefas id={tarefasDe} aoVoltar={() => setTarefasDe(null)} />
           ) : pontuacaoDe ? (
             <Pontuacao id={pontuacaoDe} aoVoltar={() => setPontuacaoDe(null)} />
+          ) : avaliacaoDe ? (
+            <Avaliacao id={avaliacaoDe} aoVoltar={() => setAvaliacaoDe(null)} />
           ) : projetoAberto ? (
             <Projeto
               id={projetoAberto}
@@ -130,6 +135,7 @@ export function App() {
               aoAbrirEtapas={() => setEtapasDe(projetoAberto)}
               aoAbrirTarefas={() => setTarefasDe(projetoAberto)}
               aoAbrirPontuacao={() => setPontuacaoDe(projetoAberto)}
+              aoAbrirAvaliacao={() => setAvaliacaoDe(projetoAberto)}
             />
           ) : (
             <Carteira aoAbrir={setProjetoAberto} aoNovo={() => setEditando({ id: null })} />
