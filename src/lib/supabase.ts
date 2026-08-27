@@ -18,13 +18,22 @@ export const supabase = createClient(url, chave, {
 })
 
 /**
- * Em que ambiente esta tela esta rodando.
+ * Em que ambiente esta tela está rodando, e contra qual banco.
  *
- * Vem do modo do Vite: `npm run dev` e produção, `npm run dev:homolog` carrega
- * `.env.homolog` e responde 'homolog'. A casca do app usa isto para avisar, em
- * letras grandes, quando o dado da tela é descartável — porque a diferença
- * entre os dois ambientes é invisível olhando a tela, e foi assim que um teste
- * de navegador escreveu num preço real.
+ * O modo do Vite responde três coisas diferentes, e a tarja precisa dizer a
+ * verdade nas três:
+ *
+ *   'homolog'      `npm run dev:homolog` — banco de homologação, dado
+ *                  descartável;
+ *   'development'  `npm run dev` — o `.env` comum, que HOJE aponta para
+ *                  produção. Dizer "descartável" aqui seria tranquilizar
+ *                  alguém prestes a escrever em dado real;
+ *   'production'   o build servido no Hostinger. Sem tarja.
+ *
+ * Por isso a tarja também mostra o ref do projeto Supabase: é o único jeito de
+ * a pessoa conferir, olhando a tela, em qual banco ela está mexendo.
  */
 export const ambiente = import.meta.env.MODE
 export const ehProducao = ambiente === 'production'
+export const ehHomolog = ambiente === 'homolog'
+export const refDoBanco = /https:\/\/([a-z0-9]+)\.supabase\.co/.exec(url)?.[1] ?? 'desconhecido'

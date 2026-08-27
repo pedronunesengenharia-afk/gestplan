@@ -1124,6 +1124,144 @@ export async function possoAssinar(projetoId: string): Promise<boolean> {
   return data === true
 }
 
+/* ==========================================================================
+   O painel
+   As seis views abaixo ja existiam e nenhuma tela consumia. Elas fazem a
+   conta pesada no Postgres; aqui so se soma o que e por projeto.
+   ========================================================================== */
+
+export type LinhaCurvaS = {
+  projeto_id: string
+  competencia: string
+  base_mes: number
+  previsto_mes: number
+  realizado_mes: number
+}
+
+export type LinhaFluxo = {
+  projeto_id: string
+  competencia: string | null
+  a_pagar: number
+  pago: number
+  vencido: number
+  parcelas: number
+}
+
+export type LinhaAvanco = {
+  projeto_id: string
+  peso_total: number
+  avanco_fisico: number
+  etapas: number
+  etapas_concluidas: number
+}
+
+export type LinhaCapacidade = {
+  pessoa_id: string
+  pessoa_nome: string
+  projetos: number
+  dedicacao_total: number
+  sobrealocada: boolean
+}
+
+export type TarefaAtrasada = {
+  id: string
+  projeto_id: string
+  projeto_codigo: string
+  nome: string
+  dias_atraso: number
+  data_fim_prev: string | null
+  responsavel_nome: string | null
+  caminho_critico: boolean
+}
+
+export type ProjetoARetomar = {
+  id: string
+  codigo: string
+  nome: string
+  retorno_em: string
+  dias: number
+  empresa_nome: string
+}
+
+export async function curvaS(): Promise<LinhaCurvaS[]> {
+  const { data, error } = await supabase
+    .from('vw_curva_s')
+    .select('projeto_id, competencia, base_mes, previsto_mes, realizado_mes')
+    .order('competencia')
+  erro('Nao foi possivel carregar a curva S', error)
+  return (data ?? []) as LinhaCurvaS[]
+}
+
+export async function fluxoMensal(): Promise<LinhaFluxo[]> {
+  const { data, error } = await supabase
+    .from('vw_fluxo_mensal')
+    .select('projeto_id, competencia, a_pagar, pago, vencido, parcelas')
+  erro('Nao foi possivel carregar o fluxo mensal', error)
+  return (data ?? []) as LinhaFluxo[]
+}
+
+export async function avancoDosProjetos(): Promise<LinhaAvanco[]> {
+  const { data, error } = await supabase
+    .from('vw_avanco')
+    .select('projeto_id, peso_total, avanco_fisico, etapas, etapas_concluidas')
+  erro('Nao foi possivel carregar o avanco', error)
+  return (data ?? []) as LinhaAvanco[]
+}
+
+export async function capacidadeDaEquipe(): Promise<LinhaCapacidade[]> {
+  const { data, error } = await supabase
+    .from('vw_capacidade')
+    .select('pessoa_id, pessoa_nome, projetos, dedicacao_total, sobrealocada')
+    .order('dedicacao_total', { ascending: false })
+  erro('Nao foi possivel carregar a capacidade', error)
+  return (data ?? []) as LinhaCapacidade[]
+}
+
+export async function tarefasAtrasadas(): Promise<TarefaAtrasada[]> {
+  const { data, error } = await supabase
+    .from('vw_tarefa_atrasada')
+    .select('id, projeto_id, projeto_codigo, nome, dias_atraso, data_fim_prev, responsavel_nome, caminho_critico')
+    .order('dias_atraso', { ascending: false })
+  erro('Nao foi possivel carregar as tarefas atrasadas', error)
+  return (data ?? []) as TarefaAtrasada[]
+}
+
+export async function projetosARetomar(): Promise<ProjetoARetomar[]> {
+  const { data, error } = await supabase
+    .from('vw_retomada')
+    .select('id, codigo, nome, retorno_em, dias, empresa_nome')
+    .order('dias', { ascending: false })
+  erro('Nao foi possivel carregar os projetos a retomar', error)
+  return (data ?? []) as ProjetoARetomar[]
+}
+
+/**
+ * Custo realizado por categoria.
+ *
+ * Duas consultas em vez de um embed: o vinculo e opcional (`categoria_id` pode
+ * ser nulo) e custo sem categoria precisa aparecer como "sem categoria", nao
+ * sumir. Sao 171 linhas — juntar aqui e mais barato do que explicar isso ao
+ * PostgREST.
+ */
+export async function custoPorCategoria(): Promise<{ nome: string; valor: number }[]> {
+  const [{ data: custos, error: e1 }, { data: cats, error: e2 }] = await Promise.all([
+    supabase.from('custo').select('valor, categoria_id'),
+    supabase.from('categoria_custo').select('id, nome'),
+  ])
+  erro('Nao foi possivel carregar os custos', e1)
+  erro('Nao foi possivel carregar as categorias', e2)
+
+  const nomeDe = new Map((cats ?? []).map((c) => [(c as { id: string }).id, (c as { nome: string }).nome]))
+  const soma = new Map<string, number>()
+  for (const c of (custos ?? []) as { valor: number; categoria_id: string | null }[]) {
+    const nome = (c.categoria_id && nomeDe.get(c.categoria_id)) || 'Sem categoria'
+    soma.set(nome, (soma.get(nome) ?? 0) + Number(c.valor ?? 0))
+  }
+  return [...soma.entries()]
+    .map(([nome, valor]) => ({ nome, valor }))
+    .sort((a, b) => b.valor - a.valor)
+}
+
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */
 export async function eu(): Promise<Pessoa | null> {
   const { data: sessao } = await supabase.auth.getUser()

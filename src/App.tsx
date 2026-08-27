@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { ambiente, ehProducao, supabase } from './lib/supabase'
+import { ehHomolog, ehProducao, refDoBanco, supabase } from './lib/supabase'
 import { eu, type Pessoa } from './lib/banco'
 import { Entrar } from './paginas/Entrar'
+import { FronteiraDeErro } from './componentes/FronteiraDeErro'
+import { Painel } from './paginas/Painel'
 import { Carteira } from './paginas/Carteira'
 import { Projeto } from './paginas/Projeto'
 import { EditarProjeto } from './paginas/EditarProjeto'
@@ -13,9 +15,10 @@ import { Avaliacao } from './paginas/Avaliacao'
 import { Empresas } from './paginas/Empresas'
 import { Equipe } from './paginas/Equipe'
 
-type Pagina = 'carteira' | 'empresas' | 'equipe'
+type Pagina = 'painel' | 'carteira' | 'empresas' | 'equipe'
 
 const PAGINAS: { chave: Pagina; nome: string }[] = [
+  { chave: 'painel', nome: 'Painel' },
   { chave: 'carteira', nome: 'Carteira' },
   { chave: 'empresas', nome: 'Empresas' },
   { chave: 'equipe', nome: 'Equipe' },
@@ -25,7 +28,7 @@ export function App() {
   const [sessao, setSessao] = useState<Session | null>(null)
   const [pessoa, setPessoa] = useState<Pessoa | null>(null)
   const [carregando, setCarregando] = useState(true)
-  const [pagina, setPagina] = useState<Pagina>('carteira')
+  const [pagina, setPagina] = useState<Pagina>('painel')
   // Sem biblioteca de rotas por enquanto: a carteira abre o projeto por estado.
   const [projetoAberto, setProjetoAberto] = useState<string | null>(null)
   // { id: null } = projeto novo; { id } = editando um existente.
@@ -63,9 +66,18 @@ export function App() {
           sinal, e por cima de tudo. O custo de um aviso feio é zero; o de
           confundir homologação com produção já foi medido. */}
       {!ehProducao && (
-        <div className="tarja-ambiente" role="status">
-          {ambiente === 'homolog' ? 'HOMOLOGAÇÃO' : ambiente.toUpperCase()} — os dados aqui são
-          descartáveis
+        <div
+          className={ehHomolog ? 'tarja-ambiente' : 'tarja-ambiente tarja-ambiente--perigo'}
+          role="status"
+        >
+          {ehHomolog ? (
+            <>HOMOLOGAÇÃO · banco {refDoBanco} — os dados aqui são descartáveis</>
+          ) : (
+            <>
+              DESENVOLVIMENTO · banco {refDoBanco} — este .env pode ser o de produção. Para
+              testar, use npm run dev:homolog
+            </>
+          )}
         </div>
       )}
       <nav className="lateral">
@@ -109,6 +121,8 @@ export function App() {
       </nav>
 
       <main className="conteudo">
+        {/* Uma tela que quebra mostra o que quebrou; o menu continua de pé. */}
+        <FronteiraDeErro nome={PAGINAS.find((p) => p.chave === pagina)?.nome ?? pagina}>
         {/* Sem cadastro de pessoa, a RLS nega tudo — e a tela viraria uma lista
             vazia inexplicável. Melhor dizer o que falta. */}
         {!pessoa && (
@@ -119,6 +133,21 @@ export function App() {
             proprietária.
           </div>
         )}
+        {pagina === 'painel' &&
+          (projetoAberto ? (
+            <Projeto
+              id={projetoAberto}
+              aoVoltar={() => setProjetoAberto(null)}
+              aoEditar={() => setEditando({ id: projetoAberto })}
+              aoAbrirEtapas={() => setEtapasDe(projetoAberto)}
+              aoAbrirTarefas={() => setTarefasDe(projetoAberto)}
+              aoAbrirPontuacao={() => setPontuacaoDe(projetoAberto)}
+              aoAbrirAvaliacao={() => setAvaliacaoDe(projetoAberto)}
+            />
+          ) : (
+            <Painel aoAbrir={setProjetoAberto} />
+          ))}
+
         {pagina === 'carteira' &&
           (editando ? (
             <EditarProjeto
@@ -151,6 +180,7 @@ export function App() {
           ))}
         {pagina === 'empresas' && <Empresas />}
         {pagina === 'equipe' && <Equipe />}
+        </FronteiraDeErro>
       </main>
     </div>
   )

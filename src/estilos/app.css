@@ -233,6 +233,9 @@ td.acoes-linha > * { margin-right: var(--e2); }
   text-transform: uppercase; text-align: center;
   padding: var(--e2) var(--e3);
 }
+/* Modo de desenvolvimento apontando para um banco que pode ser o real: a cor
+   é de alerta, não de aviso. */
+.tarja-ambiente--perigo { background: var(--vermelho); }
 .app--ensaio { padding-top: 2rem; }
 .app--ensaio .lateral { padding-top: calc(var(--e5) + 2rem); }
 

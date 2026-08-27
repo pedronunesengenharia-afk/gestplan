@@ -1,0 +1,146 @@
+/* ============================================================================
+   GestPlan · tokens de gráfico
+   Complementa tokens.css. Nenhum gráfico escreve hexadecimal.
+
+   A paleta categórica NÃO foi escolhida no olho: passou nos seis checks do
+   validador (faixa de luminosidade, piso de croma, separação sob daltonismo,
+   piso de visão normal, contraste com a superfície) nos dois temas.
+
+     claro  #0098BA #F05B00 #1E9463 #7B4FD0 #D03A78 #A38200
+            pior par adjacente ΔE 8,5 (protan) · visão normal 21,0
+     escuro #17A0C0 #E06508 #1FA36C #8C6BD8 #DE4C87 #AE8C10
+            pior par adjacente ΔE 10,2 (deutan) · visão normal 18,8
+
+   Mudou alguma cor? Rode o validador de novo antes de commitar. Duas cores que
+   um daltônico não separa é um gráfico que mente para 8% dos homens.
+   ========================================================================= */
+
+:root {
+  /* --- categórica: identidade. Ordem FIXA, nunca ciclada. ---------------- */
+  --g1: #0098BA;   /* ciano    */
+  --g2: #F05B00;   /* laranja  */
+  --g3: #1E9463;   /* verde    */
+  --g4: #7B4FD0;   /* roxo     */
+  --g5: #D03A78;   /* rosa     */
+  --g6: #A38200;   /* ocre     */
+  /* Uma sétima série não existe: vira "Outros", ou o gráfico vira pequenos
+     múltiplos. Gerar mais uma cor quebra a separação que o validador garantiu. */
+
+  /* --- sequencial: magnitude. Uma cor só, clara → escura. ---------------- */
+  --seq1: #D7EDF2;
+  --seq2: #A5D8E3;
+  --seq3: #6BBFD2;
+  --seq4: #2FA0BC;
+  --seq5: #0B7B96;
+
+  /* --- estado: reservadas. Nunca viram "série 4". ----------------------- */
+  --st-bom:     #1F7A55;
+  --st-atencao: #A38200;
+  --st-serio:   #E06508;
+  --st-critico: #C0392B;
+  /* Cor de estado anda sempre com rótulo ou ícone — nunca sozinha. */
+
+  /* --- cenário do gráfico ----------------------------------------------- */
+  --g-superficie: var(--superficie);
+  --g-grade:      #E6EDEF;   /* recessiva: a grade não compete com o dado */
+  --g-eixo:       #C3D0D4;
+  --g-tinta:      var(--tinta);
+  --g-tinta-2:    var(--apagado);
+  --g-vazio:      #EDF1F2;   /* fundo de barra, trilha de medidor */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) {
+    --g1: #17A0C0; --g2: #E06508; --g3: #1FA36C;
+    --g4: #8C6BD8; --g5: #DE4C87; --g6: #AE8C10;
+
+    /* Os passos do escuro são ESCOLHIDOS a partir da mesma rampa, não um
+       espelho do claro — inverter dá cor que some no fundo. */
+    --seq1: #0C3742; --seq2: #14515F; --seq3: #1C6E80;
+    --seq4: #2A8CA1; --seq5: #3FAAC0;
+
+    --st-bom: #5FBF95; --st-atencao: #C9A227;
+    --st-serio: #F08A4B; --st-critico: #E8756A;
+
+    --g-grade:  #1B3B45;
+    --g-eixo:   #2A4C57;
+    --g-vazio:  #123641;
+  }
+}
+
+:root[data-tema='escuro'] {
+  --g1: #17A0C0; --g2: #E06508; --g3: #1FA36C;
+  --g4: #8C6BD8; --g5: #DE4C87; --g6: #AE8C10;
+  --seq1: #0C3742; --seq2: #14515F; --seq3: #1C6E80;
+  --seq4: #2A8CA1; --seq5: #3FAAC0;
+  --st-bom: #5FBF95; --st-atencao: #C9A227;
+  --st-serio: #F08A4B; --st-critico: #E8756A;
+  --g-grade: #1B3B45; --g-eixo: #2A4C57; --g-vazio: #123641;
+}
+
+/* ============================================================================
+   peças
+   ========================================================================= */
+
+.painel {
+  display: grid;
+  gap: var(--e4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+}
+.painel .largo { grid-column: 1 / -1; }
+
+/* Ficha de número — quando a resposta é um número, não é gráfico. */
+.ficha-numero {
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: var(--e4);
+  display: flex; flex-direction: column; gap: var(--e1);
+}
+.ficha-numero .rotulo {
+  font-family: var(--fonte-dado); font-size: .68rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--apagado);
+}
+.ficha-numero .numero {
+  font-family: var(--fonte-titulo); font-weight: 700; font-stretch: 104%;
+  font-size: 1.85rem; line-height: 1.05; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+.ficha-numero .apoio { font-size: .85rem; color: var(--apagado) }
+
+.cartao-grafico {
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: var(--e4);
+  display: flex; flex-direction: column; gap: var(--e3);
+  min-width: 0;                     /* deixa o SVG encolher dentro do grid */
+}
+.cartao-grafico header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--e3) }
+.cartao-grafico h3 { margin: 0 }
+.cartao-grafico .nota { font-size: .82rem; color: var(--apagado) }
+
+/* Legenda: presente sempre que houver 2 séries ou mais. */
+.legenda { display: flex; flex-wrap: wrap; gap: var(--e3); font-size: .82rem }
+.legenda span { display: inline-flex; align-items: center; gap: .38rem; color: var(--tinta-2) }
+.legenda i { width: .7rem; height: .7rem; border-radius: 2px; flex: none }
+
+/* Alternar gráfico / tabela: o dado tem de estar legível sem enxergar cor. */
+.ver-tabela {
+  font: inherit; font-size: .78rem; background: none; border: none;
+  color: var(--ciano); cursor: pointer; padding: 0; text-decoration: underline;
+}
+
+/* Dica: some para quem pediu menos movimento. */
+.dica-grafico {
+  position: absolute; pointer-events: none; z-index: 5;
+  background: var(--petroleo); color: #EAF2F4;
+  border-radius: var(--raio); padding: var(--e2) var(--e3);
+  font-size: .8rem; line-height: 1.45; box-shadow: var(--sombra);
+  font-variant-numeric: tabular-nums;
+}
+.dica-grafico b { font-weight: 600 }
+
+@media (prefers-reduced-motion: reduce) {
+  .cartao-grafico * { transition: none !important; animation: none !important }
+}
