@@ -1,41 +1,17 @@
 import { useEffect, useState } from 'react'
 import {
-  camposDoTipo, etapasDoProjeto, fasesDoTipo, pessoas, pontuacaoDoProjeto,
-  projeto as carregarProjeto, tarefasDoProjeto, tipoDeProjeto,
-  type CampoDefinicao, type Etapa, type LinhaPontuacao, type Pessoa,
+  etapasDoProjeto, pessoas, pontuacaoDoProjeto, projeto as carregarProjeto,
+  tarefasDoProjeto, tipoDeProjeto,
+  type Etapa, type LinhaPontuacao, type Pessoa,
   type Projeto as ProjetoDado, type Tarefa, type TipoProjeto,
 } from '../lib/banco'
+import { CamposDoTipo } from '../componentes/CamposDoTipo'
 import { data, moeda } from '../lib/formato'
 
 const SELO: Record<string, string> = {
   URGENTE: 'selo selo--urgente',
   IMPORTANTE: 'selo selo--importante',
   PLANEJAMENTO: 'selo selo--planejamento',
-}
-
-/**
- * Como cada tipo_dado se lê. É a única coisa que a tela sabe sobre campos — e
- * o que ela sabe é o TIPO do dado, nunca o nome de um campo nem o de um tipo
- * de projeto. Campo novo em `campo_definicao` aparece aqui sem tocar no código.
- */
-function valorLegivel(campo: CampoDefinicao, bruto: unknown): string {
-  if (bruto === null || bruto === undefined || bruto === '') return '—'
-  switch (campo.tipo_dado) {
-    case 'MOEDA':
-      return moeda(Number(bruto))
-    case 'PERCENTUAL':
-      return `${Number(bruto).toLocaleString('pt-BR')}%`
-    case 'NUMERO':
-      return Number(bruto).toLocaleString('pt-BR')
-    case 'DATA':
-      return data(String(bruto))
-    case 'BOOLEANO':
-      return bruto ? 'Sim' : 'Não'
-    case 'SELECAO_MULTIPLA':
-      return Array.isArray(bruto) ? bruto.join(', ') : String(bruto)
-    default:
-      return String(bruto)
-  }
 }
 
 /** Achata a EAP na ordem da árvore, guardando a profundidade de cada linha. */
@@ -78,8 +54,6 @@ function emOrdemDaArvore(etapas: Etapa[]): { etapa: Etapa; profundidade: number 
 export function Projeto({ id, aoVoltar }: { id: string; aoVoltar: () => void }) {
   const [projeto, setProjeto] = useState<ProjetoDado | null>(null)
   const [tipo, setTipo] = useState<TipoProjeto | null>(null)
-  const [campos, setCampos] = useState<CampoDefinicao[]>([])
-  const [fases, setFases] = useState<Map<string, string>>(new Map())
   const [etapas, setEtapas] = useState<Etapa[]>([])
   const [tarefas, setTarefas] = useState<Tarefa[]>([])
   const [pontos, setPontos] = useState<LinhaPontuacao[]>([])
@@ -98,10 +72,8 @@ export function Projeto({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
       setProjeto(p)
       if (!p) return
 
-      const [t, cs, fs, es, ts, pts, gente] = await Promise.all([
+      const [t, es, ts, pts, gente] = await Promise.all([
         tipoDeProjeto(p.tipo_projeto_id),
-        camposDoTipo(p.tipo_projeto_id),
-        fasesDoTipo(p.tipo_projeto_id),
         etapasDoProjeto(p.id),
         tarefasDoProjeto(p.id),
         pontuacaoDoProjeto(p.id),
@@ -109,8 +81,6 @@ export function Projeto({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
       ])
       if (!vivo) return
       setTipo(t)
-      setCampos(cs)
-      setFases(new Map(fs.map((f) => [f.id, f.nome])))
       setEtapas(es)
       setTarefas(ts)
       setPontos(pts)
@@ -139,14 +109,6 @@ export function Projeto({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
         <p className="vazio">Este projeto não existe ou você não alcança ele.</p>
       </>
     )
-  }
-
-  // Os grupos saem na ordem em que os campos aparecem: a ordem também é dado.
-  const grupos: { nome: string; campos: CampoDefinicao[] }[] = []
-  for (const c of campos) {
-    const grupo = grupos.find((g) => g.nome === c.grupo)
-    if (grupo) grupo.campos.push(c)
-    else grupos.push({ nome: c.grupo, campos: [c] })
   }
 
   const linhas = emOrdemDaArvore(etapas)
@@ -200,34 +162,13 @@ export function Projeto({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
         )}
       </dl>
 
-      {grupos.map((g) => (
-        <section className="secao" key={g.nome}>
-          <h2>{g.nome}</h2>
-          <dl className="campos">
-            {g.campos.map((c) => {
-              const exige = c.exigido_para_sair_de ? fases.get(c.exigido_para_sair_de) : null
-              const bruto = projeto.campos?.[c.codigo]
-              const vazio = bruto === undefined || bruto === null || bruto === ''
-              return (
-                <div className="campo-linha" key={c.id}>
-                  <dt>
-                    {c.rotulo}
-                    {exige && (
-                      <span
-                        className="exigencia"
-                        title={`Precisa estar preenchido para o projeto sair da fase ${exige}`}
-                      >
-                        exigido para sair de {exige}
-                      </span>
-                    )}
-                  </dt>
-                  <dd className={vazio ? 'campo-vazio' : undefined}>{valorLegivel(c, bruto)}</dd>
-                </div>
-              )
-            })}
-          </dl>
-        </section>
-      ))}
+      {/* Os campos próprios se montam sozinhos, lendo campo_definicao. A mesma
+          peça vira formulário quando recebe aoMudar. */}
+      <CamposDoTipo
+        tipoProjetoId={projeto.tipo_projeto_id}
+        valores={projeto.campos}
+        faseAtualId={projeto.fase_id}
+      />
 
       <section className="secao">
         <h2>Etapas <span className="conta">{etapas.length}</span></h2>

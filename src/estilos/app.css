@@ -111,6 +111,23 @@ tfoot td { font-weight: 600; border-top: 1px solid var(--linha); border-bottom: 
 td.direita, th.direita { text-align: right; }
 .justificativa { color: var(--tinta-2); font-size: .82rem; max-width: 32rem; }
 
+/* O que a fase ATUAL vai cobrar para o projeto sair dela. */
+.exigencia--trava { color: var(--vermelho); background: var(--vermelho-fundo); }
+
+.ajuda { color: var(--apagado); font-size: .75rem; margin: var(--e1) 0 0; }
+.erro-campo { color: var(--vermelho); font-size: .78rem; margin: var(--e1) 0 0; }
+
+.com-sufixo { display: flex; align-items: center; gap: var(--e2); }
+.com-sufixo .campo { flex: 1; min-width: 0; }
+.afixo { color: var(--apagado); font-family: var(--fonte-dado); font-size: .8rem; }
+
+.marcadores { display: flex; flex-direction: column; gap: var(--e1); }
+.marcador { display: flex; align-items: center; gap: var(--e2); font-size: .9rem; cursor: pointer; }
+.marcador input { accent-color: var(--laranja); }
+
+select.campo { cursor: pointer; }
+textarea.campo { resize: vertical; font-family: inherit; }
+
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
   .lateral { flex-direction: row; align-items: center; gap: var(--e4); padding: var(--e3) var(--e4); flex-wrap: wrap; }

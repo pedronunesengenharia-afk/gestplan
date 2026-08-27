@@ -20,6 +20,7 @@ export type Projeto = {
   tipo_codigo: string
   tipo_nome: string
   tipo_cor: string
+  fase_id: string
   fase_codigo: string
   fase_nome: string
   fase_categoria: string
@@ -162,6 +163,10 @@ export type CampoDefinicao = {
     | 'DATA' | 'BOOLEANO' | 'SELECAO' | 'SELECAO_MULTIPLA'
     | 'PESSOA' | 'EMPRESA' | 'ARQUIVO'
   opcoes: string[]
+  valor_padrao: unknown
+  // Limites que o banco vai cobrar de NUMERO, MOEDA e PERCENTUAL.
+  minimo: number | null
+  maximo: number | null
   // Fase que o campo tranca: para SAIR dela, precisa estar preenchido.
   exigido_para_sair_de: string | null
   ordem: number
@@ -253,7 +258,7 @@ export async function tipoDeProjeto(id: string): Promise<TipoProjeto | null> {
 export async function camposDoTipo(tipoId: string): Promise<CampoDefinicao[]> {
   const { data, error } = await supabase
     .from('campo_definicao')
-    .select('id, tipo_projeto_id, grupo, codigo, rotulo, ajuda, tipo_dado, opcoes, exigido_para_sair_de, ordem, ativo')
+    .select('id, tipo_projeto_id, grupo, codigo, rotulo, ajuda, tipo_dado, opcoes, valor_padrao, minimo, maximo, exigido_para_sair_de, ordem, ativo')
     .eq('tipo_projeto_id', tipoId)
     .eq('ativo', true)
     .order('ordem')
