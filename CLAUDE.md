@@ -55,8 +55,8 @@ disso. Ela não sabe o nome de nenhum tipo.
 
 ## Banco de dados
 
-Dez migrações em `supabase/migrations/`. Leia o cabeçalho de cada arquivo antes
-de mexer — todos explicam as decisões que carregam.
+Dezesseis migrações em `supabase/migrations/`. Leia o cabeçalho de cada arquivo
+antes de mexer — todos explicam as decisões que carregam.
 
 ### Regras inegociáveis
 
@@ -76,9 +76,11 @@ de mexer — todos explicam as decisões que carregam.
 4. **Nada de `service_role` no navegador.** Operação privilegiada vai por Edge
    Function.
 
-5. **Dinheiro tem porta própria.** Valores de projeto moram em `projeto_valor`;
-   custo, parcela, contrato e medição têm política de `app.pode_ver_valores()`.
-   Não mova coluna de valor para dentro de `projeto`.
+5. **Dinheiro tem porta própria.** Valores de projeto moram em `projeto_valor`,
+   os da EAP em `etapa_valor`; custo, parcela, contrato e medição têm política
+   de `app.pode_ver_valores()`. Não mova coluna de valor para dentro de
+   `projeto` nem de `etapa` — foi exatamente assim que o orçamento item a item
+   ficou legível para quem não alcança dinheiro, até a migração 230000.
 
 6. **Exigência é sempre de SAÍDA de fase, nunca de entrada.** Vale para
    `tipo_fase.exige_setores` e para `campo_definicao.exigido_para_sair_de`.
@@ -96,9 +98,15 @@ de mexer — todos explicam as decisões que carregam.
 | `app.pode_editar_projeto(p)` | pode alterar escopo e cronograma |
 | `app.pode_ver_valores(p)` | pode ver dinheiro |
 
+| `app.pode_assinar(p)` | pode dar parecer de setor (papel AVALIADOR) |
+
 `pode_ver_projeto` guarda a regra do portal do fornecedor, que ainda não existe.
 Política de tabela usa `pode_ver_interno`. Trocar uma pela outra reabre um
 vazamento que já foi pego uma vez.
+
+**Para a tela perguntar**, três dessas estão espelhadas em `public`, que é o
+único schema que o PostgREST enxerga: `posso_editar_projeto`, `posso_ver_valores`
+e `posso_assinar`. A tela pergunta; não reescreve a regra em TypeScript.
 
 ## Testes
 
@@ -106,10 +114,13 @@ vazamento que já foi pego uma vez.
 rodar_testes.bat
 ```
 
-Apaga o banco de teste, aplica as dez migrações e roda as duas suítes:
+Apaga o banco de teste, aplica as migrações e roda as três suítes — 99
+verificações:
 
-- `testes/01_regras.sql` — 40 verificações de regra de negócio
-- `testes/02_permissao.sql` — 36 verificações de permissão, uma por papel
+- `testes/01_regras.sql` — 40 de regra de negócio
+- `testes/02_permissao.sql` — 41 de permissão, uma por papel
+- `testes/03_permissao_fase1.sql` — 18 das regras que a Fase 1 destapou
+  (dinheiro da EAP, quem assina parecer, quem edita comentário alheio)
 
 **A suíte de permissão roda antes de todo deploy.** Ela já pegou dois
 vazamentos que nenhum teste de tela pegaria. Ao acrescentar tabela, papel ou
@@ -141,12 +152,27 @@ Mudou o schema? `supabase gen types typescript --local > src/lib/banco.types.ts`
 **Não desenvolva direto em produção.** Funcionou enquanto o único prejudicado
 por um erro era você; com dez pessoas dentro, virou risco operacional.
 
+**Teste de tela e agente de navegador rodam em `npm run dev:homolog`, nunca em
+`npm run dev`.** O `dev` aponta para produção e escreve nos projetos reais —
+um agente de navegador já alterou um preço de R$ 17.200 para R$ 17.300 num
+projeto de verdade, testando. Produção é para usar, não para experimentar.
+
+Fora de produção o app mostra uma tarja laranja no topo com o nome do
+ambiente. Se ela não estiver lá, você está em produção.
+
 ## Onde estamos
 
-Fase 0 — fundação. O modelo de dados está pronto e testado; falta a casca do
-app: autenticação, cadastro de empresa e pessoa, e a primeira tela de carteira.
+Fase 1 entregue: carteira com filtros, kanban, detalhe de projeto, formulário
+que se monta lendo `campo_definicao`, EAP e orçamento, tarefas e checklist,
+pontuação, avaliação, comentários e anexos. A carteira do desktop está
+importada — 29 projetos, 460 etapas, R$ 4.478.846,25 orçados.
 
-**Pronto quando:** você entra no sistema, cadastra uma empresa e convida alguém.
+Falta o painel com os gráficos, que consome as seis views já construídas
+(`vw_curva_s`, `vw_fluxo_mensal`, `vw_avanco`, `vw_capacidade`,
+`vw_tarefa_atrasada`, `vw_retomada`).
+
+**Depois:** Fase 2 — tempo. Calendário de trabalho, motor de CPM, Gantt,
+marcos, linha de base, agenda por pessoa, iCal.
 
 ## O que NÃO construir
 

@@ -225,6 +225,17 @@ td.acoes-linha > * { margin-right: var(--e2); }
 .novo-anexo { display: flex; flex-wrap: wrap; gap: var(--e2); align-items: center; margin-top: var(--e4); }
 .novo-anexo .campo { width: auto; }
 
+/* Tarja de ambiente: só aparece fora de produção. */
+.tarja-ambiente {
+  position: fixed; inset: 0 0 auto 0; z-index: 50;
+  background: var(--laranja); color: #fff;
+  font-family: var(--fonte-dado); font-size: .72rem; letter-spacing: .14em;
+  text-transform: uppercase; text-align: center;
+  padding: var(--e2) var(--e3);
+}
+.app--ensaio { padding-top: 2rem; }
+.app--ensaio .lateral { padding-top: calc(var(--e5) + 2rem); }
+
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
   .lateral { flex-direction: row; align-items: center; gap: var(--e4); padding: var(--e3) var(--e4); flex-wrap: wrap; }

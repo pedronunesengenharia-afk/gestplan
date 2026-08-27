@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { supabase } from './lib/supabase'
+import { ambiente, ehProducao, supabase } from './lib/supabase'
 import { eu, type Pessoa } from './lib/banco'
 import { Entrar } from './paginas/Entrar'
 import { Carteira } from './paginas/Carteira'
@@ -58,7 +58,16 @@ export function App() {
   if (!sessao) return <Entrar />
 
   return (
-    <div className="app">
+    <div className={ehProducao ? 'app' : 'app app--ensaio'}>
+      {/* Impossível de confundir com a tela real: largura toda, laranja de
+          sinal, e por cima de tudo. O custo de um aviso feio é zero; o de
+          confundir homologação com produção já foi medido. */}
+      {!ehProducao && (
+        <div className="tarja-ambiente" role="status">
+          {ambiente === 'homolog' ? 'HOMOLOGAÇÃO' : ambiente.toUpperCase()} — os dados aqui são
+          descartáveis
+        </div>
+      )}
       <nav className="lateral">
         <div className="marca">
           <i><b /></i>

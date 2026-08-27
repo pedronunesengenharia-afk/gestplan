@@ -16,3 +16,15 @@ if (!url || !chave) {
 export const supabase = createClient(url, chave, {
   auth: { persistSession: true, autoRefreshToken: true },
 })
+
+/**
+ * Em que ambiente esta tela esta rodando.
+ *
+ * Vem do modo do Vite: `npm run dev` e produção, `npm run dev:homolog` carrega
+ * `.env.homolog` e responde 'homolog'. A casca do app usa isto para avisar, em
+ * letras grandes, quando o dado da tela é descartável — porque a diferença
+ * entre os dois ambientes é invisível olhando a tela, e foi assim que um teste
+ * de navegador escreveu num preço real.
+ */
+export const ambiente = import.meta.env.MODE
+export const ehProducao = ambiente === 'production'

@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:homolog": "vite --mode homolog",
     "build": "tsc -b && vite build",
+    "build:homolog": "tsc -b && vite build --mode homolog",
     "preview": "vite preview",
     "tipos": "supabase gen types typescript --local > src/lib/banco.types.ts",
-    "tipos:remoto": "supabase gen types typescript --linked > src/lib/banco.types.ts"
+    "tipos:remoto": "supabase gen types typescript --linked > src/lib/banco.types.ts",
+    "tipos:homolog": "supabase gen types typescript --project-id REF_DO_HOMOLOG > src/lib/banco.types.ts"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.2.5",
