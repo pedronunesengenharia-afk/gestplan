@@ -120,16 +120,75 @@ export async function carteira(): Promise<Projeto[]> {
   return (data ?? []) as Projeto[]
 }
 
-/** A carteira de um tipo so — as colunas do kanban sao as fases DELE. */
-export async function carteiraDoTipo(tipoId: string): Promise<Projeto[]> {
-  const { data, error } = await supabase
-    .from('vw_projeto')
-    .select('*')
-    .eq('tipo_projeto_id', tipoId)
+/**
+ * O que a carteira aceita filtrar. Tudo opcional; ausente = nao filtra.
+ *
+ * `arquivados` false esconde o que ja saiu de cena — `vw_projeto.ativo` e
+ * `arquivado_em is null and categoria <> ARQUIVADO`, calculado na view.
+ */
+export type FiltroCarteira = {
+  empresa_id?: string
+  tipo_projeto_id?: string
+  fase_id?: string
+  prioridade?: string
+  frente?: string
+  seguranca?: boolean
+  busca?: string
+  arquivados?: boolean
+}
+
+/**
+ * A carteira, filtrada pelo banco.
+ *
+ * Filtrar e trabalho do Postgres: trazer 29 linhas para peneirar no navegador
+ * funciona hoje e para de funcionar quando forem 3.000 — e some com o indice.
+ */
+export async function carteiraFiltrada(f: FiltroCarteira = {}): Promise<Projeto[]> {
+  let q = supabase.from('vw_projeto').select('*')
+
+  if (f.empresa_id) q = q.eq('empresa_id', f.empresa_id)
+  if (f.tipo_projeto_id) q = q.eq('tipo_projeto_id', f.tipo_projeto_id)
+  if (f.fase_id) q = q.eq('fase_id', f.fase_id)
+  if (f.prioridade) q = q.eq('prioridade', f.prioridade)
+  if (f.frente) q = q.eq('frente', f.frente)
+  if (f.seguranca) q = q.eq('seguranca', true)
+  if (!f.arquivados) q = q.eq('ativo', true)
+
+  if (f.busca && f.busca.trim() !== '') {
+    // Virgula e parentese sao a sintaxe do `or` do PostgREST; um nome de
+    // projeto com eles quebraria a consulta em vez de buscar.
+    const termo = f.busca.trim().replace(/[,()*]/g, ' ')
+    q = q.or(`codigo.ilike.%${termo}%,nome.ilike.%${termo}%`)
+  }
+
+  const { data, error } = await q
     .order('pontuacao_total', { ascending: false })
     .order('codigo', { ascending: false })
   erro('Nao foi possivel carregar a carteira', error)
   return (data ?? []) as Projeto[]
+}
+
+/** A carteira de um tipo so — as colunas do kanban sao as fases DELE. */
+export async function carteiraDoTipo(tipoId: string): Promise<Projeto[]> {
+  return carteiraFiltrada({ tipo_projeto_id: tipoId, arquivados: true })
+}
+
+/**
+ * As frentes em uso, para o filtro se oferecer.
+ *
+ * Sao os valores distintos de `projeto.frente` — texto livre por enquanto,
+ * como a migracao 011 registrou. O PostgREST nao faz DISTINCT, entao a coluna
+ * vem inteira e se agrupa aqui: e uma coluna so, e a lista de opcoes nao e
+ * filtro nenhum.
+ */
+export async function frentesUsadas(): Promise<string[]> {
+  const { data, error } = await supabase.from('vw_projeto').select('frente')
+  erro('Nao foi possivel carregar as frentes', error)
+  const vistas = new Set<string>()
+  for (const linha of (data ?? []) as { frente: string | null }[]) {
+    if (linha.frente) vistas.add(linha.frente)
+  }
+  return [...vistas].sort((a, b) => a.localeCompare(b, 'pt-BR'))
 }
 
 export async function empresas(): Promise<Empresa[]> {

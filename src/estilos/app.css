@@ -178,6 +178,22 @@ textarea.campo { resize: vertical; font-family: inherit; }
 .cartao:hover { border-color: var(--apagado); }
 .cartao .selos { margin-top: 0; }
 
+.filtros {
+  display: flex; flex-wrap: wrap; gap: var(--e2); align-items: center;
+  margin-bottom: var(--e3);
+}
+.filtros .campo { width: auto; min-width: 9rem; font-size: .85rem; padding: var(--e1) var(--e2); }
+.filtros .campo:disabled { opacity: .5; cursor: not-allowed; }
+
+.fichas { display: flex; flex-wrap: wrap; gap: var(--e2); align-items: center; margin-bottom: var(--e4); }
+.ficha {
+  font: inherit; font-size: .75rem; cursor: pointer;
+  background: var(--superficie-2); color: var(--tinta-2);
+  border: 1px solid var(--linha); border-radius: var(--raio);
+  padding: var(--e1) var(--e2);
+}
+.ficha:hover { border-color: var(--apagado); color: var(--tinta); }
+
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
   .lateral { flex-direction: row; align-items: center; gap: var(--e4); padding: var(--e3) var(--e4); flex-wrap: wrap; }
