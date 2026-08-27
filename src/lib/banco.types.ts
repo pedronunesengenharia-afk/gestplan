@@ -2102,14 +2102,18 @@ export type Database = {
           criado_em: string
           criado_por: string | null
           descricao: string | null
+          descricao_evento: string | null
           etapa_id: string | null
+          evento: string | null
           id: string
           numero: number
           pago_em: string | null
+          percentual: number | null
+          prazo_dias: number | null
           projeto_id: string
-          valor: number
+          valor: number | null
           valor_pago: number | null
-          vencimento: string
+          vencimento: string | null
         }
         Insert: {
           competencia?: string | null
@@ -2117,14 +2121,18 @@ export type Database = {
           criado_em?: string
           criado_por?: string | null
           descricao?: string | null
+          descricao_evento?: string | null
           etapa_id?: string | null
+          evento?: string | null
           id?: string
           numero: number
           pago_em?: string | null
+          percentual?: number | null
+          prazo_dias?: number | null
           projeto_id: string
-          valor: number
+          valor?: number | null
           valor_pago?: number | null
-          vencimento: string
+          vencimento?: string | null
         }
         Update: {
           competencia?: string | null
@@ -2132,14 +2140,18 @@ export type Database = {
           criado_em?: string
           criado_por?: string | null
           descricao?: string | null
+          descricao_evento?: string | null
           etapa_id?: string | null
+          evento?: string | null
           id?: string
           numero?: number
           pago_em?: string | null
+          percentual?: number | null
+          prazo_dias?: number | null
           projeto_id?: string
-          valor?: number
+          valor?: number | null
           valor_pago?: number | null
-          vencimento?: string
+          vencimento?: string | null
         }
         Relationships: [
           {
@@ -2385,6 +2397,7 @@ export type Database = {
           descricao: string | null
           empresa_id: string
           fase_id: string
+          frente: string | null
           gerente_id: string | null
           id: string
           local: string | null
@@ -2393,12 +2406,14 @@ export type Database = {
           numero: number
           objetivo: string | null
           observacao: string | null
+          origem_legado: string | null
           pontuacao_total: number
           prioridade: string
           problema: string | null
           projeto_pai_id: string | null
           retorno_em: string | null
           saude: string | null
+          seguranca: boolean
           setor: string | null
           solicitante_id: string | null
           tipo_projeto_id: string
@@ -2424,6 +2439,7 @@ export type Database = {
           descricao?: string | null
           empresa_id: string
           fase_id: string
+          frente?: string | null
           gerente_id?: string | null
           id?: string
           local?: string | null
@@ -2432,12 +2448,14 @@ export type Database = {
           numero: number
           objetivo?: string | null
           observacao?: string | null
+          origem_legado?: string | null
           pontuacao_total?: number
           prioridade?: string
           problema?: string | null
           projeto_pai_id?: string | null
           retorno_em?: string | null
           saude?: string | null
+          seguranca?: boolean
           setor?: string | null
           solicitante_id?: string | null
           tipo_projeto_id: string
@@ -2463,6 +2481,7 @@ export type Database = {
           descricao?: string | null
           empresa_id?: string
           fase_id?: string
+          frente?: string | null
           gerente_id?: string | null
           id?: string
           local?: string | null
@@ -2471,12 +2490,14 @@ export type Database = {
           numero?: number
           objetivo?: string | null
           observacao?: string | null
+          origem_legado?: string | null
           pontuacao_total?: number
           prioridade?: string
           problema?: string | null
           projeto_pai_id?: string | null
           retorno_em?: string | null
           saude?: string | null
+          seguranca?: boolean
           setor?: string | null
           solicitante_id?: string | null
           tipo_projeto_id?: string
@@ -2784,6 +2805,7 @@ export type Database = {
           atualizado_em: string
           projeto_id: string
           valor_aprovado: number
+          valor_entrada: number | null
           valor_estimado: number
           valor_orcado: number
           valor_pago: number
@@ -2794,6 +2816,7 @@ export type Database = {
           atualizado_em?: string
           projeto_id: string
           valor_aprovado?: number
+          valor_entrada?: number | null
           valor_estimado?: number
           valor_orcado?: number
           valor_pago?: number
@@ -2804,6 +2827,7 @@ export type Database = {
           atualizado_em?: string
           projeto_id?: string
           valor_aprovado?: number
+          valor_entrada?: number | null
           valor_estimado?: number
           valor_orcado?: number
           valor_pago?: number
@@ -3498,6 +3522,7 @@ export type Database = {
           fase_id: string | null
           fase_nome: string | null
           fase_ordem: number | null
+          frente: string | null
           gerente_id: string | null
           gerente_nome: string | null
           id: string | null
@@ -3508,11 +3533,13 @@ export type Database = {
           projeto_pai_id: string | null
           retorno_em: string | null
           saude: string | null
+          seguranca: boolean | null
           tipo_codigo: string | null
           tipo_cor: string | null
           tipo_nome: string | null
           tipo_projeto_id: string | null
           valor_aprovado: number | null
+          valor_entrada: number | null
           valor_estimado: number | null
           valor_orcado: number | null
           valor_pago: number | null
