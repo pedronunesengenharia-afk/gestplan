@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   atualizarEtapa, criarEtapa, etapasDoProjeto, excluirEtapa,
-  projeto as carregarProjeto, reordenarEtapas, tipoDeProjeto,
+  possoVerValores, projeto as carregarProjeto, reordenarEtapas, tipoDeProjeto,
   ErroDoBanco,
   type Etapa, type Projeto as ProjetoDado, type TipoProjeto,
 } from '../lib/banco'
@@ -35,7 +35,7 @@ function rascunhoDe(e: Etapa): Rascunho {
     unidade: e.unidade ?? '',
     quantidade: String(e.quantidade ?? 0),
     preco_unitario: String(e.preco_unitario ?? 0),
-    a_confirmar: e.a_confirmar,
+    a_confirmar: e.a_confirmar ?? false,
     peso_percentual: String(e.peso_percentual ?? 0),
     percentual_concluido: String(e.percentual_concluido ?? 0),
   }
@@ -50,6 +50,7 @@ export function Etapas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) {
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [ocupado, setOcupado] = useState(false)
+  const [alcancaDinheiro, setAlcancaDinheiro] = useState(false)
 
   useEffect(() => {
     let vivo = true
@@ -59,10 +60,15 @@ export function Etapas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) {
       if (!vivo) return
       setProjeto(p)
       if (!p) return
-      const [t, es] = await Promise.all([tipoDeProjeto(p.tipo_projeto_id), etapasDoProjeto(id)])
+      const [t, es, verValores] = await Promise.all([
+        tipoDeProjeto(p.tipo_projeto_id),
+        etapasDoProjeto(id),
+        possoVerValores(id),
+      ])
       if (!vivo) return
       setTipo(t)
       setEtapas(es)
+      setAlcancaDinheiro(verValores)
     }
     buscar()
       .catch((e: Error) => vivo && setErro(e.message))
@@ -101,11 +107,11 @@ export function Etapas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) {
     )
   }
 
-  // Duas perguntas diferentes, e as duas somem com a coluna:
-  // o tipo orça? (configuração) e esta pessoa alcança dinheiro? (RLS, que
-  // devolve os valores do projeto nulos para quem não alcança).
+  // Duas perguntas diferentes, e as duas somem com a coluna: o tipo orça?
+  // (configuração) e esta pessoa alcança dinheiro? A segunda é respondida por
+  // `posso_ver_valores`, a mesma função que a política usa — antes era
+  // deduzida de valor_orcado vir nulo, que era sintoma, não pergunta.
   const tipoOrca = tipo?.usa_orcamento ?? false
-  const alcancaDinheiro = projeto.valor_orcado !== null
   const mostraOrcamento = tipoOrca && alcancaDinheiro
 
   const linhas = emOrdemDaArvore(etapas)

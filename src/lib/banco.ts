@@ -275,11 +275,12 @@ export type Etapa = {
   nivel: number
   ordem: number
   folha: boolean
+  // Nulos quando a pessoa não alcança dinheiro: a etapa aparece, o preço não.
   unidade: string | null
   quantidade: number | null
   preco_unitario: number | null
   valor: number | null
-  a_confirmar: boolean
+  a_confirmar: boolean | null
   peso_percentual: number | null
   percentual_concluido: number
 }
@@ -359,10 +360,16 @@ export async function camposDoTipo(tipoId: string): Promise<CampoDefinicao[]> {
   return (data ?? []) as CampoDefinicao[]
 }
 
-/** A EAP do projeto, achatada. A árvore se monta na tela, por pai_id. */
+/**
+ * A EAP do projeto, achatada. A árvore se monta na tela, por pai_id.
+ *
+ * Lê `vw_etapa`, não a tabela: desde que o dinheiro saiu para `etapa_valor`, é
+ * a view que junta as duas — e as colunas de valor vêm nulas para quem não tem
+ * alcance financeiro, em vez de virem.
+ */
 export async function etapasDoProjeto(projetoId: string): Promise<Etapa[]> {
   const { data, error } = await supabase
-    .from('etapa')
+    .from('vw_etapa')
     .select('id, projeto_id, pai_id, codigo, nome, nivel, ordem, folha, unidade, quantidade, preco_unitario, valor, a_confirmar, peso_percentual, percentual_concluido')
     .eq('projeto_id', projetoId)
     .order('ordem')
@@ -588,15 +595,49 @@ export type EtapaEdicao = {
   percentual_concluido: number
 }
 
+/**
+ * O que e estrutura e o que e dinheiro.
+ *
+ * Desde que `etapa_valor` existe, sao duas tabelas com duas portas: a EAP e do
+ * projeto e quem executa precisa dela; quantidade e preco tem a porta do
+ * dinheiro. As funcoes abaixo separam a carga sozinhas, para a tela nao ter de
+ * lembrar disso a cada campo.
+ */
+const CAMPOS_DE_DINHEIRO = ['unidade', 'quantidade', 'preco_unitario', 'a_confirmar'] as const
+
+function separar(dados: Partial<EtapaEdicao>) {
+  const estrutura: Record<string, unknown> = {}
+  const dinheiro: Record<string, unknown> = {}
+  for (const [chave, valor] of Object.entries(dados)) {
+    if ((CAMPOS_DE_DINHEIRO as readonly string[]).includes(chave)) dinheiro[chave] = valor
+    else estrutura[chave] = valor
+  }
+  return { estrutura, dinheiro }
+}
+
 export async function criarEtapa(dados: Partial<EtapaEdicao>): Promise<string> {
-  const { data, error } = await supabase.from('etapa').insert(dados).select('id').single()
+  const { estrutura, dinheiro } = separar(dados)
+  const { data, error } = await supabase.from('etapa').insert(estrutura).select('id').single()
   erroDeEscrita('Nao foi possivel criar a etapa', error)
-  return (data as { id: string }).id
+  const id = (data as { id: string }).id
+
+  // A linha de etapa_valor nasce por trigger; aqui so se preenche o que veio.
+  if (Object.keys(dinheiro).length > 0) await atualizarValorDaEtapa(id, dinheiro)
+  return id
 }
 
 export async function atualizarEtapa(id: string, dados: Partial<EtapaEdicao>): Promise<void> {
-  const { error } = await supabase.from('etapa').update(dados).eq('id', id)
-  erroDeEscrita('Nao foi possivel salvar a etapa', error)
+  const { estrutura, dinheiro } = separar(dados)
+  if (Object.keys(estrutura).length > 0) {
+    const { error } = await supabase.from('etapa').update(estrutura).eq('id', id)
+    erroDeEscrita('Nao foi possivel salvar a etapa', error)
+  }
+  if (Object.keys(dinheiro).length > 0) await atualizarValorDaEtapa(id, dinheiro)
+}
+
+async function atualizarValorDaEtapa(etapaId: string, dinheiro: Record<string, unknown>) {
+  const { error } = await supabase.from('etapa_valor').update(dinheiro).eq('etapa_id', etapaId)
+  erroDeEscrita('Nao foi possivel salvar o valor da etapa', error)
 }
 
 /** Apaga a etapa. Os filhos vao junto: a chave estrangeira e `on delete cascade`. */
@@ -1054,6 +1095,33 @@ export async function urlAssinada(caminho: string, segundos = 3600): Promise<str
     .createSignedUrl(caminho, segundos)
   if (error) return null
   return data?.signedUrl ?? null
+}
+
+/**
+ * O que esta pessoa pode neste projeto, perguntado ao banco.
+ *
+ * Sao as mesmas funcoes que as politicas usam, expostas em `public` pela
+ * migracao 20260827230000. Antes disso a tela descobria a resposta pelo
+ * numero de linhas que um UPDATE negado devolvia — funcionava, mas era
+ * adivinhacao. Agora a pergunta e direta, e continua havendo uma so definicao
+ * da regra: a do banco.
+ */
+export async function possoEditarProjeto(projetoId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('posso_editar_projeto', { p_projeto: projetoId })
+  erro('Nao foi possivel conferir a permissao de edicao', error)
+  return data === true
+}
+
+export async function possoVerValores(projetoId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('posso_ver_valores', { p_projeto: projetoId })
+  erro('Nao foi possivel conferir o alcance financeiro', error)
+  return data === true
+}
+
+export async function possoAssinar(projetoId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('posso_assinar', { p_projeto: projetoId })
+  erro('Nao foi possivel conferir a permissao de parecer', error)
+  return data === true
 }
 
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */

@@ -225,6 +225,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "anexo_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "vw_etapa"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "anexo_medicao_fk"
             columns: ["medicao_id"]
             isOneToOne: false
@@ -338,6 +345,13 @@ export type Database = {
             columns: ["etapa_id"]
             isOneToOne: false
             referencedRelation: "etapa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apontamento_hora_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "vw_etapa"
             referencedColumns: ["id"]
           },
           {
@@ -699,6 +713,13 @@ export type Database = {
             columns: ["etapa_id"]
             isOneToOne: false
             referencedRelation: "etapa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comentario_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "vw_etapa"
             referencedColumns: ["id"]
           },
           {
@@ -1141,6 +1162,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "custo_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "vw_etapa"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "custo_fornecedor_id_fkey"
             columns: ["fornecedor_id"]
             isOneToOne: false
@@ -1289,16 +1317,13 @@ export type Database = {
       }
       etapa: {
         Row: {
-          a_confirmar: boolean
           atualizado_em: string
           atualizado_por: string | null
-          categoria_id: string | null
           codigo: string
           criado_em: string
           criado_por: string | null
           descricao: string | null
           folha: boolean
-          fornecedor_id: string | null
           id: string
           nivel: number
           nome: string
@@ -1306,23 +1331,16 @@ export type Database = {
           pai_id: string | null
           percentual_concluido: number
           peso_percentual: number
-          preco_unitario: number
           projeto_id: string
-          quantidade: number
-          unidade: string | null
-          valor: number | null
         }
         Insert: {
-          a_confirmar?: boolean
           atualizado_em?: string
           atualizado_por?: string | null
-          categoria_id?: string | null
           codigo: string
           criado_em?: string
           criado_por?: string | null
           descricao?: string | null
           folha?: boolean
-          fornecedor_id?: string | null
           id?: string
           nivel?: number
           nome: string
@@ -1330,23 +1348,16 @@ export type Database = {
           pai_id?: string | null
           percentual_concluido?: number
           peso_percentual?: number
-          preco_unitario?: number
           projeto_id: string
-          quantidade?: number
-          unidade?: string | null
-          valor?: number | null
         }
         Update: {
-          a_confirmar?: boolean
           atualizado_em?: string
           atualizado_por?: string | null
-          categoria_id?: string | null
           codigo?: string
           criado_em?: string
           criado_por?: string | null
           descricao?: string | null
           folha?: boolean
-          fornecedor_id?: string | null
           id?: string
           nivel?: number
           nome?: string
@@ -1354,11 +1365,7 @@ export type Database = {
           pai_id?: string | null
           percentual_concluido?: number
           peso_percentual?: number
-          preco_unitario?: number
           projeto_id?: string
-          quantidade?: number
-          unidade?: string | null
-          valor?: number | null
         }
         Relationships: [
           {
@@ -1369,13 +1376,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "etapa_categoria_fk"
-            columns: ["categoria_id"]
-            isOneToOne: false
-            referencedRelation: "categoria_custo"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "etapa_criado_por_fkey"
             columns: ["criado_por"]
             isOneToOne: false
@@ -1383,17 +1383,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "etapa_fornecedor_fk"
-            columns: ["fornecedor_id"]
+            foreignKeyName: "etapa_pai_id_fkey"
+            columns: ["pai_id"]
             isOneToOne: false
-            referencedRelation: "fornecedor"
+            referencedRelation: "etapa"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "etapa_pai_id_fkey"
             columns: ["pai_id"]
             isOneToOne: false
-            referencedRelation: "etapa"
+            referencedRelation: "vw_etapa"
             referencedColumns: ["id"]
           },
           {
@@ -1419,6 +1419,102 @@ export type Database = {
           },
           {
             foreignKeyName: "etapa_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_retomada"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      etapa_valor: {
+        Row: {
+          a_confirmar: boolean
+          atualizado_em: string
+          categoria_id: string | null
+          etapa_id: string
+          fornecedor_id: string | null
+          preco_unitario: number
+          projeto_id: string
+          quantidade: number
+          unidade: string | null
+          valor: number | null
+        }
+        Insert: {
+          a_confirmar?: boolean
+          atualizado_em?: string
+          categoria_id?: string | null
+          etapa_id: string
+          fornecedor_id?: string | null
+          preco_unitario?: number
+          projeto_id: string
+          quantidade?: number
+          unidade?: string | null
+          valor?: number | null
+        }
+        Update: {
+          a_confirmar?: boolean
+          atualizado_em?: string
+          categoria_id?: string | null
+          etapa_id?: string
+          fornecedor_id?: string | null
+          preco_unitario?: number
+          projeto_id?: string
+          quantidade?: number
+          unidade?: string | null
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "etapa_valor_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categoria_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_valor_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: true
+            referencedRelation: "etapa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_valor_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: true
+            referencedRelation: "vw_etapa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_valor_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_valor_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_valor_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_valor_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_valor_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "vw_retomada"
@@ -1778,6 +1874,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "linha_base_item_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "vw_etapa"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "linha_base_item_linha_base_id_fkey"
             columns: ["linha_base_id"]
             isOneToOne: false
@@ -1951,6 +2054,13 @@ export type Database = {
             columns: ["etapa_id"]
             isOneToOne: false
             referencedRelation: "etapa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medicao_item_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "vw_etapa"
             referencedColumns: ["id"]
           },
           {
@@ -2264,6 +2374,13 @@ export type Database = {
             columns: ["etapa_id"]
             isOneToOne: false
             referencedRelation: "etapa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parcela_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "vw_etapa"
             referencedColumns: ["id"]
           },
           {
@@ -3117,6 +3234,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tarefa_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "vw_etapa"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tarefa_pai_id_fkey"
             columns: ["pai_id"]
             isOneToOne: false
@@ -3587,6 +3711,88 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_etapa: {
+        Row: {
+          a_confirmar: boolean | null
+          atualizado_em: string | null
+          categoria_id: string | null
+          codigo: string | null
+          criado_em: string | null
+          descricao: string | null
+          folha: boolean | null
+          fornecedor_id: string | null
+          id: string | null
+          nivel: number | null
+          nome: string | null
+          ordem: number | null
+          pai_id: string | null
+          percentual_concluido: number | null
+          peso_percentual: number | null
+          preco_unitario: number | null
+          projeto_id: string | null
+          quantidade: number | null
+          unidade: string | null
+          valor: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "etapa_pai_id_fkey"
+            columns: ["pai_id"]
+            isOneToOne: false
+            referencedRelation: "etapa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_pai_id_fkey"
+            columns: ["pai_id"]
+            isOneToOne: false
+            referencedRelation: "vw_etapa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_retomada"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_valor_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categoria_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_valor_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vw_fluxo_mensal: {
         Row: {
           a_pagar: number | null
@@ -4045,6 +4251,9 @@ export type Database = {
         Args: { p_linhas: Json; p_projeto: string }
         Returns: undefined
       }
+      posso_assinar: { Args: { p_projeto: string }; Returns: boolean }
+      posso_editar_projeto: { Args: { p_projeto: string }; Returns: boolean }
+      posso_ver_valores: { Args: { p_projeto: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

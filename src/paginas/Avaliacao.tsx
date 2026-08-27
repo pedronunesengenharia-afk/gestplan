@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import {
   camposDoTipo, etapasDoProjeto, eu as carregarEu, fasesDoTipo, mudarFase,
-  pareceresDoProjeto, pessoas as carregarPessoas, projeto as carregarProjeto,
-  registrarParecer, setores as carregarSetores, tarefasDoProjeto,
-  transicoesDaFase,
+  pareceresDoProjeto, pessoas as carregarPessoas, possoAssinar,
+  projeto as carregarProjeto, registrarParecer, setores as carregarSetores,
+  tarefasDoProjeto, transicoesDaFase,
   ErroDoBanco, DECISOES,
   type CampoDefinicao, type Fase, type Parecer, type Pessoa,
   type Projeto as ProjetoDado, type Setor, type Transicao,
@@ -34,6 +34,7 @@ export function Avaliacao({ id, aoVoltar }: { id: string; aoVoltar: () => void }
   const [minhaPessoaId, setMinhaPessoaId] = useState<string | null>(null)
   const [temOrcamento, setTemOrcamento] = useState<boolean | null>(null)
   const [cronogramaCompleto, setCronogramaCompleto] = useState<boolean | null>(null)
+  const [podeAssinarProjeto, setPodeAssinarProjeto] = useState(false)
 
   const [setorEmFoco, setSetorEmFoco] = useState<string>('')
   const [decisao, setDecisao] = useState<string>('CIENTE')
@@ -53,7 +54,7 @@ export function Avaliacao({ id, aoVoltar }: { id: string; aoVoltar: () => void }
       setProjeto(p)
       if (!p) return
 
-      const [fs, cs, par, ss, gente, quemSouEu, ts] = await Promise.all([
+      const [fs, cs, par, ss, gente, quemSouEu, ts, assina] = await Promise.all([
         fasesDoTipo(p.tipo_projeto_id),
         camposDoTipo(p.tipo_projeto_id),
         pareceresDoProjeto(id),
@@ -61,8 +62,10 @@ export function Avaliacao({ id, aoVoltar }: { id: string; aoVoltar: () => void }
         carregarPessoas(),
         carregarEu(),
         transicoesDaFase(p.fase_id),
+        possoAssinar(id),
       ])
       if (!vivo) return
+      setPodeAssinarProjeto(assina)
       setFases(fs)
       setCampos(cs)
       setPareceres(par)
@@ -141,7 +144,8 @@ export function Avaliacao({ id, aoVoltar }: { id: string; aoVoltar: () => void }
   // O que cada decisão obriga, do CHECK da tabela.
   const faltaTexto = decisao === 'REPROVADO' && texto.trim() === ''
   const faltaData = decisao === 'POSTERGADO' && retorno === ''
-  const podeAssinar = setorEmFoco !== '' && !faltaTexto && !faltaData && !ocupado
+  const podeAssinar =
+    podeAssinarProjeto && setorEmFoco !== '' && !faltaTexto && !faltaData && !ocupado
 
   async function assinar() {
     setOcupado(true)
@@ -267,6 +271,12 @@ export function Avaliacao({ id, aoVoltar }: { id: string; aoVoltar: () => void }
 
       <section className="secao">
         <h2>Registrar parecer</h2>
+        {!podeAssinarProjeto && (
+          <p className="ajuda">
+            Assinar parecer é do papel AVALIADOR, e do proprietário. Quem o banco deixa assinar
+            é decidido por <code>app.pode_assinar</code> — esta tela só pergunta.
+          </p>
+        )}
         <dl className="campos">
           <div className="campo-linha">
             <dt><label htmlFor="setor">Setor</label></dt>

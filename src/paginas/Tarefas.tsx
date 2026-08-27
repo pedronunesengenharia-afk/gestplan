@@ -3,8 +3,8 @@ import {
   atualizarTarefa, checklistDasTarefas, criarDependencia, criarItemChecklist,
   criarTarefa, dependenciasDasTarefas, etapasDoProjeto, eu as carregarEu,
   excluirDependencia, excluirItemChecklist, excluirTarefa, marcarItemChecklist,
-  pessoas as carregarPessoas, projeto as carregarProjeto, reordenarTarefas,
-  tarefasDoProjeto, tipoDeProjeto,
+  pessoas as carregarPessoas, possoEditarProjeto, projeto as carregarProjeto,
+  reordenarTarefas, tarefasDoProjeto, tipoDeProjeto,
   ErroDoBanco, STATUS_TAREFA, TIPOS_DE_DEPENDENCIA,
   type Dependencia, type Etapa, type ItemChecklist, type Pessoa,
   type Projeto as ProjetoDado, type Tarefa, type TipoProjeto,
@@ -19,13 +19,14 @@ import { data as formatarData } from '../lib/formato'
  * o motor de CPM é a Fase 2, e inventar data aqui seria trabalho jogado fora.
  *
  * Sobre quem pode editar o quê: a RLS tem duas políticas para `tarefa` — quem
- * edita o projeto mexe em tudo, e o responsável mexe na dele. Descobrir do
- * lado do front qual das duas vale pediria refazer `app.pode_editar_projeto`
- * em TypeScript — que lê papel, empresa e tipo, e é exatamente a duplicação
- * que a regra de ouro proíbe. Então a tela pergunta ao banco do jeito mais
- * simples: um UPDATE que a RLS nega volta com zero linhas, sem erro. Na
- * primeira negativa a tela passa a modo leitura e diz por quê, em vez de
- * seguir oferecendo o que vai ser recusado.
+ * edita o projeto mexe em tudo, e o responsável mexe na dele. A tela pergunta
+ * ao banco qual é o caso, por `posso_editar_projeto`: a mesma função que a
+ * política usa, exposta em `public` para a tela poder consultar sem reescrever
+ * a regra em TypeScript.
+ *
+ * O UPDATE que volta com zero linhas continua tratado, como rede: se a
+ * permissão mudar entre a pergunta e o clique, a tela diz o que aconteceu em
+ * vez de fingir que salvou.
  */
 
 type Rascunho = {
@@ -91,14 +92,16 @@ export function Tarefas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
       if (!vivo) return
       setProjeto(p)
       if (!p) return
-      const [t, ts, es, gente, quemSouEu] = await Promise.all([
+      const [t, ts, es, gente, quemSouEu, podeEditar] = await Promise.all([
         tipoDeProjeto(p.tipo_projeto_id),
         tarefasDoProjeto(id),
         etapasDoProjeto(id),
         carregarPessoas(),
         carregarEu(),
+        possoEditarProjeto(id),
       ])
       if (!vivo) return
+      setSoLeitura(!podeEditar)
       setTipo(t)
       setTarefas(ts)
       setEtapas(es)
@@ -204,6 +207,7 @@ export function Tarefas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
         data_fim_real: rascunho.data_fim_real || null,
       })
       if (mudou === 0) {
+        // Rede: a permissão mudou entre a pergunta e o clique.
         setSoLeitura(true)
         setErro(
           'A RLS recusou em silêncio: você pode alterar apenas as tarefas de que é ' +
