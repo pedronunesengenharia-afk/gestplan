@@ -90,11 +90,14 @@
 .campo-vazio { color: var(--apagado); }
 
 /* O que `exigido_para_sair_de` vai cobrar — a tela não sabe de qual campo se
-   trata, só que a definição aponta para uma fase. */
+   trata, só que a definição aponta para uma fase.
+
+   Três pesos, e a cor é a diferença entre eles: cinza é só informação,
+   âmbar ficou para trás, vermelho trava a fase de agora. */
 .exigencia {
   display: inline-block; margin-left: var(--e2); padding: 0 var(--e1);
   font-size: .62rem; letter-spacing: .02em; text-transform: none;
-  color: var(--laranja); background: var(--laranja-fundo); border-radius: var(--raio);
+  color: var(--apagado); background: var(--superficie-2); border-radius: var(--raio);
 }
 
 .marca-etapa {
@@ -111,8 +114,10 @@ tfoot td { font-weight: 600; border-top: 1px solid var(--linha); border-bottom: 
 td.direita, th.direita { text-align: right; }
 .justificativa { color: var(--tinta-2); font-size: .82rem; max-width: 32rem; }
 
-/* O que a fase ATUAL vai cobrar para o projeto sair dela. */
+/* Trava a fase de agora. */
 .exigencia--trava { color: var(--vermelho); background: var(--vermelho-fundo); }
+/* Ficou em branco numa fase que o projeto já deixou. */
+.exigencia--pendencia { color: var(--laranja); background: var(--laranja-fundo); }
 
 .ajuda { color: var(--apagado); font-size: .75rem; margin: var(--e1) 0 0; }
 .erro-campo { color: var(--vermelho); font-size: .78rem; margin: var(--e1) 0 0; }

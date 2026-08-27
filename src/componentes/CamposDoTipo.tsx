@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   camposDoTipo, empresas as carregarEmpresas, fasesDoTipo,
   pessoas as carregarPessoas,
-  type CampoDefinicao,
+  type CampoDefinicao, type Fase,
 } from '../lib/banco'
 import { data as formatarData, moeda } from '../lib/formato'
 
@@ -37,6 +37,65 @@ function estaVazio(v: unknown): boolean {
   return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0)
 }
 
+/**
+ * A lista de onde um campo de referência tira suas opções. PESSOA e EMPRESA
+ * apontam para cadastros diferentes: um mapa só faria um select de pessoa
+ * oferecer empresas assim que um tipo tivesse os dois campos.
+ */
+function referencias(
+  campo: CampoDefinicao,
+  pessoas: Map<string, string>,
+  empresas: Map<string, string>,
+): Map<string, string> {
+  switch (campo.tipo_dado) {
+    case 'PESSOA':
+      return pessoas
+    case 'EMPRESA':
+      return empresas
+    default:
+      return new Map()
+  }
+}
+
+/**
+ * Em que pé está a exigência de saída de um campo — e é sempre de SAÍDA:
+ * entra-se na Viabilidade justamente para preenchê-la.
+ *
+ *   trava     em branco e a fase que o exige é a fase de agora: é o que
+ *             impede o projeto de avançar hoje;
+ *   pendencia em branco e a fase que o exige já passou: não trava nada, mas
+ *             ficou para trás — é o retrato dos projetos que entraram antes
+ *             das regras existirem;
+ *   futura    em branco e a fase que o exige ainda vem;
+ *   atendida  preenchido.
+ */
+type Exigencia = 'trava' | 'pendencia' | 'futura' | 'atendida'
+
+function situacaoDaExigencia(
+  vazio: boolean,
+  faseQueExige: Fase | null | undefined,
+  faseAtual: Fase | undefined,
+): Exigencia {
+  if (!vazio) return 'atendida'
+  if (!faseQueExige || !faseAtual) return 'futura'
+  if (faseQueExige.ordem === faseAtual.ordem) return 'trava'
+  return faseQueExige.ordem < faseAtual.ordem ? 'pendencia' : 'futura'
+}
+
+const ROTULO_EXIGENCIA: Record<Exigencia, string> = {
+  trava: 'falta para sair de',
+  pendencia: 'pendência de',
+  futura: 'exigido para sair de',
+  atendida: 'exigido para sair de',
+}
+
+const TITULO_EXIGENCIA: Record<Exigencia, (fase: string) => string> = {
+  trava: (f) => `Em branco, este campo impede o projeto de sair da fase ${f}`,
+  pendencia: (f) => `Ficou em branco na fase ${f}, que o projeto já deixou. Não trava a fase de agora.`,
+  futura: (f) => `Precisa estar preenchido para o projeto sair da fase ${f}`,
+  atendida: (f) => `Preenchido. É exigido para o projeto sair da fase ${f}.`,
+}
+
 /** Como cada tipo_dado se lê quando não há o que editar. */
 function valorLegivel(campo: CampoDefinicao, bruto: unknown, nomes?: Map<string, string>): string {
   if (estaVazio(bruto)) return '—'
@@ -65,10 +124,11 @@ export function CamposDoTipo({
   tipoProjetoId, valores, aoMudar, faseAtualId, erros, desabilitado,
 }: Props) {
   const [campos, setCampos] = useState<CampoDefinicao[]>([])
-  const [fases, setFases] = useState<Map<string, string>>(new Map())
-  // Só é carregado se algum campo for de PESSOA ou EMPRESA — quem decide é a
-  // configuração, não uma lista de tipos escrita aqui.
-  const [nomes, setNomes] = useState<Map<string, string>>(new Map())
+  const [fases, setFases] = useState<Map<string, Fase>>(new Map())
+  // Cada cadastro no seu mapa. Só são carregados se a configuração pedir —
+  // quem decide é `tipo_dado`, não uma lista de tipos escrita aqui.
+  const [pessoas, setPessoas] = useState<Map<string, string>>(new Map())
+  const [empresas, setEmpresas] = useState<Map<string, string>>(new Map())
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
 
@@ -81,19 +141,25 @@ export function CamposDoTipo({
       const [cs, fs] = await Promise.all([camposDoTipo(tipoProjetoId), fasesDoTipo(tipoProjetoId)])
       if (!vivo) return
       setCampos(cs)
-      setFases(new Map(fs.map((f) => [f.id, f.nome])))
+      setFases(new Map(fs.map((f) => [f.id, f])))
 
       const precisa = new Set(cs.map((c) => c.tipo_dado))
-      const mapa = new Map<string, string>()
       const buscas: Promise<void>[] = []
       if (precisa.has('PESSOA')) {
-        buscas.push(carregarPessoas().then((ps) => ps.forEach((p) => mapa.set(p.id, p.nome))))
+        buscas.push(
+          carregarPessoas().then((ps) => {
+            if (vivo) setPessoas(new Map(ps.map((q) => [q.id, q.nome])))
+          }),
+        )
       }
       if (precisa.has('EMPRESA')) {
-        buscas.push(carregarEmpresas().then((es) => es.forEach((e) => mapa.set(e.id, e.nome))))
+        buscas.push(
+          carregarEmpresas().then((es) => {
+            if (vivo) setEmpresas(new Map(es.map((e) => [e.id, e.nome])))
+          }),
+        )
       }
       await Promise.all(buscas)
-      if (vivo) setNomes(mapa)
     }
 
     buscar()
@@ -143,9 +209,7 @@ export function CamposDoTipo({
               const bruto = valores?.[c.codigo]
               const vazio = estaVazio(bruto)
               const faseQueExige = c.exigido_para_sair_de ? fases.get(c.exigido_para_sair_de) : null
-              // Trava a fase em que o projeto está agora, e ainda está em branco.
-              const trancaAgora =
-                vazio && c.exigido_para_sair_de !== null && c.exigido_para_sair_de === faseAtualId
+              const exigencia = situacaoDaExigencia(vazio, faseQueExige, fases.get(faseAtualId ?? ''))
               const mensagem = erros?.[c.codigo]
 
               return (
@@ -154,15 +218,10 @@ export function CamposDoTipo({
                     <label htmlFor={`campo-${c.codigo}`}>{c.rotulo}</label>
                     {faseQueExige && (
                       <span
-                        className={trancaAgora ? 'exigencia exigencia--trava' : 'exigencia'}
-                        title={
-                          trancaAgora
-                            ? `Em branco, este campo impede o projeto de sair da fase ${faseQueExige}`
-                            : `Precisa estar preenchido para o projeto sair da fase ${faseQueExige}`
-                        }
+                        className={`exigencia exigencia--${exigencia}`}
+                        title={TITULO_EXIGENCIA[exigencia](faseQueExige.nome)}
                       >
-                        {trancaAgora ? 'falta para sair de ' : 'exigido para sair de '}
-                        {faseQueExige}
+                        {ROTULO_EXIGENCIA[exigencia]} {faseQueExige.nome}
                       </span>
                     )}
                   </dt>
@@ -171,11 +230,11 @@ export function CamposDoTipo({
                       <Controle
                         campo={c}
                         valor={bruto}
-                        nomes={nomes}
+                        opcoes={referencias(c, pessoas, empresas)}
                         aoMudar={(v) => mudar(c, v)}
                       />
                     ) : (
-                      valorLegivel(c, bruto, nomes)
+                      valorLegivel(c, bruto, referencias(c, pessoas, empresas))
                     )}
                     {c.ajuda && <p className="ajuda">{c.ajuda}</p>}
                     {mensagem && <p className="erro-campo">{mensagem}</p>}
@@ -196,11 +255,12 @@ export function CamposDoTipo({
  * espécie, nunca por quem o campo é.
  */
 function Controle({
-  campo, valor, nomes, aoMudar,
+  campo, valor, opcoes, aoMudar,
 }: {
   campo: CampoDefinicao
   valor: unknown
-  nomes: Map<string, string>
+  /** Para PESSOA e EMPRESA: o cadastro de onde saem as opções. */
+  opcoes: Map<string, string>
   aoMudar: (v: unknown) => void
 }) {
   const id = `campo-${campo.codigo}`
@@ -293,7 +353,7 @@ function Controle({
       return (
         <select id={id} className="campo" value={texto} onChange={(e) => aoMudar(e.target.value)}>
           <option value="">—</option>
-          {[...nomes.entries()].map(([idOpcao, nome]) => (
+          {[...opcoes.entries()].map(([idOpcao, nome]) => (
             <option key={idOpcao} value={idOpcao}>{nome}</option>
           ))}
         </select>
