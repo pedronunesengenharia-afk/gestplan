@@ -792,6 +792,88 @@ export async function excluirDependencia(id: string): Promise<void> {
   erroDeEscrita('Nao foi possivel excluir a dependencia', error)
 }
 
+export type Criterio = {
+  id: string
+  codigo: string
+  nome: string
+  descricao: string | null
+  tipo_projeto_id: string | null
+  minimo: number
+  maximo: number
+  peso: number
+  ordem: number
+  ativo: boolean
+}
+
+export type NotaDoProjeto = {
+  criterio_id: string
+  nota: number
+  justificativa: string | null
+}
+
+/**
+ * Os criterios que valem para um tipo.
+ *
+ * `tipo_projeto_id` nulo quer dizer "vale para todo tipo" — e assim que o
+ * modelo guarda o criterio geral, e por isso o filtro e uma alternativa, nao
+ * uma igualdade.
+ */
+export async function criteriosDePontuacao(tipoProjetoId: string): Promise<Criterio[]> {
+  const { data, error } = await supabase
+    .from('pontuacao_criterio')
+    .select('id, codigo, nome, descricao, tipo_projeto_id, minimo, maximo, peso, ordem, ativo')
+    .or(`tipo_projeto_id.is.null,tipo_projeto_id.eq.${tipoProjetoId}`)
+    .order('ordem')
+  erro('Nao foi possivel carregar os criterios', error)
+  return (data ?? []) as Criterio[]
+}
+
+export async function notasDoProjeto(projetoId: string): Promise<NotaDoProjeto[]> {
+  const { data, error } = await supabase
+    .from('projeto_pontuacao')
+    .select('criterio_id, nota, justificativa')
+    .eq('projeto_id', projetoId)
+  erro('Nao foi possivel carregar as notas', error)
+  return (data ?? []) as NotaDoProjeto[]
+}
+
+/**
+ * Grava as notas.
+ *
+ * `pontuacao_total` e `prioridade` NAO vao daqui: sao derivados, calculados
+ * por `app.recalcular_prioridade` no trigger de projeto_pontuacao. Mandar um
+ * valor para eles seria disputar a conta com o banco — e perder na proxima vez
+ * que alguem mudasse um peso.
+ */
+export async function salvarNotas(
+  projetoId: string, pessoaId: string | null, notas: NotaDoProjeto[],
+): Promise<void> {
+  if (notas.length === 0) return
+  const { error } = await supabase.from('projeto_pontuacao').upsert(
+    notas.map((n) => ({
+      projeto_id: projetoId,
+      criterio_id: n.criterio_id,
+      nota: n.nota,
+      justificativa: n.justificativa,
+      pessoa_id: pessoaId,
+    })),
+    { onConflict: 'projeto_id,criterio_id' },
+  )
+  erroDeEscrita('Nao foi possivel salvar a pontuacao', error)
+}
+
+/** Os cortes que separam URGENTE de IMPORTANTE, lidos de `configuracao`. */
+export async function cortesDePrioridade(): Promise<{ urgente: number; importante: number }> {
+  const { data, error } = await supabase
+    .from('configuracao')
+    .select('valor')
+    .eq('chave', 'prioridade.cortes')
+    .maybeSingle()
+  erro('Nao foi possivel carregar os cortes de prioridade', error)
+  const v = (data as { valor: { urgente?: number; importante?: number } } | null)?.valor
+  return { urgente: Number(v?.urgente ?? 0.7), importante: Number(v?.importante ?? 0.25) }
+}
+
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */
 export async function eu(): Promise<Pessoa | null> {
   const { data: sessao } = await supabase.auth.getUser()

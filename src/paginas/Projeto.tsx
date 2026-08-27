@@ -16,13 +16,14 @@ const SELO: Record<string, string> = {
 }
 
 export function Projeto({
-  id, aoVoltar, aoEditar, aoAbrirEtapas, aoAbrirTarefas,
+  id, aoVoltar, aoEditar, aoAbrirEtapas, aoAbrirTarefas, aoAbrirPontuacao,
 }: {
   id: string
   aoVoltar: () => void
   aoEditar: () => void
   aoAbrirEtapas: () => void
   aoAbrirTarefas: () => void
+  aoAbrirPontuacao: () => void
 }) {
   const [projeto, setProjeto] = useState<ProjetoDado | null>(null)
   const [tipo, setTipo] = useState<TipoProjeto | null>(null)
@@ -237,7 +238,10 @@ export function Projeto({
 
       {(tipo?.usa_pontuacao ?? false) && (
         <section className="secao">
-          <h2>Pontuação <span className="conta">{projeto.pontuacao_total} pontos</span></h2>
+          <h2>
+            Pontuação <span className="conta">{projeto.pontuacao_total} pontos</span>
+            <button className="voltar conta" onClick={aoAbrirPontuacao}>pontuar</button>
+          </h2>
           {pontos.length === 0 ? (
             <p className="vazio">Projeto ainda não pontuado.</p>
           ) : (

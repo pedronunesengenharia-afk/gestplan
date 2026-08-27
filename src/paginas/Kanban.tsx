@@ -260,7 +260,12 @@ export function Kanban({ aoAbrir }: { aoAbrir: (id: string) => void }) {
                       <strong>{p.nome}</strong>
                       <div className="selos">
                         <span className={SELO[p.prioridade]}>{p.prioridade}</span>
-                        <span className="dado pontos-total">{p.pontuacao_total} pts</span>
+                        <span
+                          className="dado pontos-total"
+                          title={`${p.pontuacao_total} pontos nos criterios ativos — abra o projeto e clique em pontuar para ver criterio por criterio`}
+                        >
+                          {p.pontuacao_total} pts
+                        </span>
                       </div>
                       <span className="campo-vazio">{p.gerente_nome ?? 'sem gerente'}</span>
                     </article>

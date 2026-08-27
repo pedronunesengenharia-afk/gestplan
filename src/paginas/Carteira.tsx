@@ -327,7 +327,14 @@ export function Carteira({
                   </td>
                   <td>{p.fase_nome}</td>
                   <td>{p.empresa_nome}</td>
-                  <td>
+                  <td
+                    title={
+                      `${p.pontuacao_total} pontos nos criterios ativos. ` +
+                      'A prioridade sai da fracao do maximo possivel, com os cortes de ' +
+                      'configuracao.prioridade.cortes. Abra o projeto e clique em pontuar ' +
+                      'para ver criterio por criterio.'
+                    }
+                  >
                     <span className={SELO[p.prioridade]}>{p.prioridade}</span>{' '}
                     <span className="dado" style={{ color: 'var(--apagado)', fontSize: '.78rem' }}>
                       {p.pontuacao_total}
