@@ -81,11 +81,33 @@ export type Fase = {
   ordem: number
   categoria: string
   cor: string
+  inicial: boolean
+  conclusiva: boolean
   exige_setores: string[]
+  exige_orcamento: boolean
+  exige_cronograma: boolean
 }
 
 function erro(contexto: string, e: { message: string } | null): never | void {
   if (e) throw new Error(`${contexto}: ${e.message}`)
+}
+
+/**
+ * Erro que veio do Postgres, com a mensagem dele preservada em `mensagem`.
+ *
+ * A tela precisa do texto cru para achar de que campo o erro fala — as
+ * mensagens de `app.validar_campos` carregam o código do campo. Concatenar o
+ * contexto na frente, como o `erro()` faz, atrapalharia essa leitura.
+ */
+export class ErroDoBanco extends Error {
+  constructor(public contexto: string, public mensagem: string) {
+    super(`${contexto}: ${mensagem}`)
+    this.name = 'ErroDoBanco'
+  }
+}
+
+function erroDeEscrita(contexto: string, e: { message: string } | null): void {
+  if (e) throw new ErroDoBanco(contexto, e.message)
 }
 
 export async function carteira(): Promise<Projeto[]> {
@@ -140,7 +162,7 @@ export async function tiposDeProjeto(): Promise<TipoProjeto[]> {
 export async function fasesDoTipo(tipoId: string): Promise<Fase[]> {
   const { data, error } = await supabase
     .from('tipo_fase')
-    .select('id, tipo_projeto_id, codigo, nome, ordem, categoria, cor, exige_setores')
+    .select('id, tipo_projeto_id, codigo, nome, ordem, categoria, cor, inicial, conclusiva, exige_setores, exige_orcamento, exige_cronograma')
     .eq('tipo_projeto_id', tipoId)
     .order('ordem')
   erro('Não foi possível carregar as fases', error)
@@ -296,6 +318,183 @@ export async function pontuacaoDoProjeto(projetoId: string): Promise<LinhaPontua
     .order('ordem')
   erro('Não foi possível carregar a pontuação', error)
   return (data ?? []) as LinhaPontuacao[]
+}
+
+/**
+ * O projeto como ele e na TABELA, nao na view.
+ *
+ * A carteira le `vw_projeto`, que ja resolve nomes e esconde dinheiro de quem
+ * nao alcanca. O formulario precisa das colunas que a view nao carrega —
+ * descricao, objetivo, problema, beneficios, local — e por isso le a tabela.
+ */
+export type ProjetoEdicao = {
+  id: string
+  codigo: string
+  nome: string
+  tipo_projeto_id: string
+  empresa_id: string
+  fase_id: string
+  gerente_id: string | null
+  solicitante_id: string | null
+  setor: string | null
+  frente: string | null
+  seguranca: boolean
+  descricao: string | null
+  objetivo: string | null
+  problema: string | null
+  beneficios: string | null
+  local: string | null
+  cidade: string | null
+  uf: string | null
+  data_solicitacao: string | null
+  data_inicio_prev: string | null
+  data_fim_prev: string | null
+  campos: Record<string, unknown>
+}
+
+/** Uma transicao declarada em tipo_transicao. Fluxo e dado, nao codigo. */
+export type Transicao = {
+  id: string
+  de_fase_id: string
+  para_fase_id: string
+  rotulo: string
+  papeis: string[]
+  exige_motivo: boolean
+  ordem: number
+}
+
+/** Um parecer de setor sobre o projeto numa fase. */
+export type Parecer = {
+  id: string
+  projeto_id: string
+  fase_id: string
+  setor_codigo: string
+  decisao: string
+  parecer: string | null
+  pessoa_id: string | null
+  em: string
+}
+
+/** Uma linha do rateio entre empresas. A soma tem de fechar 100%. */
+export type Rateio = {
+  empresa_id: string
+  percentual: number
+  observacao: string | null
+}
+
+export type Setor = { codigo: string; nome: string; ordem: number }
+
+/** O projeto para edicao, direto da tabela. */
+export async function projetoParaEdicao(id: string): Promise<ProjetoEdicao | null> {
+  const { data, error } = await supabase
+    .from('projeto')
+    // Literal de propósito: o cliente do Supabase tipa o retorno lendo esta
+    // string em tempo de compilação, e uma constante montada some com os tipos.
+    .select('id, codigo, nome, tipo_projeto_id, empresa_id, fase_id, gerente_id, solicitante_id, setor, frente, seguranca, descricao, objetivo, problema, beneficios, local, cidade, uf, data_solicitacao, data_inicio_prev, data_fim_prev, campos')
+    .eq('id', id)
+    .maybeSingle()
+  erro('Nao foi possivel carregar o projeto para edicao', error)
+  return (data as ProjetoEdicao) ?? null
+}
+
+/**
+ * Cria o projeto e devolve o id.
+ *
+ * `codigo`, `numero` e `ano` nao vao daqui: quem os gera e o trigger
+ * `app.gerar_codigo_projeto`, que conhece o prefixo da empresa e o contador do
+ * ano. Mandar um codigo daqui seria disputar a numeracao com o banco.
+ */
+export async function criarProjeto(dados: Partial<ProjetoEdicao>): Promise<string> {
+  const { data, error } = await supabase.from('projeto').insert(dados).select('id').single()
+  erroDeEscrita('Nao foi possivel criar o projeto', error)
+  return (data as { id: string }).id
+}
+
+export async function atualizarProjeto(id: string, dados: Partial<ProjetoEdicao>): Promise<void> {
+  const { error } = await supabase.from('projeto').update(dados).eq('id', id)
+  erroDeEscrita('Nao foi possivel salvar o projeto', error)
+}
+
+/**
+ * Move o projeto de fase.
+ *
+ * O motivo vai em `motivo_arquivo` porque e de la que `app.registrar_fase` o
+ * copia para o historico — vale para arquivar e para qualquer transicao que
+ * peca motivo.
+ */
+export async function mudarFase(id: string, paraFaseId: string, motivo?: string): Promise<void> {
+  const dados: Record<string, unknown> = { fase_id: paraFaseId }
+  if (motivo) dados.motivo_arquivo = motivo
+  const { error } = await supabase.from('projeto').update(dados).eq('id', id)
+  erroDeEscrita('Nao foi possivel mudar a fase', error)
+}
+
+/** As saidas possiveis de uma fase, na ordem em que se oferecem. */
+export async function transicoesDaFase(faseId: string): Promise<Transicao[]> {
+  const { data, error } = await supabase
+    .from('tipo_transicao')
+    .select('id, de_fase_id, para_fase_id, rotulo, papeis, exige_motivo, ordem')
+    .eq('de_fase_id', faseId)
+    .order('ordem')
+  erro('Nao foi possivel carregar as transicoes', error)
+  return (data ?? []) as Transicao[]
+}
+
+export async function pareceresDoProjeto(projetoId: string): Promise<Parecer[]> {
+  const { data, error } = await supabase
+    .from('aprovacao')
+    .select('id, projeto_id, fase_id, setor_codigo, decisao, parecer, pessoa_id, em')
+    .eq('projeto_id', projetoId)
+  erro('Nao foi possivel carregar os pareceres', error)
+  return (data ?? []) as Parecer[]
+}
+
+export async function setores(): Promise<Setor[]> {
+  const { data, error } = await supabase
+    .from('setor')
+    .select('codigo, nome, ordem')
+    .eq('ativo', true)
+    .order('ordem')
+  erro('Nao foi possivel carregar os setores', error)
+  return (data ?? []) as Setor[]
+}
+
+export async function rateioDoProjeto(projetoId: string): Promise<Rateio[]> {
+  const { data, error } = await supabase
+    .from('projeto_empresa')
+    .select('empresa_id, percentual, observacao')
+    .eq('projeto_id', projetoId)
+  erro('Nao foi possivel carregar o rateio', error)
+  return (data ?? []) as Rateio[]
+}
+
+/**
+ * Troca o rateio inteiro: apaga o que havia e grava as linhas novas.
+ *
+ * Sao duas idas ao banco porque tem de ser. `projeto_empresa_fecha_100` e um
+ * constraint trigger `initially deferred`: confere no COMMIT, e cada
+ * requisicao do PostgREST e uma transacao. Apagar tudo passa — projeto sem
+ * linha nenhuma sai do group by e vira 100% da empresa principal —, e as
+ * linhas novas entram de uma vez so, ja somando 100. Uma linha de 40% sozinha
+ * seria recusada no commit da propria requisicao.
+ *
+ * O que isso NAO garante: se a gravacao falhar depois do apagamento, o projeto
+ * fica sem rateio ate a proxima tentativa. Juntar as duas coisas numa
+ * transacao so pediria uma funcao no banco.
+ */
+export async function salvarRateio(projetoId: string, linhas: Rateio[]): Promise<void> {
+  const { error: erroApaga } = await supabase
+    .from('projeto_empresa')
+    .delete()
+    .eq('projeto_id', projetoId)
+  erroDeEscrita('Nao foi possivel limpar o rateio', erroApaga)
+
+  if (linhas.length === 0) return
+
+  const { error: erroGrava } = await supabase
+    .from('projeto_empresa')
+    .insert(linhas.map((l) => ({ ...l, projeto_id: projetoId })))
+  erroDeEscrita('Nao foi possivel gravar o rateio', erroGrava)
 }
 
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */

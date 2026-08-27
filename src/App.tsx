@@ -5,6 +5,7 @@ import { eu, type Pessoa } from './lib/banco'
 import { Entrar } from './paginas/Entrar'
 import { Carteira } from './paginas/Carteira'
 import { Projeto } from './paginas/Projeto'
+import { EditarProjeto } from './paginas/EditarProjeto'
 import { Empresas } from './paginas/Empresas'
 import { Equipe } from './paginas/Equipe'
 
@@ -23,6 +24,8 @@ export function App() {
   const [pagina, setPagina] = useState<Pagina>('carteira')
   // Sem biblioteca de rotas por enquanto: a carteira abre o projeto por estado.
   const [projetoAberto, setProjetoAberto] = useState<string | null>(null)
+  // { id: null } = projeto novo; { id } = editando um existente.
+  const [editando, setEditando] = useState<{ id: string | null } | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -61,6 +64,7 @@ export function App() {
               onClick={() => {
                 setPagina(p.chave)
                 setProjetoAberto(null)
+                setEditando(null)
               }}
               aria-current={pagina === p.chave ? 'page' : undefined}
             >
@@ -95,10 +99,22 @@ export function App() {
           </div>
         )}
         {pagina === 'carteira' &&
-          (projetoAberto ? (
-            <Projeto id={projetoAberto} aoVoltar={() => setProjetoAberto(null)} />
+          (editando ? (
+            <EditarProjeto
+              id={editando.id}
+              aoSair={(idSalvo) => {
+                setEditando(null)
+                if (idSalvo) setProjetoAberto(idSalvo)
+              }}
+            />
+          ) : projetoAberto ? (
+            <Projeto
+              id={projetoAberto}
+              aoVoltar={() => setProjetoAberto(null)}
+              aoEditar={() => setEditando({ id: projetoAberto })}
+            />
           ) : (
-            <Carteira aoAbrir={setProjetoAberto} />
+            <Carteira aoAbrir={setProjetoAberto} aoNovo={() => setEditando({ id: null })} />
           ))}
         {pagina === 'empresas' && <Empresas />}
         {pagina === 'equipe' && <Equipe />}

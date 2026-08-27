@@ -8,7 +8,12 @@ const SELO: Record<string, string> = {
   PLANEJAMENTO: 'selo selo--planejamento',
 }
 
-export function Carteira({ aoAbrir }: { aoAbrir: (id: string) => void }) {
+export function Carteira({
+  aoAbrir, aoNovo,
+}: {
+  aoAbrir: (id: string) => void
+  aoNovo: () => void
+}) {
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
@@ -27,7 +32,10 @@ export function Carteira({ aoAbrir }: { aoAbrir: (id: string) => void }) {
   return (
     <>
       <header className="cabecalho-pagina">
-        <h1>Carteira</h1>
+        <div className="titulo-projeto">
+          <h1>Carteira</h1>
+          <button className="botao botao--acao" onClick={aoNovo}>Novo projeto</button>
+        </div>
         <p>
           {carregando
             ? 'Carregando…'

@@ -51,7 +51,13 @@ function emOrdemDaArvore(etapas: Etapa[]): { etapa: Etapa; profundidade: number 
   return linhas
 }
 
-export function Projeto({ id, aoVoltar }: { id: string; aoVoltar: () => void }) {
+export function Projeto({
+  id, aoVoltar, aoEditar,
+}: {
+  id: string
+  aoVoltar: () => void
+  aoEditar: () => void
+}) {
   const [projeto, setProjeto] = useState<ProjetoDado | null>(null)
   const [tipo, setTipo] = useState<TipoProjeto | null>(null)
   const [etapas, setEtapas] = useState<Etapa[]>([])
@@ -133,6 +139,7 @@ export function Projeto({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
           <h1>{projeto.nome}</h1>
         </div>
         <div className="selos">
+          <button className="botao" onClick={aoEditar}>Editar</button>
           <span
             className="selo"
             style={{ background: projeto.tipo_cor + '22', color: projeto.tipo_cor }}

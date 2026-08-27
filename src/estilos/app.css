@@ -133,6 +133,14 @@ td.direita, th.direita { text-align: right; }
 select.campo { cursor: pointer; }
 textarea.campo { resize: vertical; font-family: inherit; }
 
+.acoes { display: flex; gap: var(--e2); margin: var(--e5) 0; }
+.campo-largo { grid-column: 1 / -1; }
+.total-errado { color: var(--vermelho); }
+.aviso--ok { border-left-color: var(--verde); background: var(--verde-fundo); }
+.aviso ul { margin: var(--e2) 0; padding-left: var(--e4); }
+.aviso li { margin: var(--e1) 0; }
+.titulo-projeto h1 { margin-right: auto; }
+
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
   .lateral { flex-direction: row; align-items: center; gap: var(--e4); padding: var(--e3) var(--e4); flex-wrap: wrap; }
