@@ -250,7 +250,7 @@ export function Kanban({ aoAbrir }: { aoAbrir: (id: string) => void }) {
                   cartoes.map((p) => (
                     <article
                       key={p.id}
-                      className="cartao"
+                      className="cartao-kanban"
                       draggable={!ocupado}
                       onDragStart={() => comecarArraste(p)}
                       onDragEnd={() => setArrastando(null)}

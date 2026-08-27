@@ -181,12 +181,17 @@ td.acoes-linha > * { margin-right: var(--e2); }
 .coluna--aceita { outline: 2px dashed var(--ciano); outline-offset: -2px; }
 .coluna--recusa { opacity: .45; }
 
-.cartao {
+/* Cartao do kanban. Chamava-se `.cartao` e colidia com o `.cartao` de
+   tokens.css, que e a moldura generica do sistema — o formulario de Empresas
+   usa a de la e herdava daqui `flex-direction: column`, o que transformava o
+   flex-basis de cada campo em ALTURA: um quadro vazio de 434px. Classe
+   generica em arquivo de tela e armadilha; esta tem sobrenome. */
+.cartao-kanban {
   background: var(--fundo); border: 1px solid var(--linha); padding: var(--e2);
   display: flex; flex-direction: column; gap: var(--e1); cursor: grab; font-size: .85rem;
 }
-.cartao:hover { border-color: var(--apagado); }
-.cartao .selos { margin-top: 0; }
+.cartao-kanban:hover { border-color: var(--apagado); }
+.cartao-kanban .selos { margin-top: 0; }
 
 .filtros {
   display: flex; flex-wrap: wrap; gap: var(--e2); align-items: center;
