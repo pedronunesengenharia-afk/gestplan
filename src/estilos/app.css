@@ -155,6 +155,29 @@ textarea.campo { resize: vertical; font-family: inherit; }
 .checklist li { display: flex; align-items: center; gap: var(--e2); padding: var(--e1) 0; }
 .acoes .campo { max-width: 14rem; }
 
+.alternador { display: inline-flex; gap: 1px; }
+.botao--ligado { background: var(--superficie-2); border-color: var(--apagado); }
+
+.kanban { display: flex; gap: var(--e3); overflow-x: auto; padding-bottom: var(--e4); align-items: flex-start; }
+.coluna {
+  flex: 0 0 15rem; background: var(--superficie); border: 1px solid var(--linha);
+  padding: var(--e3); display: flex; flex-direction: column; gap: var(--e2);
+}
+.coluna--recolhida { flex-basis: 9rem; }
+.coluna h2 {
+  font-size: .82rem; margin: 0; padding-top: var(--e2);
+  border-top: 3px solid var(--linha); border-bottom: none;
+}
+.coluna--aceita { outline: 2px dashed var(--ciano); outline-offset: -2px; }
+.coluna--recusa { opacity: .45; }
+
+.cartao {
+  background: var(--fundo); border: 1px solid var(--linha); padding: var(--e2);
+  display: flex; flex-direction: column; gap: var(--e1); cursor: grab; font-size: .85rem;
+}
+.cartao:hover { border-color: var(--apagado); }
+.cartao .selos { margin-top: 0; }
+
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
   .lateral { flex-direction: row; align-items: center; gap: var(--e4); padding: var(--e3) var(--e4); flex-wrap: wrap; }

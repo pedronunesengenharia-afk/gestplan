@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { carteira, type Projeto } from '../lib/banco'
 import { moeda, data } from '../lib/formato'
+import { Kanban } from './Kanban'
+import { guardarParametros, lerParametros } from '../lib/url'
 
 const SELO: Record<string, string> = {
   URGENTE: 'selo selo--urgente',
@@ -14,6 +16,11 @@ export function Carteira({
   aoAbrir: (id: string) => void
   aoNovo: () => void
 }) {
+  // Lista ou kanban: a escolha vive na URL, para sobreviver ao F5 e caber
+  // num link mandado para outra pessoa.
+  const [visao, setVisao] = useState<'lista' | 'kanban'>(
+    lerParametros().visao === 'kanban' ? 'kanban' : 'lista',
+  )
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
@@ -34,6 +41,20 @@ export function Carteira({
       <header className="cabecalho-pagina">
         <div className="titulo-projeto">
           <h1>Carteira</h1>
+          <span className="alternador">
+            <button
+              className={visao === 'lista' ? 'botao botao--ligado' : 'botao'}
+              onClick={() => { setVisao('lista'); guardarParametros({ visao: null }) }}
+            >
+              Lista
+            </button>
+            <button
+              className={visao === 'kanban' ? 'botao botao--ligado' : 'botao'}
+              onClick={() => { setVisao('kanban'); guardarParametros({ visao: 'kanban' }) }}
+            >
+              Kanban
+            </button>
+          </span>
           <button className="botao botao--acao" onClick={aoNovo}>Novo projeto</button>
         </div>
         <p>
@@ -45,11 +66,13 @@ export function Carteira({
 
       {erro && <div className="aviso">{erro}</div>}
 
-      {!carregando && !erro && projetos.length === 0 && (
+      {visao === 'kanban' && <Kanban aoAbrir={aoAbrir} />}
+
+      {visao === 'lista' && !carregando && !erro && projetos.length === 0 && (
         <p className="vazio">Nenhum projeto ainda. Cadastre uma empresa e crie o primeiro.</p>
       )}
 
-      {projetos.length > 0 && (
+      {visao === 'lista' && projetos.length > 0 && (
         <div className="tabela-rolavel">
           <table>
             <thead>

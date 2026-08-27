@@ -9,6 +9,8 @@ import {
   type ProjetoEdicao, type Rateio, type Setor, type TipoProjeto, type Transicao,
 } from '../lib/banco'
 import { CamposDoTipo } from '../componentes/CamposDoTipo'
+import { ListaDePendencias } from '../componentes/Pendencias'
+import { calcularPendencias, temPendencia as temAlguma } from '../lib/pendencias'
 
 /**
  * Criar e editar projeto.
@@ -38,10 +40,6 @@ export function codigoDoErro(mensagem: string): string | null {
   const noComeco = mensagem.match(/^Campo ([a-z][a-z0-9_]*)[\s:,]/)
   if (noComeco) return noComeco[1]
   return null
-}
-
-function estaVazio(v: unknown): boolean {
-  return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0)
 }
 
 export function EditarProjeto({
@@ -288,69 +286,18 @@ export function EditarProjeto({
   const transicao = transicoes.find((t) => t.id === transicaoEscolhida)
   const faseDestino = transicao ? fases.find((f) => f.id === transicao.para_fase_id) : undefined
 
-  /**
-   * O que o banco vai cobrar nesta transição, perguntado antes de mandar.
-   *
-   * São as mesmas duas regras que os triggers aplicam: `app.validar_campos`
-   * cobra todo campo cuja fase exigente fica ANTES da fase de destino — as
-   * tarjas vermelha e âmbar da tela —, e `app.exigir_pareceres` cobra os
-   * setores que a fase de ORIGEM lista em exige_setores. Arquivar é exceção no
-   * banco e é exceção aqui: a categoria da fase de destino é que diz.
-   */
-  function pendencias(): {
-    campos: CampoDefinicao[]
-    setores: string[]
-    reprovou: string | null
-    outras: string[]
-  } {
-    const nada = { campos: [], setores: [], reprovou: null, outras: [] }
-    if (!transicao || !faseDestino || !faseAtual) return nada
-
-    const ordemDaFase = (faseId: string) => fases.find((f) => f.id === faseId)?.ordem ?? 0
-    const camposFaltando = campos.filter(
-      (c) =>
-        c.exigido_para_sair_de !== null &&
-        ordemDaFase(c.exigido_para_sair_de) < faseDestino.ordem &&
-        estaVazio(dados.campos?.[c.codigo]),
-    )
-
-    const arquivando = faseDestino.categoria === 'ARQUIVADO'
-    const setoresFaltando = arquivando
-      ? []
-      : faseAtual.exige_setores.filter(
-          (s) =>
-            !pareceres.some(
-              (p) =>
-                p.fase_id === faseAtual.id &&
-                p.setor_codigo === s &&
-                (p.decisao === 'APROVADO' || p.decisao === 'CIENTE'),
-            ),
-        )
-
-    const reprovou = arquivando
-      ? null
-      : pareceres.find((p) => p.fase_id === faseAtual.id && p.decisao === 'REPROVADO')
-          ?.setor_codigo ?? null
-
-    // As duas outras exigências da fase de origem, que também são dado.
-    const outras: string[] = []
-    if (!arquivando && faseAtual.exige_orcamento && temOrcamento === false) {
-      outras.push(`${faseAtual.nome} exige orçamento com pelo menos um item valorado`)
-    }
-    if (!arquivando && faseAtual.exige_cronograma && cronogramaCompleto === false) {
-      outras.push(`${faseAtual.nome} exige todas as tarefas com data prevista`)
-    }
-
-    return { campos: camposFaltando, setores: setoresFaltando, reprovou, outras }
-  }
-
-  const pend = pendencias()
-  const temPendencia =
-    pend.campos.length > 0 ||
-    pend.setores.length > 0 ||
-    pend.outras.length > 0 ||
-    pend.reprovou !== null
-  const nomeDoSetor = (cod: string) => listaSetores.find((s) => s.codigo === cod)?.nome ?? cod
+  // O mesmo cálculo que o kanban e a avaliação fazem — em lib/pendencias.
+  const pend = calcularPendencias({
+    campos,
+    fases,
+    faseAtual,
+    faseDestino,
+    valores: dados.campos,
+    pareceres,
+    temOrcamento,
+    cronogramaCompleto,
+  })
+  const temPendencia = temAlguma(pend)
 
   async function avancar() {
     if (!transicao || !idAtual) return
@@ -756,24 +703,9 @@ export function EditarProjeto({
           {transicao && temPendencia && (
             <div className="aviso">
               <strong>O banco vai recusar esta mudança enquanto faltar:</strong>
-              <ul>
-                {pend.campos.map((c) => (
-                  <li key={c.id}>
-                    {c.rotulo} — exigido para sair de{' '}
-                    {fases.find((f) => f.id === c.exigido_para_sair_de)?.nome}
-                  </li>
-                ))}
-                {pend.setores.map((s) => (
-                  <li key={s}>Parecer de {nomeDoSetor(s)}, que {faseAtual?.nome} exige</li>
-                ))}
-                {pend.outras.map((o) => <li key={o}>{o}</li>)}
-                {pend.reprovou && (
-                  <li>
-                    {nomeDoSetor(pend.reprovou)} reprovou o projeto nesta fase — o caminho é
-                    arquivar, não avançar
-                  </li>
-                )}
-              </ul>
+              <ListaDePendencias
+                pend={pend} fases={fases} setores={listaSetores} faseAtual={faseAtual}
+              />
               {confirmarTransicao
                 ? 'Clique de novo para mandar assim mesmo e ver o que o banco responde.'
                 : 'Preencha o que falta, ou clique para tentar mesmo assim.'}

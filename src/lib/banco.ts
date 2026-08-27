@@ -120,6 +120,18 @@ export async function carteira(): Promise<Projeto[]> {
   return (data ?? []) as Projeto[]
 }
 
+/** A carteira de um tipo so — as colunas do kanban sao as fases DELE. */
+export async function carteiraDoTipo(tipoId: string): Promise<Projeto[]> {
+  const { data, error } = await supabase
+    .from('vw_projeto')
+    .select('*')
+    .eq('tipo_projeto_id', tipoId)
+    .order('pontuacao_total', { ascending: false })
+    .order('codigo', { ascending: false })
+  erro('Nao foi possivel carregar a carteira', error)
+  return (data ?? []) as Projeto[]
+}
+
 export async function empresas(): Promise<Empresa[]> {
   const { data, error } = await supabase
     .from('empresa')
