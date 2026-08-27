@@ -6,6 +6,7 @@ import {
   type Projeto as ProjetoDado, type Tarefa, type TipoProjeto,
 } from '../lib/banco'
 import { CamposDoTipo } from '../componentes/CamposDoTipo'
+import { emOrdemDaArvore } from '../lib/arvore'
 import { data, moeda } from '../lib/formato'
 
 const SELO: Record<string, string> = {
@@ -14,49 +15,13 @@ const SELO: Record<string, string> = {
   PLANEJAMENTO: 'selo selo--planejamento',
 }
 
-/** Achata a EAP na ordem da árvore, guardando a profundidade de cada linha. */
-function emOrdemDaArvore(etapas: Etapa[]): { etapa: Etapa; profundidade: number }[] {
-  const filhos = new Map<string | null, Etapa[]>()
-  for (const e of etapas) {
-    const chave = e.pai_id ?? null
-    filhos.set(chave, [...(filhos.get(chave) ?? []), e])
-  }
-  for (const lista of filhos.values()) {
-    lista.sort((a, b) => a.ordem - b.ordem || (a.codigo ?? '').localeCompare(b.codigo ?? ''))
-  }
-
-  const linhas: { etapa: Etapa; profundidade: number }[] = []
-  // O banco impede a etapa de ser pai de si mesma, mas não impede A→B→A.
-  // Sem esta marca, um ciclo desses trava a aba do navegador em vez de
-  // aparecer como dado estranho na tela.
-  const vistas = new Set<string>()
-  const descer = (pai: string | null, profundidade: number) => {
-    for (const e of filhos.get(pai) ?? []) {
-      if (vistas.has(e.id)) continue
-      vistas.add(e.id)
-      linhas.push({ etapa: e, profundidade })
-      descer(e.id, profundidade + 1)
-    }
-  }
-  descer(null, 0)
-
-  // Etapa cujo pai a RLS não devolveu — ou que ficou presa num ciclo — não
-  // pode sumir da tela.
-  for (const e of etapas) {
-    if (!vistas.has(e.id)) {
-      vistas.add(e.id)
-      linhas.push({ etapa: e, profundidade: 0 })
-    }
-  }
-  return linhas
-}
-
 export function Projeto({
-  id, aoVoltar, aoEditar,
+  id, aoVoltar, aoEditar, aoAbrirEtapas,
 }: {
   id: string
   aoVoltar: () => void
   aoEditar: () => void
+  aoAbrirEtapas: () => void
 }) {
   const [projeto, setProjeto] = useState<ProjetoDado | null>(null)
   const [tipo, setTipo] = useState<TipoProjeto | null>(null)
@@ -140,6 +105,7 @@ export function Projeto({
         </div>
         <div className="selos">
           <button className="botao" onClick={aoEditar}>Editar</button>
+          <button className="botao" onClick={aoAbrirEtapas}>Etapas</button>
           <span
             className="selo"
             style={{ background: projeto.tipo_cor + '22', color: projeto.tipo_cor }}
@@ -178,7 +144,10 @@ export function Projeto({
       />
 
       <section className="secao">
-        <h2>Etapas <span className="conta">{etapas.length}</span></h2>
+        <h2>
+          Etapas <span className="conta">{etapas.length}</span>
+          <button className="voltar conta" onClick={aoAbrirEtapas}>editar a EAP</button>
+        </h2>
         {etapas.length === 0 ? (
           <p className="vazio">Nenhuma etapa cadastrada.</p>
         ) : (
@@ -196,7 +165,7 @@ export function Projeto({
                 </tr>
               </thead>
               <tbody>
-                {linhas.map(({ etapa: e, profundidade }) => (
+                {linhas.map(({ item: e, profundidade }) => (
                   <tr key={e.id} className={e.folha ? undefined : 'linha-grupo'}>
                     <td className="dado">{e.codigo ?? '—'}</td>
                     <td style={{ paddingLeft: `calc(var(--e3) + ${profundidade} * var(--e4))` }}>

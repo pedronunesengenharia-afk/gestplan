@@ -141,6 +141,10 @@ textarea.campo { resize: vertical; font-family: inherit; }
 .aviso li { margin: var(--e1) 0; }
 .titulo-projeto h1 { margin-right: auto; }
 
+.estreito { width: 6rem; padding: var(--e1) var(--e2); font-size: .85rem; }
+.acoes-linha { display: flex; gap: var(--e2); align-items: center; white-space: nowrap; }
+.acoes-linha .voltar { margin: 0; font-size: .78rem; }
+
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
   .lateral { flex-direction: row; align-items: center; gap: var(--e4); padding: var(--e3) var(--e4); flex-wrap: wrap; }

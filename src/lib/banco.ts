@@ -493,6 +493,62 @@ export async function salvarRateio(projetoId: string, linhas: Rateio[]): Promise
   erroDeEscrita('Nao foi possivel gravar o rateio', error)
 }
 
+/**
+ * O que se pode escrever numa etapa.
+ *
+ * `valor` fica de fora de proposito: e coluna gerada
+ * (`quantidade * preco_unitario`), e o Postgres recusa escrita nela. Quem
+ * calcula o dinheiro e o banco; a tela so soma o que ele devolve.
+ */
+export type EtapaEdicao = {
+  projeto_id: string
+  pai_id: string | null
+  codigo: string
+  nome: string
+  descricao: string | null
+  nivel: number
+  ordem: number
+  folha: boolean
+  unidade: string | null
+  quantidade: number
+  preco_unitario: number
+  a_confirmar: boolean
+  peso_percentual: number
+  percentual_concluido: number
+}
+
+export async function criarEtapa(dados: Partial<EtapaEdicao>): Promise<string> {
+  const { data, error } = await supabase.from('etapa').insert(dados).select('id').single()
+  erroDeEscrita('Nao foi possivel criar a etapa', error)
+  return (data as { id: string }).id
+}
+
+export async function atualizarEtapa(id: string, dados: Partial<EtapaEdicao>): Promise<void> {
+  const { error } = await supabase.from('etapa').update(dados).eq('id', id)
+  erroDeEscrita('Nao foi possivel salvar a etapa', error)
+}
+
+/** Apaga a etapa. Os filhos vao junto: a chave estrangeira e `on delete cascade`. */
+export async function excluirEtapa(id: string): Promise<void> {
+  const { error } = await supabase.from('etapa').delete().eq('id', id)
+  erroDeEscrita('Nao foi possivel excluir a etapa', error)
+}
+
+/**
+ * Regrava a `ordem` de um conjunto de irmas.
+ *
+ * A ordem e coluna, nao consequencia do codigo: duas etapas podem se chamar
+ * "1.10" e "1.9" e a segunda vir antes. Sao varias requisicoes porque nao ha
+ * upsert possivel — `codigo` e `nome` sao NOT NULL e um upsert de id+ordem
+ * tentaria inserir linha incompleta.
+ */
+export async function reordenarEtapas(linhas: { id: string; ordem: number }[]): Promise<void> {
+  for (const l of linhas) {
+    const { error } = await supabase.from('etapa').update({ ordem: l.ordem }).eq('id', l.id)
+    erroDeEscrita('Nao foi possivel reordenar as etapas', error)
+  }
+}
+
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */
 export async function eu(): Promise<Pessoa | null> {
   const { data: sessao } = await supabase.auth.getUser()
