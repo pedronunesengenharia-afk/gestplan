@@ -7,6 +7,7 @@ import { Carteira } from './paginas/Carteira'
 import { Projeto } from './paginas/Projeto'
 import { EditarProjeto } from './paginas/EditarProjeto'
 import { Etapas } from './paginas/Etapas'
+import { Tarefas } from './paginas/Tarefas'
 import { Empresas } from './paginas/Empresas'
 import { Equipe } from './paginas/Equipe'
 
@@ -28,6 +29,7 @@ export function App() {
   // { id: null } = projeto novo; { id } = editando um existente.
   const [editando, setEditando] = useState<{ id: string | null } | null>(null)
   const [etapasDe, setEtapasDe] = useState<string | null>(null)
+  const [tarefasDe, setTarefasDe] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -68,6 +70,7 @@ export function App() {
                 setProjetoAberto(null)
                 setEditando(null)
                 setEtapasDe(null)
+                setTarefasDe(null)
               }}
               aria-current={pagina === p.chave ? 'page' : undefined}
             >
@@ -112,12 +115,15 @@ export function App() {
             />
           ) : etapasDe ? (
             <Etapas id={etapasDe} aoVoltar={() => setEtapasDe(null)} />
+          ) : tarefasDe ? (
+            <Tarefas id={tarefasDe} aoVoltar={() => setTarefasDe(null)} />
           ) : projetoAberto ? (
             <Projeto
               id={projetoAberto}
               aoVoltar={() => setProjetoAberto(null)}
               aoEditar={() => setEditando({ id: projetoAberto })}
               aoAbrirEtapas={() => setEtapasDe(projetoAberto)}
+              aoAbrirTarefas={() => setTarefasDe(projetoAberto)}
             />
           ) : (
             <Carteira aoAbrir={setProjetoAberto} aoNovo={() => setEditando({ id: null })} />

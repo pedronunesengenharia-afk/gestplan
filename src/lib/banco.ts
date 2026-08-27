@@ -549,6 +549,178 @@ export async function reordenarEtapas(linhas: { id: string; ordem: number }[]): 
   }
 }
 
+/**
+ * Os estados de uma tarefa.
+ *
+ * Espelham o CHECK `tarefa_status_check`. Ficariam melhor vindo do banco, mas
+ * `supabase gen types` so exporta valores de tipo `enum`, e estes sao CHECK —
+ * chegam ao TypeScript como `string`. Enquanto for assim, a lista mora aqui,
+ * num lugar so, apontando para a constraint que manda.
+ */
+export const STATUS_TAREFA = [
+  'NAO_INICIADA', 'EM_ANDAMENTO', 'BLOQUEADA', 'CONCLUIDA', 'CANCELADA',
+] as const
+
+/** Os tipos de ligacao entre tarefas, do CHECK `tarefa_dependencia_tipo_check`. */
+export const TIPOS_DE_DEPENDENCIA = [
+  { codigo: 'TI', nome: 'Termino a inicio' },
+  { codigo: 'II', nome: 'Inicio a inicio' },
+  { codigo: 'TT', nome: 'Termino a termino' },
+  { codigo: 'IT', nome: 'Inicio a termino' },
+] as const
+
+export type TarefaEdicao = {
+  projeto_id: string
+  etapa_id: string | null
+  pai_id: string | null
+  codigo: string | null
+  nome: string
+  descricao: string | null
+  responsavel_id: string | null
+  status: string
+  marco: boolean
+  data_inicio_prev: string | null
+  data_fim_prev: string | null
+  data_inicio_real: string | null
+  data_fim_real: string | null
+  duracao_dias: number | null
+  percentual_concluido: number
+  ordem: number
+  observacao: string | null
+}
+
+export type ItemChecklist = {
+  id: string
+  tarefa_id: string
+  texto: string
+  concluido: boolean
+  concluido_em: string | null
+  concluido_por: string | null
+  ordem: number
+}
+
+export type Dependencia = {
+  id: string
+  tarefa_id: string
+  predecessora_id: string
+  tipo: string
+  folga_dias: number
+}
+
+export async function criarTarefa(dados: Partial<TarefaEdicao>): Promise<string> {
+  const { data, error } = await supabase.from('tarefa').insert(dados).select('id').single()
+  erroDeEscrita('Nao foi possivel criar a tarefa', error)
+  return (data as { id: string }).id
+}
+
+/**
+ * Salva a tarefa e devolve quantas linhas mudaram.
+ *
+ * Zero linhas nao e erro do PostgREST: e a RLS recusando em silencio. A tela
+ * usa isso para dizer "voce so pode alterar as tarefas de que e responsavel"
+ * em vez de fingir que salvou.
+ */
+export async function atualizarTarefa(id: string, dados: Partial<TarefaEdicao>): Promise<number> {
+  const { data, error } = await supabase.from('tarefa').update(dados).eq('id', id).select('id')
+  erroDeEscrita('Nao foi possivel salvar a tarefa', error)
+  return (data ?? []).length
+}
+
+export async function excluirTarefa(id: string): Promise<number> {
+  const { data, error } = await supabase.from('tarefa').delete().eq('id', id).select('id')
+  erroDeEscrita('Nao foi possivel excluir a tarefa', error)
+  return (data ?? []).length
+}
+
+export async function reordenarTarefas(linhas: { id: string; ordem: number }[]): Promise<void> {
+  for (const l of linhas) {
+    const { error } = await supabase.from('tarefa').update({ ordem: l.ordem }).eq('id', l.id)
+    erroDeEscrita('Nao foi possivel reordenar as tarefas', error)
+  }
+}
+
+/** O checklist de todas as tarefas de um projeto, de uma vez. */
+export async function checklistDasTarefas(tarefaIds: string[]): Promise<ItemChecklist[]> {
+  if (tarefaIds.length === 0) return []
+  const { data, error } = await supabase
+    .from('tarefa_checklist')
+    .select('id, tarefa_id, texto, concluido, concluido_em, concluido_por, ordem')
+    .in('tarefa_id', tarefaIds)
+    .order('ordem')
+  erro('Nao foi possivel carregar os checklists', error)
+  return (data ?? []) as ItemChecklist[]
+}
+
+export async function criarItemChecklist(
+  tarefaId: string, texto: string, ordem: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from('tarefa_checklist')
+    .insert({ tarefa_id: tarefaId, texto, ordem })
+  erroDeEscrita('Nao foi possivel acrescentar o item', error)
+}
+
+/**
+ * Marca ou desmarca um item.
+ *
+ * Quem marcou e quando andam juntos com o marcado: item concluido sem autor e
+ * uma informacao pela metade, e desmarcar tem de limpar os tres.
+ */
+export async function marcarItemChecklist(
+  id: string, concluido: boolean, pessoaId: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('tarefa_checklist')
+    .update({
+      concluido,
+      concluido_em: concluido ? new Date().toISOString() : null,
+      concluido_por: concluido ? pessoaId : null,
+    })
+    .eq('id', id)
+  erroDeEscrita('Nao foi possivel marcar o item', error)
+}
+
+export async function excluirItemChecklist(id: string): Promise<void> {
+  const { error } = await supabase.from('tarefa_checklist').delete().eq('id', id)
+  erroDeEscrita('Nao foi possivel excluir o item', error)
+}
+
+export async function reordenarChecklist(linhas: { id: string; ordem: number }[]): Promise<void> {
+  for (const l of linhas) {
+    const { error } = await supabase
+      .from('tarefa_checklist').update({ ordem: l.ordem }).eq('id', l.id)
+    erroDeEscrita('Nao foi possivel reordenar o checklist', error)
+  }
+}
+
+export async function dependenciasDasTarefas(tarefaIds: string[]): Promise<Dependencia[]> {
+  if (tarefaIds.length === 0) return []
+  const { data, error } = await supabase
+    .from('tarefa_dependencia')
+    .select('id, tarefa_id, predecessora_id, tipo, folga_dias')
+    .in('tarefa_id', tarefaIds)
+  erro('Nao foi possivel carregar as dependencias', error)
+  return (data ?? []) as Dependencia[]
+}
+
+/** O banco recusa ciclo por trigger; a mensagem dele sobe inteira. */
+export async function criarDependencia(
+  tarefaId: string, predecessoraId: string, tipo: string, folgaDias: number,
+): Promise<void> {
+  const { error } = await supabase.from('tarefa_dependencia').insert({
+    tarefa_id: tarefaId,
+    predecessora_id: predecessoraId,
+    tipo,
+    folga_dias: folgaDias,
+  })
+  erroDeEscrita('Nao foi possivel criar a dependencia', error)
+}
+
+export async function excluirDependencia(id: string): Promise<void> {
+  const { error } = await supabase.from('tarefa_dependencia').delete().eq('id', id)
+  erroDeEscrita('Nao foi possivel excluir a dependencia', error)
+}
+
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */
 export async function eu(): Promise<Pessoa | null> {
   const { data: sessao } = await supabase.auth.getUser()

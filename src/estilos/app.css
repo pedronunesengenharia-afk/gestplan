@@ -145,6 +145,16 @@ textarea.campo { resize: vertical; font-family: inherit; }
 .acoes-linha { display: flex; gap: var(--e2); align-items: center; white-space: nowrap; }
 .acoes-linha .voltar { margin: 0; font-size: .78rem; }
 
+.detalhe-tarefa {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--e5); padding: var(--e3) 0;
+}
+.detalhe-tarefa h3 { font-size: .82rem; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--apagado); margin: 0 0 var(--e2); }
+.checklist { list-style: none; margin: 0; padding: 0; }
+.checklist li { display: flex; align-items: center; gap: var(--e2); padding: var(--e1) 0; }
+.acoes .campo { max-width: 14rem; }
+
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
   .lateral { flex-direction: row; align-items: center; gap: var(--e4); padding: var(--e3) var(--e4); flex-wrap: wrap; }

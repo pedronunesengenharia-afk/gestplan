@@ -16,12 +16,13 @@ const SELO: Record<string, string> = {
 }
 
 export function Projeto({
-  id, aoVoltar, aoEditar, aoAbrirEtapas,
+  id, aoVoltar, aoEditar, aoAbrirEtapas, aoAbrirTarefas,
 }: {
   id: string
   aoVoltar: () => void
   aoEditar: () => void
   aoAbrirEtapas: () => void
+  aoAbrirTarefas: () => void
 }) {
   const [projeto, setProjeto] = useState<ProjetoDado | null>(null)
   const [tipo, setTipo] = useState<TipoProjeto | null>(null)
@@ -106,6 +107,7 @@ export function Projeto({
         <div className="selos">
           <button className="botao" onClick={aoEditar}>Editar</button>
           <button className="botao" onClick={aoAbrirEtapas}>Etapas</button>
+          <button className="botao" onClick={aoAbrirTarefas}>Tarefas</button>
           <span
             className="selo"
             style={{ background: projeto.tipo_cor + '22', color: projeto.tipo_cor }}
@@ -192,7 +194,10 @@ export function Projeto({
       </section>
 
       <section className="secao">
-        <h2>Tarefas <span className="conta">{tarefas.length}</span></h2>
+        <h2>
+          Tarefas <span className="conta">{tarefas.length}</span>
+          <button className="voltar conta" onClick={aoAbrirTarefas}>editar as tarefas</button>
+        </h2>
         {tarefas.length === 0 ? (
           <p className="vazio">Nenhuma tarefa cadastrada.</p>
         ) : (
