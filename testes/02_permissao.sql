@@ -147,6 +147,31 @@ select teste('sem usuário identificado, nenhuma pessoa',  conta('select id from
 select teste('sem usuário identificado, nenhum tipo de projeto',
   conta('select id from tipo_projeto') = 0);
 
+-- -----------------------------------------------------------------------------
+-- O caminho de verdade: o claim como o PostgREST o publica
+--
+-- Todos os casos acima entram por `app.usuario`, que é atalho de teste. Se a
+-- suíte parar aí, uma quebra no jeito de ler o JWT passa batida — e foi
+-- exatamente o que aconteceu: `app.pessoa_atual()` lia um GUC que o PostgREST
+-- não popula desde a v9, e a RLS negava tudo no app real com a suíte verde.
+-- -----------------------------------------------------------------------------
+select set_config('app.usuario', '', false);
+select set_config('request.jwt.claims',
+  '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', false);
+
+select teste('claim em request.jwt.claims identifica a pessoa',
+  app.pessoa_atual() = 'bbbbbbbb-0000-0000-0000-000000000001');
+select teste('pelo JWT, o dono enxerga os projetos',   conta('select id from projeto') = 4);
+select teste('pelo JWT, o dono enxerga as empresas',   conta('select id from empresa') = 2);
+
+select set_config('request.jwt.claims',
+  '{"sub":"55555555-5555-5555-5555-555555555555","role":"authenticated"}', false);
+select teste('pelo JWT, o externo continua sem ver empresa',
+  conta('select id from empresa') = 0);
+
+select set_config('request.jwt.claims', '', false);
+select teste('sem claim nenhum, ninguém é identificado', app.pessoa_atual() is null);
+
 reset role;
 
 \echo ''
