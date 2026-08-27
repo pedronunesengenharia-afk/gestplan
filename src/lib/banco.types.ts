@@ -105,6 +105,13 @@ export type Database = {
             foreignKeyName: "alocacao_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alocacao_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -242,6 +249,13 @@ export type Database = {
             foreignKeyName: "anexo_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anexo_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -351,6 +365,13 @@ export type Database = {
             foreignKeyName: "apontamento_hora_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apontamento_hora_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -441,6 +462,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprovacao_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
             referencedColumns: ["id"]
           },
           {
@@ -698,6 +726,13 @@ export type Database = {
             foreignKeyName: "comentario_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comentario_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -857,6 +892,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contrato_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
             referencedColumns: ["id"]
           },
           {
@@ -1130,6 +1172,13 @@ export type Database = {
             foreignKeyName: "custo_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custo_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -1365,6 +1414,13 @@ export type Database = {
             foreignKeyName: "etapa_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -1591,6 +1647,13 @@ export type Database = {
             foreignKeyName: "ideia_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ideia_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -1654,6 +1717,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "linha_base_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
             referencedColumns: ["id"]
           },
           {
@@ -1835,6 +1905,13 @@ export type Database = {
             foreignKeyName: "medicao_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medicao_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -1942,6 +2019,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificacao_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
             referencedColumns: ["id"]
           },
           {
@@ -2056,6 +2140,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
             referencedColumns: ["id"]
           },
           {
@@ -2187,6 +2278,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parcela_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
             referencedColumns: ["id"]
           },
           {
@@ -2557,6 +2655,13 @@ export type Database = {
             foreignKeyName: "projeto_projeto_pai_id_fkey"
             columns: ["projeto_pai_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_projeto_pai_id_fkey"
+            columns: ["projeto_pai_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -2653,6 +2758,13 @@ export type Database = {
             foreignKeyName: "projeto_empresa_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_empresa_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -2729,6 +2841,13 @@ export type Database = {
             foreignKeyName: "projeto_fase_hist_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_fase_hist_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -2795,6 +2914,13 @@ export type Database = {
             foreignKeyName: "projeto_pontuacao_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_pontuacao_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -2847,6 +2973,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: true
             referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_valor_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: true
+            referencedRelation: "vw_projeto_edicao"
             referencedColumns: ["id"]
           },
           {
@@ -3016,6 +3149,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefa_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
             referencedColumns: ["id"]
           },
           {
@@ -3358,6 +3498,13 @@ export type Database = {
             foreignKeyName: "tarefa_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefa_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -3391,6 +3538,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapa_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
             referencedColumns: ["id"]
           },
           {
@@ -3461,6 +3615,13 @@ export type Database = {
             foreignKeyName: "parcela_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parcela_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -3505,6 +3666,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_pontuacao_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
             referencedColumns: ["id"]
           },
           {
@@ -3600,7 +3768,201 @@ export type Database = {
             foreignKeyName: "projeto_projeto_pai_id_fkey"
             columns: ["projeto_pai_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_projeto_pai_id_fkey"
+            columns: ["projeto_pai_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_tipo_projeto_id_fkey"
+            columns: ["tipo_projeto_id"]
+            isOneToOne: false
+            referencedRelation: "tipo_projeto"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_projeto_edicao: {
+        Row: {
+          ano: number | null
+          arquivado_em: string | null
+          atualizado_em: string | null
+          beneficios: string | null
+          campos: Json | null
+          cidade: string | null
+          codigo: string | null
+          criado_em: string | null
+          data_fase: string | null
+          data_fim_prev: string | null
+          data_fim_real: string | null
+          data_inicio_prev: string | null
+          data_inicio_real: string | null
+          data_solicitacao: string | null
+          descricao: string | null
+          empresa_id: string | null
+          fase_id: string | null
+          frente: string | null
+          gerente_id: string | null
+          id: string | null
+          local: string | null
+          motivo_arquivo: string | null
+          nome: string | null
+          numero: number | null
+          objetivo: string | null
+          observacao: string | null
+          origem_legado: string | null
+          pontuacao_total: number | null
+          prioridade: string | null
+          problema: string | null
+          projeto_pai_id: string | null
+          retorno_em: string | null
+          saude: string | null
+          seguranca: boolean | null
+          setor: string | null
+          solicitante_id: string | null
+          tipo_projeto_id: string | null
+          uf: string | null
+        }
+        Insert: {
+          ano?: number | null
+          arquivado_em?: string | null
+          atualizado_em?: string | null
+          beneficios?: string | null
+          campos?: never
+          cidade?: string | null
+          codigo?: string | null
+          criado_em?: string | null
+          data_fase?: string | null
+          data_fim_prev?: string | null
+          data_fim_real?: string | null
+          data_inicio_prev?: string | null
+          data_inicio_real?: string | null
+          data_solicitacao?: string | null
+          descricao?: string | null
+          empresa_id?: string | null
+          fase_id?: string | null
+          frente?: string | null
+          gerente_id?: string | null
+          id?: string | null
+          local?: string | null
+          motivo_arquivo?: string | null
+          nome?: string | null
+          numero?: number | null
+          objetivo?: string | null
+          observacao?: string | null
+          origem_legado?: string | null
+          pontuacao_total?: number | null
+          prioridade?: string | null
+          problema?: string | null
+          projeto_pai_id?: string | null
+          retorno_em?: string | null
+          saude?: string | null
+          seguranca?: boolean | null
+          setor?: string | null
+          solicitante_id?: string | null
+          tipo_projeto_id?: string | null
+          uf?: string | null
+        }
+        Update: {
+          ano?: number | null
+          arquivado_em?: string | null
+          atualizado_em?: string | null
+          beneficios?: string | null
+          campos?: never
+          cidade?: string | null
+          codigo?: string | null
+          criado_em?: string | null
+          data_fase?: string | null
+          data_fim_prev?: string | null
+          data_fim_real?: string | null
+          data_inicio_prev?: string | null
+          data_inicio_real?: string | null
+          data_solicitacao?: string | null
+          descricao?: string | null
+          empresa_id?: string | null
+          fase_id?: string | null
+          frente?: string | null
+          gerente_id?: string | null
+          id?: string | null
+          local?: string | null
+          motivo_arquivo?: string | null
+          nome?: string | null
+          numero?: number | null
+          objetivo?: string | null
+          observacao?: string | null
+          origem_legado?: string | null
+          pontuacao_total?: number | null
+          prioridade?: string | null
+          problema?: string | null
+          projeto_pai_id?: string | null
+          retorno_em?: string | null
+          saude?: string | null
+          seguranca?: boolean | null
+          setor?: string | null
+          solicitante_id?: string | null
+          tipo_projeto_id?: string | null
+          uf?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_fase_id_fkey"
+            columns: ["fase_id"]
+            isOneToOne: false
+            referencedRelation: "tipo_fase"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_gerente_id_fkey"
+            columns: ["gerente_id"]
+            isOneToOne: false
+            referencedRelation: "pessoa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_projeto_pai_id_fkey"
+            columns: ["projeto_pai_id"]
+            isOneToOne: false
+            referencedRelation: "projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_projeto_pai_id_fkey"
+            columns: ["projeto_pai_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_projeto_pai_id_fkey"
+            columns: ["projeto_pai_id"]
+            isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_projeto_pai_id_fkey"
+            columns: ["projeto_pai_id"]
+            isOneToOne: false
+            referencedRelation: "vw_retomada"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_solicitante_id_fkey"
+            columns: ["solicitante_id"]
+            isOneToOne: false
+            referencedRelation: "pessoa"
             referencedColumns: ["id"]
           },
           {
@@ -3658,6 +4020,13 @@ export type Database = {
             foreignKeyName: "tarefa_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefa_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
             referencedRelation: "vw_retomada"
             referencedColumns: ["id"]
           },
@@ -3672,7 +4041,10 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      definir_rateio: {
+        Args: { p_linhas: Json; p_projeto: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

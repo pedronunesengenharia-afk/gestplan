@@ -384,10 +384,16 @@ export type Rateio = {
 
 export type Setor = { codigo: string; nome: string; ordem: number }
 
-/** O projeto para edicao, direto da tabela. */
+/**
+ * O projeto para edicao.
+ *
+ * Le `vw_projeto_edicao`, nao a tabela: a view traz as colunas que a carteira
+ * nao carrega e aplica o mesmo filtro de dinheiro — as chaves de campo MOEDA
+ * saem de `campos` para quem nao tem alcance financeiro.
+ */
 export async function projetoParaEdicao(id: string): Promise<ProjetoEdicao | null> {
   const { data, error } = await supabase
-    .from('projeto')
+    .from('vw_projeto_edicao')
     // Literal de propósito: o cliente do Supabase tipa o retorno lendo esta
     // string em tempo de compilação, e uma constante montada some com os tipos.
     .select('id, codigo, nome, tipo_projeto_id, empresa_id, fase_id, gerente_id, solicitante_id, setor, frente, seguranca, descricao, objetivo, problema, beneficios, local, cidade, uf, data_solicitacao, data_inicio_prev, data_fim_prev, campos')
@@ -469,32 +475,22 @@ export async function rateioDoProjeto(projetoId: string): Promise<Rateio[]> {
 }
 
 /**
- * Troca o rateio inteiro: apaga o que havia e grava as linhas novas.
+ * Troca o rateio inteiro, numa transacao so.
  *
- * Sao duas idas ao banco porque tem de ser. `projeto_empresa_fecha_100` e um
- * constraint trigger `initially deferred`: confere no COMMIT, e cada
- * requisicao do PostgREST e uma transacao. Apagar tudo passa — projeto sem
- * linha nenhuma sai do group by e vira 100% da empresa principal —, e as
- * linhas novas entram de uma vez so, ja somando 100. Uma linha de 40% sozinha
- * seria recusada no commit da propria requisicao.
+ * A funcao `definir_rateio` apaga e regrava do lado do banco, e antecipa a
+ * conferencia dos 100% para dentro da mesma transacao. Fazer isso em duas
+ * requisicoes deixava a porta aberta para o projeto ficar sem rateio nenhum
+ * se a segunda falhasse — e sem rateio o modelo le 100% da empresa principal,
+ * que e um numero errado sem erro nenhum aparecendo.
  *
- * O que isso NAO garante: se a gravacao falhar depois do apagamento, o projeto
- * fica sem rateio ate a proxima tentativa. Juntar as duas coisas numa
- * transacao so pediria uma funcao no banco.
+ * Lista vazia e decisao valida: significa 100% da empresa principal.
  */
 export async function salvarRateio(projetoId: string, linhas: Rateio[]): Promise<void> {
-  const { error: erroApaga } = await supabase
-    .from('projeto_empresa')
-    .delete()
-    .eq('projeto_id', projetoId)
-  erroDeEscrita('Nao foi possivel limpar o rateio', erroApaga)
-
-  if (linhas.length === 0) return
-
-  const { error: erroGrava } = await supabase
-    .from('projeto_empresa')
-    .insert(linhas.map((l) => ({ ...l, projeto_id: projetoId })))
-  erroDeEscrita('Nao foi possivel gravar o rateio', erroGrava)
+  const { error } = await supabase.rpc('definir_rateio', {
+    p_projeto: projetoId,
+    p_linhas: linhas,
+  })
+  erroDeEscrita('Nao foi possivel gravar o rateio', error)
 }
 
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */
