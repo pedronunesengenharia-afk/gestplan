@@ -10,6 +10,7 @@ import {
   type LinhaAvanco, type LinhaCapacidade, type LinhaCurvaS, type LinhaFluxo,
   type ProjetoARetomar, type Projeto, type TarefaAtrasada,
 } from '../lib/banco'
+import { EsqueletoDeFichas } from '../componentes/Esqueleto'
 import { FichaDeNumero, Grafico, type Serie } from '../componentes/Grafico'
 import { competencia as formatarCompetencia, data as formatarData, moeda } from '../lib/formato'
 
@@ -100,7 +101,7 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
     }
   }, [])
 
-  if (carregando) return <p className="vazio">Carregando o painel…</p>
+  if (carregando) return <EsqueletoDeFichas quantas={5} />
 
   const ativos = projetos.filter((p) => p.ativo)
   const orcado = ativos.reduce((t, p) => t + (p.valor_orcado ?? 0), 0)

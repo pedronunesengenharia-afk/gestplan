@@ -9,6 +9,7 @@ import {
   type Dependencia, type Etapa, type ItemChecklist, type Pessoa,
   type Projeto as ProjetoDado, type Tarefa, type TipoProjeto,
 } from '../lib/banco'
+import { EsqueletoDeTabela } from '../componentes/Esqueleto'
 import { emOrdemDaArvore } from '../lib/arvore'
 import { data as formatarData } from '../lib/formato'
 
@@ -143,7 +144,7 @@ export function Tarefas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
     }
   }
 
-  if (carregando) return <p className="vazio">Carregando…</p>
+  if (carregando) return <EsqueletoDeTabela linhas={8} colunas={8} />
   if (!projeto) {
     return (
       <>
@@ -276,20 +277,23 @@ export function Tarefas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
       </p>
 
       {tarefas.length === 0 ? (
-        <p className="vazio">Nenhuma tarefa ainda.</p>
+        <p className="vazio">
+          Nenhuma tarefa ainda. Comece pelas entregas da fase atual — data prevista pode ficar
+          para depois, e 130 das tarefas importadas estão assim.
+        </p>
       ) : (
         <div className="tabela-rolavel">
           <table>
             <thead>
               <tr>
                 <th>Código</th>
-                <th>Tarefa</th>
+                <th className="principal">Tarefa</th>
                 <th>Responsável</th>
                 <th>Etapa</th>
                 <th>Situação</th>
                 <th className="direita">Concluído</th>
-                <th>Início prev.</th>
-                <th>Fim prev.</th>
+                <th className="data">Início prev.</th>
+                <th className="data">Fim prev.</th>
                 <th />
               </tr>
             </thead>
@@ -304,7 +308,10 @@ export function Tarefas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
                   <Fragment key={t.id}>
                     <tr className={t.marco ? 'linha-grupo' : undefined}>
                       <td className="dado">{t.codigo ?? '—'}</td>
-                      <td style={{ paddingLeft: `calc(var(--e3) + ${profundidade} * var(--e4))` }}>
+                      <td
+                        className="principal"
+                        style={{ paddingLeft: `calc(var(--e3) + ${profundidade} * var(--e4))` }}
+                      >
                         {emEdicao ? (
                           <input
                             className="campo" value={rascunho.nome}
@@ -384,7 +391,7 @@ export function Tarefas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
                           `${t.percentual_concluido}%`
                         )}
                       </td>
-                      <td className="dado">
+                      <td className="dado data">
                         {emEdicao ? (
                           <input
                             type="date" className="campo dado estreito" value={rascunho.data_inicio_prev}
@@ -395,7 +402,7 @@ export function Tarefas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
                           formatarData(t.data_inicio_prev)
                         )}
                       </td>
-                      <td className="dado">
+                      <td className="dado data">
                         {emEdicao ? (
                           <input
                             type="date" className="campo dado estreito" value={rascunho.data_fim_prev}

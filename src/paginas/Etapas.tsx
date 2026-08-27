@@ -5,6 +5,7 @@ import {
   ErroDoBanco,
   type Etapa, type Projeto as ProjetoDado, type TipoProjeto,
 } from '../lib/banco'
+import { EsqueletoDeTabela } from '../componentes/Esqueleto'
 import { descendentes, emOrdemDaArvore } from '../lib/arvore'
 import { moeda } from '../lib/formato'
 
@@ -97,7 +98,7 @@ export function Etapas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) {
     }
   }
 
-  if (carregando) return <p className="vazio">Carregando…</p>
+  if (carregando) return <EsqueletoDeTabela linhas={8} colunas={7} />
   if (!projeto) {
     return (
       <>
@@ -276,14 +277,17 @@ Cancelar não cria nada.`,
       </p>
 
       {etapas.length === 0 ? (
-        <p className="vazio">Nenhuma etapa ainda.</p>
+        <p className="vazio">
+          Nenhuma etapa cadastrada. Comece pelo orçamento: cada item vira uma etapa, e a soma
+          das folhas é o valor do projeto.
+        </p>
       ) : (
         <div className="tabela-rolavel">
           <table>
             <thead>
               <tr>
                 <th>Código</th>
-                <th>Etapa</th>
+                <th className="principal">Etapa</th>
                 {mostraOrcamento && <th>Un.</th>}
                 {mostraOrcamento && <th className="direita">Qtd.</th>}
                 {mostraOrcamento && <th className="direita">Preço unit.</th>}
@@ -312,7 +316,10 @@ Cancelar não cria nada.`,
                       )}
                     </td>
 
-                    <td style={{ paddingLeft: `calc(var(--e3) + ${profundidade} * var(--e4))` }}>
+                    <td
+                      className="principal"
+                      style={{ paddingLeft: `calc(var(--e3) + ${profundidade} * var(--e4))` }}
+                    >
                       {emEdicao ? (
                         <input
                           className="campo" value={rascunho.nome}

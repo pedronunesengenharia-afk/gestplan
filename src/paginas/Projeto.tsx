@@ -7,6 +7,7 @@ import {
 } from '../lib/banco'
 import { CamposDoTipo } from '../componentes/CamposDoTipo'
 import { ConversaEArquivos } from '../componentes/ConversaEArquivos'
+import { EsqueletoDeTabela } from '../componentes/Esqueleto'
 import { emOrdemDaArvore } from '../lib/arvore'
 import { data, moeda } from '../lib/formato'
 
@@ -81,7 +82,7 @@ export function Projeto({
     }
   }, [id])
 
-  if (carregando) return <p className="vazio">Carregando…</p>
+  if (carregando) return <EsqueletoDeTabela linhas={6} colunas={5} />
   if (erro) return <div className="aviso">{erro}</div>
   if (!projeto) {
     return (
@@ -220,8 +221,8 @@ export function Projeto({
                   <th>Responsável</th>
                   <th>Situação</th>
                   <th className="direita">Concluído</th>
-                  <th>Início prev.</th>
-                  <th>Fim prev.</th>
+                  <th className="data">Início prev.</th>
+                  <th className="data">Fim prev.</th>
                 </tr>
               </thead>
               <tbody>

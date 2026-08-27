@@ -195,7 +195,20 @@ a { color: var(--laranja); }
 /* Tabela larga rola dentro de si; a página nunca rola de lado. */
 .tabela-rolavel { overflow-x: auto; border: 1px solid var(--linha); background: var(--superficie); }
 table { border-collapse: collapse; width: 100%; font-size: .9rem; }
-th, td { text-align: left; padding: var(--e2) var(--e3); border-bottom: 1px solid var(--linha-suave); }
+/* Densidade de ferramenta, não de folheto: quem passa o dia aqui quer ver
+   mais linhas sem rolar. O alvo de clique continua confortável porque a
+   linha inteira é clicável, não um link de 12px dentro dela. */
+th, td {
+  text-align: left;
+  padding: .3rem var(--e3);
+  border-bottom: 1px solid var(--linha-suave);
+  line-height: 1.4;
+}
+/* Hierarquia: código e valor são o que o olho procura na tabela; o resto
+   recua meio tom para eles aparecerem sem precisar de negrito. */
+td { color: var(--tinta-2); }
+td.dado, td.num, td .moeda { color: var(--tinta); }
+td.num { font-weight: 500; }
 th {
   font-family: var(--fonte-dado);
   font-size: .66rem;

@@ -5,6 +5,7 @@ import {
   type Empresa, type Fase, type FiltroCarteira, type Projeto, type TipoProjeto,
 } from '../lib/banco'
 import { moeda, data } from '../lib/formato'
+import { EsqueletoDeTabela } from '../componentes/Esqueleto'
 import { Kanban } from './Kanban'
 import { guardarParametros, lerParametros } from '../lib/url'
 
@@ -279,6 +280,8 @@ export function Carteira({
 
       {visao === 'kanban' && <Kanban aoAbrir={aoAbrir} />}
 
+      {visao === 'lista' && carregando && <EsqueletoDeTabela linhas={10} colunas={7} />}
+
       {visao === 'lista' && !carregando && !erro && projetos.length === 0 && (
         <p className="vazio">
           {filtrando
@@ -287,18 +290,18 @@ export function Carteira({
         </p>
       )}
 
-      {visao === 'lista' && projetos.length > 0 && (
+      {visao === 'lista' && !carregando && projetos.length > 0 && (
         <div className="tabela-rolavel">
           <table>
             <thead>
               <tr>
                 <th>Código</th>
-                <th>Projeto</th>
+                <th className="principal">Projeto</th>
                 <th>Tipo</th>
                 <th>Fase</th>
                 <th>Empresa</th>
                 <th>Prioridade</th>
-                <th>Prazo</th>
+                <th className="data">Prazo</th>
                 {mostraValor && <th className="direita">Orçado</th>}
                 {mostraValor && <th className="direita">Realizado</th>}
               </tr>
@@ -313,7 +316,7 @@ export function Carteira({
                   onKeyDown={(e) => e.key === 'Enter' && aoAbrir(p.id)}
                 >
                   <td className="dado">{p.codigo}</td>
-                  <td>
+                  <td className="principal">
                     {p.nome}
                     {p.seguranca && <span className="marca-etapa">segurança</span>}
                   </td>
@@ -340,7 +343,7 @@ export function Carteira({
                       {p.pontuacao_total}
                     </span>
                   </td>
-                  <td className="dado">{data(p.data_fim_prev)}</td>
+                  <td className="dado data">{data(p.data_fim_prev)}</td>
                   {mostraValor && <td className="num direita">{moeda(p.valor_orcado)}</td>}
                   {mostraValor && <td className="num direita">{moeda(p.valor_realizado)}</td>}
                 </tr>

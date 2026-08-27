@@ -62,7 +62,9 @@
 
 .linha-clicavel { cursor: pointer; }
 .linha-clicavel:hover { background: var(--superficie-2); }
-.linha-clicavel:focus-visible { outline: 2px solid var(--ciano); outline-offset: -2px; }
+/* Mesmo laranja de sinal do foco global: quem navega por Tab não deve ter de
+   aprender duas cores de foco. */
+.linha-clicavel:focus-visible { outline: 2px solid var(--laranja); outline-offset: -2px; }
 
 .titulo-projeto { display: flex; align-items: baseline; gap: var(--e3); flex-wrap: wrap; }
 .codigo-projeto { color: var(--apagado); font-size: .95rem; }
@@ -238,6 +240,38 @@ td.acoes-linha > * { margin-right: var(--e2); }
 .tarja-ambiente--perigo { background: var(--vermelho); }
 .app--ensaio { padding-top: 2rem; }
 .app--ensaio .lateral { padding-top: calc(var(--e5) + 2rem); }
+
+/* Data alinha à direita como dinheiro e percentual: são todas grandezas que
+   se comparam de cima a baixo. */
+td.data, th.data { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Esqueleto: o contorno do que vem, para a tela não pular quando o dado chega. */
+.esqueleto .barra {
+  display: block; height: .8rem; border-radius: var(--raio);
+  background: var(--superficie-2);
+  animation: respira 1.4s ease-in-out infinite;
+}
+.esqueleto th .barra { height: .55rem; width: 60%; }
+@keyframes respira {
+  0%, 100% { opacity: .55 }
+  50%      { opacity: 1 }
+}
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto .barra { animation: none }
+}
+
+/* A linha estava com 91px porque o nome do projeto se espremia em cinco
+   linhas enquanto "2026-007" quebrava no meio. Densidade aqui não é reduzir
+   padding: é dar largura ao que é longo, tirando-a do que é curto. */
+td.dado, th.dado, td.data, th.data, td.num, th.num { white-space: nowrap; }
+td .selo, td .marca-etapa { white-space: nowrap; }
+/* A coluna do nome pede largura explicitamente. Sem isso o layout automático
+   a trata como a mais estreita — ela é a única que quebra, e quebrar é o que
+   o navegador entende por "cabe em pouco espaço". */
+td.principal, th.principal { min-width: 20rem; white-space: normal; }
+.tabela-rolavel > table { min-width: 54rem; }
+.detalhe-tarefa .tabela-rolavel > table,
+.cartao-grafico .tabela-rolavel > table { min-width: 0; }
 
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
