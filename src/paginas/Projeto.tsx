@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import {
-  etapasDoProjeto, pessoas, pontuacaoDoProjeto, projeto as carregarProjeto,
-  tarefasDoProjeto, tipoDeProjeto,
+  etapasDoProjeto, eu as carregarEu, pessoas, pontuacaoDoProjeto,
+  projeto as carregarProjeto, tarefasDoProjeto, tipoDeProjeto,
   type Etapa, type LinhaPontuacao, type Pessoa,
   type Projeto as ProjetoDado, type Tarefa, type TipoProjeto,
 } from '../lib/banco'
 import { CamposDoTipo } from '../componentes/CamposDoTipo'
+import { ConversaEArquivos } from '../componentes/ConversaEArquivos'
 import { emOrdemDaArvore } from '../lib/arvore'
 import { data, moeda } from '../lib/formato'
 
@@ -33,6 +34,8 @@ export function Projeto({
   const [tarefas, setTarefas] = useState<Tarefa[]>([])
   const [pontos, setPontos] = useState<LinhaPontuacao[]>([])
   const [equipe, setEquipe] = useState<Map<string, Pessoa>>(new Map())
+  const [listaEquipe, setListaEquipe] = useState<Pessoa[]>([])
+  const [minhaPessoaId, setMinhaPessoaId] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
 
@@ -47,12 +50,13 @@ export function Projeto({
       setProjeto(p)
       if (!p) return
 
-      const [t, es, ts, pts, gente] = await Promise.all([
+      const [t, es, ts, pts, gente, quemSouEu] = await Promise.all([
         tipoDeProjeto(p.tipo_projeto_id),
         etapasDoProjeto(p.id),
         tarefasDoProjeto(p.id),
         pontuacaoDoProjeto(p.id),
         pessoas(),
+        carregarEu(),
       ])
       if (!vivo) return
       setTipo(t)
@@ -60,6 +64,8 @@ export function Projeto({
       setTarefas(ts)
       setPontos(pts)
       setEquipe(new Map(gente.map((q) => [q.id, q])))
+      setListaEquipe(gente)
+      setMinhaPessoaId(quemSouEu?.id ?? null)
     }
 
     buscar()
@@ -238,6 +244,12 @@ export function Projeto({
           </div>
         )}
       </section>
+
+      <ConversaEArquivos
+        projetoId={projeto.id}
+        equipe={listaEquipe}
+        minhaPessoaId={minhaPessoaId}
+      />
 
       {(tipo?.usa_pontuacao ?? false) && (
         <section className="secao">

@@ -900,6 +900,162 @@ export async function registrarParecer(p: {
   erroDeEscrita('Nao foi possivel registrar o parecer', error)
 }
 
+export type Comentario = {
+  id: string
+  projeto_id: string
+  tarefa_id: string | null
+  responde_id: string | null
+  pessoa_id: string
+  texto: string
+  mencionados: string[]
+  criado_em: string
+  editado_em: string | null
+}
+
+export type Anexo = {
+  id: string
+  projeto_id: string
+  tipo: string
+  titulo: string
+  storage_path: string
+  mime: string | null
+  bytes: number | null
+  secao: string | null
+  ordem: number
+  criado_em: string
+  criado_por: string | null
+}
+
+/** Os tipos de anexo, do CHECK `anexo_tipo_check`. */
+export const TIPOS_DE_ANEXO = [
+  'FOTO', 'PROJETO', 'MEMORIAL', 'ART', 'CONTRATO', 'ADITIVO', 'MEDICAO',
+  'PROPOSTA', 'NOTA_FISCAL', 'RELATORIO', 'OUTRO',
+] as const
+
+export const BUCKET_ANEXOS = 'anexos'
+
+export async function comentariosDoProjeto(projetoId: string): Promise<Comentario[]> {
+  const { data, error } = await supabase
+    .from('comentario')
+    .select('id, projeto_id, tarefa_id, responde_id, pessoa_id, texto, mencionados, criado_em, editado_em')
+    .eq('projeto_id', projetoId)
+    .order('criado_em')
+  erro('Nao foi possivel carregar os comentarios', error)
+  return (data ?? []) as Comentario[]
+}
+
+/**
+ * Escreve um comentario.
+ *
+ * `pessoa_id` vai explicito porque a politica `comentario_proprio` exige que
+ * ele seja `app.pessoa_atual()` — escrever em nome de outro e recusado pelo
+ * banco, nao pela tela.
+ */
+export async function criarComentario(c: {
+  projeto_id: string
+  pessoa_id: string
+  texto: string
+  responde_id: string | null
+  mencionados: string[]
+}): Promise<void> {
+  const { error } = await supabase.from('comentario').insert(c)
+  erroDeEscrita('Nao foi possivel comentar', error)
+}
+
+/** Editar e so do autor: a politica compara pessoa_id com quem esta logado. */
+export async function editarComentario(id: string, texto: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('comentario')
+    .update({ texto, editado_em: new Date().toISOString() })
+    .eq('id', id)
+    .select('id')
+  erroDeEscrita('Nao foi possivel editar o comentario', error)
+  return (data ?? []).length
+}
+
+export async function excluirComentario(id: string): Promise<number> {
+  const { data, error } = await supabase.from('comentario').delete().eq('id', id).select('id')
+  erroDeEscrita('Nao foi possivel excluir o comentario', error)
+  return (data ?? []).length
+}
+
+export async function anexosDoProjeto(projetoId: string): Promise<Anexo[]> {
+  const { data, error } = await supabase
+    .from('anexo')
+    .select('id, projeto_id, tipo, titulo, storage_path, mime, bytes, secao, ordem, criado_em, criado_por')
+    .eq('projeto_id', projetoId)
+    .order('secao')
+    .order('ordem')
+  erro('Nao foi possivel carregar os anexos', error)
+  return (data ?? []) as Anexo[]
+}
+
+/**
+ * Manda o arquivo para o Storage e grava a linha.
+ *
+ * O caminho e `projeto/<id do projeto>/<arquivo>` porque a politica de
+ * storage.objects le o SEGUNDO pedaco do caminho para saber de quem e o
+ * arquivo. Fora dessa convencao o upload e recusado — e e o proprio banco que
+ * recusa, com a sessao do usuario; nenhuma service_role passa por aqui.
+ *
+ * `mime` e `bytes` saem do arquivo no momento do envio: depois ninguem sabe
+ * mais dizer, e "quanto pesa" e a pergunta que se faz quando o Storage enche.
+ */
+export async function enviarAnexo(
+  arquivo: File,
+  dados: { projeto_id: string; titulo: string; tipo: string; secao: string | null; pessoa_id: string | null },
+): Promise<void> {
+  const caminho = `projeto/${dados.projeto_id}/${arquivo.name}`
+
+  const { error: erroUpload } = await supabase.storage
+    .from(BUCKET_ANEXOS)
+    .upload(caminho, arquivo, { upsert: false, contentType: arquivo.type || undefined })
+  if (erroUpload) throw new ErroDoBanco('Nao foi possivel enviar o arquivo', erroUpload.message)
+
+  const { error } = await supabase.from('anexo').insert({
+    projeto_id: dados.projeto_id,
+    tipo: dados.tipo,
+    titulo: dados.titulo || arquivo.name,
+    storage_path: caminho,
+    mime: arquivo.type || null,
+    bytes: arquivo.size,
+    secao: dados.secao,
+    criado_por: dados.pessoa_id,
+  })
+  if (error) {
+    // A linha nao entrou: o arquivo orfao no bucket so confundiria.
+    await supabase.storage.from(BUCKET_ANEXOS).remove([caminho])
+    throw new ErroDoBanco('Nao foi possivel gravar o anexo', error.message)
+  }
+}
+
+/**
+ * Apaga o arquivo e depois a linha.
+ *
+ * Nessa ordem, e a linha vai embora mesmo que o arquivo ja nao esteja la:
+ * linha apontando para arquivo inexistente e pior do que arquivo sem linha —
+ * uma aparece na tela e quebra, o outro so ocupa espaco.
+ */
+export async function excluirAnexo(a: Anexo): Promise<void> {
+  await supabase.storage.from(BUCKET_ANEXOS).remove([a.storage_path])
+  const { error } = await supabase.from('anexo').delete().eq('id', a.id)
+  erroDeEscrita('Nao foi possivel excluir o anexo', error)
+}
+
+/**
+ * Um endereco temporario para ver ou baixar o arquivo.
+ *
+ * O bucket e privado: nao ha URL publica, e cada acesso passa pela politica
+ * do Storage com a sessao de quem pediu.
+ */
+export async function urlAssinada(caminho: string, segundos = 3600): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from(BUCKET_ANEXOS)
+    .createSignedUrl(caminho, segundos)
+  if (error) return null
+  return data?.signedUrl ?? null
+}
+
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */
 export async function eu(): Promise<Pessoa | null> {
   const { data: sessao } = await supabase.auth.getUser()
