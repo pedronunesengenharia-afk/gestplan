@@ -14,6 +14,9 @@ export type Projeto = {
   prioridade: 'URGENTE' | 'IMPORTANTE' | 'PLANEJAMENTO'
   pontuacao_total: number
   saude: 'VERDE' | 'AMARELO' | 'VERMELHO' | null
+  frente: string | null
+  seguranca: boolean
+  tipo_projeto_id: string
   tipo_codigo: string
   tipo_nome: string
   tipo_cor: string
@@ -25,6 +28,8 @@ export type Projeto = {
   gerente_nome: string | null
   data_inicio_prev: string | null
   data_fim_prev: string | null
+  data_inicio_real: string | null
+  data_fim_real: string | null
   ativo: boolean
   // Vêm nulos para quem não tem alcance financeiro. Não é erro: é a RLS.
   valor_estimado: number | null
@@ -139,6 +144,140 @@ export async function fasesDoTipo(tipoId: string): Promise<Fase[]> {
     .order('ordem')
   erro('Não foi possível carregar as fases', error)
   return (data ?? []) as Fase[]
+}
+
+/**
+ * O esquema de um campo próprio. A tela lê isto para se montar — rótulo, tipo
+ * de dado, grupo e ordem vêm daqui, nunca de uma lista no código.
+ */
+export type CampoDefinicao = {
+  id: string
+  tipo_projeto_id: string
+  grupo: string
+  codigo: string
+  rotulo: string
+  ajuda: string | null
+  tipo_dado:
+    | 'TEXTO' | 'TEXTO_LONGO' | 'NUMERO' | 'MOEDA' | 'PERCENTUAL'
+    | 'DATA' | 'BOOLEANO' | 'SELECAO' | 'SELECAO_MULTIPLA'
+    | 'PESSOA' | 'EMPRESA' | 'ARQUIVO'
+  opcoes: string[]
+  // Fase que o campo tranca: para SAIR dela, precisa estar preenchido.
+  exigido_para_sair_de: string | null
+  ordem: number
+  ativo: boolean
+}
+
+export type Etapa = {
+  id: string
+  projeto_id: string
+  pai_id: string | null
+  codigo: string | null
+  nome: string
+  nivel: number
+  ordem: number
+  folha: boolean
+  unidade: string | null
+  quantidade: number | null
+  preco_unitario: number | null
+  valor: number | null
+  a_confirmar: boolean
+  peso_percentual: number | null
+  percentual_concluido: number
+}
+
+export type Tarefa = {
+  id: string
+  projeto_id: string
+  etapa_id: string | null
+  pai_id: string | null
+  codigo: string | null
+  nome: string
+  responsavel_id: string | null
+  status: string
+  marco: boolean
+  data_inicio_prev: string | null
+  data_fim_prev: string | null
+  data_fim_real: string | null
+  percentual_concluido: number
+  ordem: number
+}
+
+/** Uma linha de vw_pontuacao: o critério, a nota dada e quanto ela pesa. */
+export type LinhaPontuacao = {
+  projeto_id: string
+  criterio: string
+  criterio_nome: string
+  nota: number
+  maximo: number
+  peso: number
+  pontos: number
+  justificativa: string | null
+}
+
+/** Um projeto da carteira. Nulo quando a RLS não o alcança — não é erro. */
+export async function projeto(id: string): Promise<Projeto | null> {
+  const { data, error } = await supabase
+    .from('vw_projeto')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+  erro('Não foi possível carregar o projeto', error)
+  return (data as Projeto) ?? null
+}
+
+/** Um tipo pelo id — é dele que saem usa_orcamento, usa_pontuacao e o resto. */
+export async function tipoDeProjeto(id: string): Promise<TipoProjeto | null> {
+  const { data, error } = await supabase
+    .from('tipo_projeto')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+  erro('Não foi possível carregar o tipo de projeto', error)
+  return (data as TipoProjeto) ?? null
+}
+
+/** O esquema dos campos próprios de um tipo, na ordem em que se apresentam. */
+export async function camposDoTipo(tipoId: string): Promise<CampoDefinicao[]> {
+  const { data, error } = await supabase
+    .from('campo_definicao')
+    .select('id, tipo_projeto_id, grupo, codigo, rotulo, ajuda, tipo_dado, opcoes, exigido_para_sair_de, ordem, ativo')
+    .eq('tipo_projeto_id', tipoId)
+    .eq('ativo', true)
+    .order('ordem')
+  erro('Não foi possível carregar os campos do tipo', error)
+  return (data ?? []) as CampoDefinicao[]
+}
+
+/** A EAP do projeto, achatada. A árvore se monta na tela, por pai_id. */
+export async function etapasDoProjeto(projetoId: string): Promise<Etapa[]> {
+  const { data, error } = await supabase
+    .from('etapa')
+    .select('id, projeto_id, pai_id, codigo, nome, nivel, ordem, folha, unidade, quantidade, preco_unitario, valor, a_confirmar, peso_percentual, percentual_concluido')
+    .eq('projeto_id', projetoId)
+    .order('ordem')
+  erro('Não foi possível carregar as etapas', error)
+  return (data ?? []) as Etapa[]
+}
+
+export async function tarefasDoProjeto(projetoId: string): Promise<Tarefa[]> {
+  const { data, error } = await supabase
+    .from('tarefa')
+    .select('id, projeto_id, etapa_id, pai_id, codigo, nome, responsavel_id, status, marco, data_inicio_prev, data_fim_prev, data_fim_real, percentual_concluido, ordem')
+    .eq('projeto_id', projetoId)
+    .order('ordem')
+  erro('Não foi possível carregar as tarefas', error)
+  return (data ?? []) as Tarefa[]
+}
+
+/** A pontuação aberta por critério. Vem vazia onde o tipo não pontua. */
+export async function pontuacaoDoProjeto(projetoId: string): Promise<LinhaPontuacao[]> {
+  const { data, error } = await supabase
+    .from('vw_pontuacao')
+    .select('*')
+    .eq('projeto_id', projetoId)
+  erro('Não foi possível carregar a pontuação', error)
+  return (data ?? []) as LinhaPontuacao[]
 }
 
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */

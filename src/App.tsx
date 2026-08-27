@@ -4,6 +4,7 @@ import { supabase } from './lib/supabase'
 import { eu, type Pessoa } from './lib/banco'
 import { Entrar } from './paginas/Entrar'
 import { Carteira } from './paginas/Carteira'
+import { Projeto } from './paginas/Projeto'
 import { Empresas } from './paginas/Empresas'
 import { Equipe } from './paginas/Equipe'
 
@@ -20,6 +21,8 @@ export function App() {
   const [pessoa, setPessoa] = useState<Pessoa | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [pagina, setPagina] = useState<Pagina>('carteira')
+  // Sem biblioteca de rotas por enquanto: a carteira abre o projeto por estado.
+  const [projetoAberto, setProjetoAberto] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -55,7 +58,10 @@ export function App() {
           {PAGINAS.map((p) => (
             <button
               key={p.chave}
-              onClick={() => setPagina(p.chave)}
+              onClick={() => {
+                setPagina(p.chave)
+                setProjetoAberto(null)
+              }}
               aria-current={pagina === p.chave ? 'page' : undefined}
             >
               {p.nome}
@@ -88,7 +94,12 @@ export function App() {
             proprietária.
           </div>
         )}
-        {pagina === 'carteira' && <Carteira />}
+        {pagina === 'carteira' &&
+          (projetoAberto ? (
+            <Projeto id={projetoAberto} aoVoltar={() => setProjetoAberto(null)} />
+          ) : (
+            <Carteira aoAbrir={setProjetoAberto} />
+          ))}
         {pagina === 'empresas' && <Empresas />}
         {pagina === 'equipe' && <Equipe />}
       </main>

@@ -8,7 +8,7 @@ const SELO: Record<string, string> = {
   PLANEJAMENTO: 'selo selo--planejamento',
 }
 
-export function Carteira() {
+export function Carteira({ aoAbrir }: { aoAbrir: (id: string) => void }) {
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
@@ -59,7 +59,13 @@ export function Carteira() {
             </thead>
             <tbody>
               {projetos.map((p) => (
-                <tr key={p.id}>
+                <tr
+                  key={p.id}
+                  className="linha-clicavel"
+                  onClick={() => aoAbrir(p.id)}
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && aoAbrir(p.id)}
+                >
                   <td className="dado">{p.codigo}</td>
                   <td>{p.nome}</td>
                   <td>
