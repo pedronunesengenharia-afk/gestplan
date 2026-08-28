@@ -54,9 +54,14 @@ export type Pessoa = {
   id: string
   nome: string
   email: string | null
+  fone: string | null
   cargo: string | null
+  setor: string | null
+  vinculo: string
+  custo_hora: number
   proprietario: boolean
   ativo: boolean
+  auth_user_id: string | null
 }
 
 export type TipoProjeto = {
@@ -213,7 +218,7 @@ export async function salvarEmpresa(e: Partial<Empresa>): Promise<Empresa> {
 export async function pessoas(): Promise<Pessoa[]> {
   const { data, error } = await supabase
     .from('pessoa')
-    .select('id, nome, email, cargo, proprietario, ativo')
+    .select('id, nome, email, fone, cargo, setor, vinculo, custo_hora, proprietario, ativo, auth_user_id')
     .order('nome')
   erro('Não foi possível carregar as pessoas', error)
   return (data ?? []) as Pessoa[]
@@ -1273,13 +1278,77 @@ export async function custoPorCategoria(): Promise<{ nome: string; valor: number
     .sort((a, b) => b.valor - a.valor)
 }
 
+/** Os papeis, do CHECK `pessoa_papel_papel_check`. */
+export const PAPEIS = [
+  { codigo: 'GERENTE_PROJETOS', nome: 'Gerente de projetos', ajuda: 'Cria e edita projeto, cronograma e orcamento na empresa.' },
+  { codigo: 'TIME_TI', nome: 'Time de TI', ajuda: 'Edita os projetos do tipo TI.' },
+  { codigo: 'ESTRUTURA', nome: 'Estrutura / operacao', ajuda: 'Ve o projeto e executa; nao ve dinheiro.' },
+  { codigo: 'FINANCEIRO_COMPRAS', nome: 'Financeiro e compras', ajuda: 'Ve valores, custos e parcelas.' },
+  { codigo: 'AVALIADOR', nome: 'Avaliador', ajuda: 'Assina parecer de setor nas fases que exigem.' },
+  { codigo: 'EXTERNO', nome: 'Externo (fornecedor)', ajuda: 'So o que o contrato dele alcanca. Nunca ve dinheiro alheio.' },
+] as const
+
+/** Os vinculos possiveis, do CHECK `pessoa_vinculo_check`. */
+export const VINCULOS = ['CLT', 'PJ', 'TERCEIRO', 'SOCIO', 'ESTAGIO'] as const
+
+export type PessoaEdicao = {
+  id?: string
+  nome: string
+  email: string | null
+  fone: string | null
+  cargo: string | null
+  setor: string | null
+  vinculo: string
+  custo_hora: number
+  ativo: boolean
+}
+
+export type PapelDaPessoa = {
+  id: string
+  pessoa_id: string
+  empresa_id: string
+  papel: string
+}
+
+/**
+ * Cria ou atualiza uma pessoa.
+ *
+ * Pessoa nao e usuario: quem aparece na equipe pode nunca fazer login. E o que
+ * permite alocar e apontar hora de terceiro sem criar conta para ele.
+ */
+export async function salvarPessoa(p: PessoaEdicao): Promise<string> {
+  const { data, error } = await supabase.from('pessoa').upsert(p).select('id').single()
+  erroDeEscrita('Nao foi possivel salvar a pessoa', error)
+  return (data as { id: string }).id
+}
+
+export async function papeisDaEquipe(): Promise<PapelDaPessoa[]> {
+  const { data, error } = await supabase
+    .from('pessoa_papel')
+    .select('id, pessoa_id, empresa_id, papel')
+  erro('Nao foi possivel carregar os papeis', error)
+  return (data ?? []) as PapelDaPessoa[]
+}
+
+export async function darPapel(pessoaId: string, empresaId: string, papel: string): Promise<void> {
+  const { error } = await supabase
+    .from('pessoa_papel')
+    .insert({ pessoa_id: pessoaId, empresa_id: empresaId, papel })
+  erroDeEscrita('Nao foi possivel dar o papel', error)
+}
+
+export async function tirarPapel(id: string): Promise<void> {
+  const { error } = await supabase.from('pessoa_papel').delete().eq('id', id)
+  erroDeEscrita('Nao foi possivel tirar o papel', error)
+}
+
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */
 export async function eu(): Promise<Pessoa | null> {
   const { data: sessao } = await supabase.auth.getUser()
   if (!sessao.user) return null
   const { data, error } = await supabase
     .from('pessoa')
-    .select('id, nome, email, cargo, proprietario, ativo')
+    .select('id, nome, email, fone, cargo, setor, vinculo, custo_hora, proprietario, ativo, auth_user_id')
     .eq('auth_user_id', sessao.user.id)
     .maybeSingle()
   erro('Não foi possível identificar o usuário', error)
