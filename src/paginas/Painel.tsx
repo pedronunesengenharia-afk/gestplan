@@ -257,6 +257,19 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
     .map(([nome, n]) => ({ nome, n }))
     .sort((a, b) => b.n - a.n)
 
+  // Por empresa: a pergunta mais imediata de quem tem duas. Conta projetos
+  // sempre; soma dinheiro so para quem alcanca.
+  const porEmpresa = new Map<string, { n: number; valor: number }>()
+  for (const p of ativos) {
+    const atual = porEmpresa.get(p.empresa_nome) ?? { n: 0, valor: 0 }
+    atual.n += 1
+    atual.valor += p.valor_orcado ?? 0
+    porEmpresa.set(p.empresa_nome, atual)
+  }
+  const dadosEmpresa = [...porEmpresa.entries()]
+    .map(([nome, v]) => ({ nome, ...v }))
+    .sort((a, b) => b.n - a.n)
+
   /** Sequencial: cinco passos, do mais claro ao mais escuro, por posição. */
   const passo = (i: number, total: number) =>
     `var(--seq${Math.max(1, 5 - Math.floor((i / Math.max(1, total)) * 5))})`
@@ -588,6 +601,47 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
               <Bar dataKey="n" name="Projetos" radius={[0, 2, 2, 0]}>
                 {dadosFrente.map((_, i) => (
                   <Cell key={i} fill={passo(i, dadosFrente.length)} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </Grafico>
+
+        <Grafico
+          titulo="Carteira por empresa"
+          nota={
+            veDinheiro
+              ? 'Projetos ativos e orçamento de cada empresa.'
+              : 'Projetos ativos de cada empresa.'
+          }
+          vazio={dadosEmpresa.length === 0 ? 'Nenhum projeto ativo.' : undefined}
+          colunas={veDinheiro ? ['Empresa', 'Projetos', 'Orçado'] : ['Empresa', 'Projetos']}
+          linhas={dadosEmpresa.map((e) =>
+            veDinheiro ? [e.nome, e.n, moeda(e.valor)] : [e.nome, e.n],
+          )}
+        >
+          <ResponsiveContainer width="100%" height={Math.max(180, dadosEmpresa.length * 46)}>
+            <BarChart data={dadosEmpresa} layout="vertical" margin={{ top: 4, right: 24, bottom: 4, left: 8 }}>
+              <CartesianGrid stroke={GRADE} horizontal={false} />
+              <XAxis type="number" tick={EIXO} axisLine={false} tickLine={false} allowDecimals={false} />
+              <YAxis type="category" dataKey="nome" tick={EIXO} axisLine={false} tickLine={false} width={110} />
+              <Tooltip
+                cursor={{ fill: 'var(--g-vazio)' }}
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null
+                  const e = payload[0].payload as (typeof dadosEmpresa)[number]
+                  return (
+                    <div className="dica-grafico">
+                      <b>{e.nome}</b>
+                      <div>{e.n} projeto{e.n === 1 ? '' : 's'} ativo{e.n === 1 ? '' : 's'}</div>
+                      {veDinheiro && <div>{moeda(e.valor)} orçados</div>}
+                    </div>
+                  )
+                }}
+              />
+              <Bar dataKey="n" name="Projetos" radius={[0, 2, 2, 0]}>
+                {dadosEmpresa.map((_, i) => (
+                  <Cell key={i} fill={passo(i, dadosEmpresa.length)} />
                 ))}
               </Bar>
             </BarChart>

@@ -13,8 +13,37 @@ if (!url || !chave) {
   )
 }
 
+/**
+ * Uma retentativa para o token que nasceu "no futuro".
+ *
+ * O magic link cria o JWT com `iat` = agora, e as primeiras consultas saem no
+ * mesmo instante. Se o relógio do PostgREST estiver uma fração de segundo
+ * atrás, ele recusa com 401 "JWT issued at future" — e a primeira tela depois
+ * de entrar aparece vazia, com um erro que some sozinho ao recarregar.
+ *
+ * Medido no build de produção: a carteira abria com "0 projetos ativos".
+ * Recarregar resolvia, mas ninguém deveria precisar saber disso.
+ *
+ * A retentativa é estreita de propósito: só 401, só com esta mensagem, só uma
+ * vez. Qualquer outro 401 continua sendo 401 — token expirado tem de doer.
+ */
+async function comRetentativaDeRelogio(
+  entrada: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  const resposta = await fetch(entrada, init)
+  if (resposta.status !== 401) return resposta
+
+  const texto = await resposta.clone().text().catch(() => '')
+  if (!/issued at future/i.test(texto)) return resposta
+
+  await new Promise((pronto) => setTimeout(pronto, 1200))
+  return fetch(entrada, init)
+}
+
 export const supabase = createClient(url, chave, {
   auth: { persistSession: true, autoRefreshToken: true },
+  global: { fetch: comRetentativaDeRelogio },
 })
 
 /**
