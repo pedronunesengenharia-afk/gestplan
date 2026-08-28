@@ -38,6 +38,7 @@ export type Projeto = {
   valor_orcado: number | null
   valor_realizado: number | null
   campos: Record<string, unknown>
+  criado_em: string
 }
 
 export type Empresa = {
@@ -1340,6 +1341,59 @@ export async function darPapel(pessoaId: string, empresaId: string, papel: strin
 export async function tirarPapel(id: string): Promise<void> {
   const { error } = await supabase.from('pessoa_papel').delete().eq('id', id)
   erroDeEscrita('Nao foi possivel tirar o papel', error)
+}
+
+/**
+ * Liga o login desta sessao a pessoa cadastrada com o mesmo e-mail.
+ *
+ * Chamada a cada entrada, e inofensiva quando ja esta ligado. Sem ela, quem o
+ * proprietario cadastra na Equipe nunca entra: o cadastro existe, o login
+ * existe, e nada os apresenta um ao outro.
+ */
+export async function vincularMeuAcesso(): Promise<string | null> {
+  const { data, error } = await supabase.rpc('vincular_meu_acesso')
+  // Falha aqui nao pode derrubar a entrada: quem ja esta vinculado entra do
+  // mesmo jeito, e quem nao esta ve o aviso de sempre.
+  if (error) return null
+  return (data as string | null) ?? null
+}
+
+/** Qual fila recebe chamado, segundo `configuracao.chamado.tipo_projeto`. */
+export async function tipoDeChamado(): Promise<{ id: string; nome: string } | null> {
+  const { data, error } = await supabase
+    .from('configuracao')
+    .select('valor')
+    .eq('chave', 'chamado.tipo_projeto')
+    .maybeSingle()
+  erro('Nao foi possivel descobrir a fila de chamados', error)
+  const id = (data as { valor: { tipo_projeto_id?: string } } | null)?.valor?.tipo_projeto_id
+  if (!id) return null
+  const t = await tipoDeProjeto(id)
+  return t ? { id: t.id, nome: t.nome } : null
+}
+
+/**
+ * Abre um chamado.
+ *
+ * Vai por RPC porque a politica de INSERT de `projeto` exige GERENTE_PROJETOS
+ * — e quem precisa de manutencao e justamente quem nao e gerente. A funcao no
+ * banco cria o projeto no tipo configurado e na fase inicial dele; a tela nao
+ * escolhe nem uma coisa nem outra.
+ */
+export async function abrirChamado(c: {
+  titulo: string
+  descricao: string | null
+  setor: string | null
+  empresa_id: string | null
+}): Promise<string | null> {
+  const { data, error } = await supabase.rpc('abrir_chamado', {
+    p_titulo: c.titulo,
+    p_descricao: c.descricao,
+    p_setor: c.setor,
+    p_empresa: c.empresa_id,
+  })
+  erroDeEscrita('Nao foi possivel abrir o chamado', error)
+  return (data as string | null) ?? null
 }
 
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */

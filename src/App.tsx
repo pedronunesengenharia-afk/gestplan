@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { ehHomolog, ehProducao, refDoBanco, supabase } from './lib/supabase'
-import { eu, type Pessoa } from './lib/banco'
+import { eu, vincularMeuAcesso, type Pessoa } from './lib/banco'
 import { Entrar } from './paginas/Entrar'
 import { FronteiraDeErro } from './componentes/FronteiraDeErro'
 import { Painel } from './paginas/Painel'
+import { Chamados } from './paginas/Chamados'
 import { Carteira } from './paginas/Carteira'
 import { Projeto } from './paginas/Projeto'
 import { EditarProjeto } from './paginas/EditarProjeto'
@@ -15,11 +16,12 @@ import { Avaliacao } from './paginas/Avaliacao'
 import { Empresas } from './paginas/Empresas'
 import { Equipe } from './paginas/Equipe'
 
-type Pagina = 'painel' | 'carteira' | 'empresas' | 'equipe'
+type Pagina = 'painel' | 'carteira' | 'chamados' | 'empresas' | 'equipe'
 
 const PAGINAS: { chave: Pagina; nome: string }[] = [
   { chave: 'painel', nome: 'Painel' },
   { chave: 'carteira', nome: 'Carteira' },
+  { chave: 'chamados', nome: 'Chamados' },
   { chave: 'empresas', nome: 'Empresas' },
   { chave: 'equipe', nome: 'Equipe' },
 ]
@@ -54,7 +56,13 @@ export function App() {
       setPessoa(null)
       return
     }
-    eu().then(setPessoa).catch(() => setPessoa(null))
+    // Apresenta o login a pessoa cadastrada com o mesmo e-mail, se houver, e
+    // so entao pergunta quem sou eu — senao quem acabou de ser cadastrado
+    // continuaria vendo "login nao vinculado" ate alguem rodar SQL na mao.
+    vincularMeuAcesso()
+      .then(() => eu())
+      .then(setPessoa)
+      .catch(() => setPessoa(null))
   }, [sessao])
 
   if (carregando) return <div className="vazio">Carregando…</div>
@@ -127,10 +135,11 @@ export function App() {
             vazia inexplicável. Melhor dizer o que falta. */}
         {!pessoa && (
           <div className="aviso" style={{ marginBottom: 'var(--e5)' }}>
-            Este login ainda não está vinculado a uma pessoa do GestPlan, então o
-            banco não devolve nada. Rode o comando de primeiro acesso descrito no{' '}
-            <code>README.md</code> para criar a sua pessoa e marcá-la como
-            proprietária.
+            Este login ainda não está vinculado a uma pessoa do GestPlan, então o banco não
+            devolve nada. O vínculo acontece sozinho quando existe uma pessoa cadastrada com
+            este mesmo e-mail — peça ao proprietário para cadastrar você em Equipe. Se você é o
+            proprietário e ainda não existe ninguém, rode o{' '}
+            <code>supabase/primeiro_acesso.sql</code>.
           </div>
         )}
         {pagina === 'painel' &&
@@ -146,6 +155,21 @@ export function App() {
             />
           ) : (
             <Painel aoAbrir={setProjetoAberto} />
+          ))}
+
+        {pagina === 'chamados' &&
+          (projetoAberto ? (
+            <Projeto
+              id={projetoAberto}
+              aoVoltar={() => setProjetoAberto(null)}
+              aoEditar={() => setEditando({ id: projetoAberto })}
+              aoAbrirEtapas={() => setEtapasDe(projetoAberto)}
+              aoAbrirTarefas={() => setTarefasDe(projetoAberto)}
+              aoAbrirPontuacao={() => setPontuacaoDe(projetoAberto)}
+              aoAbrirAvaliacao={() => setAvaliacaoDe(projetoAberto)}
+            />
+          ) : (
+            <Chamados aoAbrir={setProjetoAberto} />
           ))}
 
         {pagina === 'carteira' &&

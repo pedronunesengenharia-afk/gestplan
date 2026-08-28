@@ -4247,6 +4247,15 @@ export type Database = {
       }
     }
     Functions: {
+      abrir_chamado: {
+        Args: {
+          p_descricao?: string
+          p_empresa?: string
+          p_setor?: string
+          p_titulo: string
+        }
+        Returns: string
+      }
       definir_rateio: {
         Args: { p_linhas: Json; p_projeto: string }
         Returns: undefined
@@ -4254,6 +4263,7 @@ export type Database = {
       posso_assinar: { Args: { p_projeto: string }; Returns: boolean }
       posso_editar_projeto: { Args: { p_projeto: string }; Returns: boolean }
       posso_ver_valores: { Args: { p_projeto: string }; Returns: boolean }
+      vincular_meu_acesso: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
