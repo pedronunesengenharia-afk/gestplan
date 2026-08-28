@@ -4,14 +4,18 @@ import {
   ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis,
 } from 'recharts'
 import {
-  avancoDosProjetos, capacidadeDaEquipe, carteiraFiltrada, curvaS,
-  custoPorCategoria, fluxoMensal, possoVerValores, projetosARetomar,
-  tarefasAtrasadas,
-  type LinhaAvanco, type LinhaCapacidade, type LinhaCurvaS, type LinhaFluxo,
-  type ProjetoARetomar, type Projeto, type TarefaAtrasada,
+  avancoDosProjetos, capacidadeDaEquipe, carteiraFiltrada, checklistDasTarefas,
+  curvaS, custoPorCategoria, fasesDoTipo, fluxoMensal, possoVerValores,
+  projetosARetomar, tarefasAtrasadas, tarefasDeProjetos, tiposDeProjeto,
+  type Fase, type ItemChecklist, type LinhaAvanco, type LinhaCapacidade,
+  type LinhaCurvaS, type LinhaFluxo, type ProjetoARetomar, type Projeto,
+  type Tarefa, type TarefaAtrasada, type TipoProjeto,
 } from '../lib/banco'
 import { EsqueletoDeFichas } from '../componentes/Esqueleto'
+import { FarolDaCarteira } from '../componentes/Farol'
+import { BarraDeEvolucao, medirEvolucao } from '../componentes/EvolucaoDoTipo'
 import { FichaDeNumero, Grafico, type Serie } from '../componentes/Grafico'
+import { guardarParametros, lerParametros } from '../lib/url'
 import { competencia as formatarCompetencia, data as formatarData, moeda } from '../lib/formato'
 
 /**
@@ -57,6 +61,13 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
   const [atrasadas, setAtrasadas] = useState<TarefaAtrasada[]>([])
   const [retomar, setRetomar] = useState<ProjetoARetomar[]>([])
   const [categorias, setCategorias] = useState<{ nome: string; valor: number }[]>([])
+  // O painel de um tipo: as fases, as tarefas e o checklist DAQUELE tipo.
+  const [tipos, setTipos] = useState<TipoProjeto[]>([])
+  const [tipoId, setTipoId] = useState<string>(lerParametros().painel ?? '')
+  const [fases, setFases] = useState<Fase[]>([])
+  const [tarefasDoTipo, setTarefasDoTipo] = useState<Tarefa[]>([])
+  const [checklist, setChecklist] = useState<ItemChecklist[]>([])
+  const [faseEscolhida, setFaseEscolhida] = useState<string | null>(null)
   const [veDinheiro, setVeDinheiro] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
@@ -75,7 +86,7 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
       if (!vivo) return
       setVeDinheiro(alcanca)
 
-      const [c, f, a, cap, at, ret, cat] = await Promise.all([
+      const [c, f, a, cap, at, ret, cat, ts] = await Promise.all([
         curvaS(),
         fluxoMensal(),
         avancoDosProjetos(),
@@ -83,6 +94,7 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
         tarefasAtrasadas(),
         projetosARetomar(),
         alcanca ? custoPorCategoria() : Promise.resolve([]),
+        tiposDeProjeto(),
       ])
       if (!vivo) return
       setCurva(c)
@@ -92,6 +104,7 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
       setAtrasadas(at)
       setRetomar(ret)
       setCategorias(cat)
+      setTipos(ts)
     }
     buscar()
       .catch((e: Error) => vivo && setErro(e.message))
@@ -101,9 +114,66 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
     }
   }, [])
 
+  const tipo = tipos.find((t) => t.id === tipoId)
+
+  // As fases do tipo, e as tarefas e checklists dos projetos dele. Só se
+  // pergunta o que o tipo declara precisar: um tipo que mede por desembolso
+  // não faz o banco varrer tarefa nenhuma.
+  useEffect(() => {
+    let vivo = true
+    if (!tipoId) {
+      setFases([])
+      setTarefasDoTipo([])
+      setChecklist([])
+      return
+    }
+    const t = tipos.find((x) => x.id === tipoId)
+    const ids = projetos.filter((p) => p.tipo_projeto_id === tipoId).map((p) => p.id)
+    // Carrega tarefa se o tipo mede por ela OU se tem cronograma — o bloco de
+    // situação existe para todo tipo com cronograma, e dizer "nenhuma tarefa"
+    // num tipo que tem 147 seria a tela mentindo por não ter perguntado.
+    const precisaDeTarefa =
+      (t?.usa_cronograma ?? false) ||
+      t?.mede_avanco_por === 'TAREFAS' ||
+      t?.mede_avanco_por === 'CHECKLIST'
+
+    const buscar = async () => {
+      const [fs, ts] = await Promise.all([
+        fasesDoTipo(tipoId),
+        precisaDeTarefa ? tarefasDeProjetos(ids) : Promise.resolve([] as Tarefa[]),
+      ])
+      if (!vivo) return
+      setFases(fs)
+      setTarefasDoTipo(ts)
+      const itens =
+        t?.mede_avanco_por === 'CHECKLIST'
+          ? await checklistDasTarefas(ts.map((x) => x.id))
+          : []
+      if (vivo) setChecklist(itens)
+    }
+    buscar().catch((e: Error) => vivo && setErro(e.message))
+    return () => {
+      vivo = false
+    }
+  }, [tipoId, tipos, projetos])
+
+  function escolherTipo(id: string) {
+    setTipoId(id)
+    setFaseEscolhida(null)
+    guardarParametros({ painel: id })
+  }
+
   if (carregando) return <EsqueletoDeFichas quantas={5} />
 
-  const ativos = projetos.filter((p) => p.ativo)
+  // Sem tipo escolhido, o painel é da carteira inteira. Com tipo, tudo abaixo
+  // passa a falar só dele — as fases, as somas, os gráficos.
+  const ativos = projetos
+    .filter((p) => p.ativo)
+    .filter((p) => !tipoId || p.tipo_projeto_id === tipoId)
+    .filter((p) => !faseEscolhida || p.fase_id === faseEscolhida)
+  const idsVisiveis = new Set(ativos.map((p) => p.id))
+  const doEscopo = <T extends { projeto_id: string }>(linhas: T[]) =>
+    tipoId || faseEscolhida ? linhas.filter((l) => idsVisiveis.has(l.projeto_id)) : linhas
   const orcado = ativos.reduce((t, p) => t + (p.valor_orcado ?? 0), 0)
   const realizado = ativos.reduce((t, p) => t + (p.valor_realizado ?? 0), 0)
   const urgentes = ativos.filter((p) => p.prioridade === 'URGENTE').length
@@ -112,7 +182,7 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
   // --- curva S: somar os projetos por competência, e acumular ---------------
   const porMes = new Map<string, { base: number; previsto: number; realizado: number }>()
   let curvaSemCompetencia = 0
-  for (const l of curva) {
+  for (const l of doEscopo(curva)) {
     // Linha sem competência não tem onde ser desenhada numa série temporal —
     // e uma chave nula derrubava a tela inteira na ordenação.
     if (!l.competencia) {
@@ -146,7 +216,7 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
   // --- fluxo mensal ---------------------------------------------------------
   const fluxoPorMes = new Map<string, { pago: number; aPagar: number; vencido: number }>()
   let parcelasSemData = 0
-  for (const l of fluxo) {
+  for (const l of doEscopo(fluxo)) {
     if (!l.competencia) {
       parcelasSemData += Number(l.parcelas ?? 0)
       continue
@@ -181,7 +251,7 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
     `var(--seq${Math.max(1, 5 - Math.floor((i / Math.max(1, total)) * 5))})`
 
   // --- avanço × desembolso --------------------------------------------------
-  const avancoDe = new Map(avanco.map((a) => [a.projeto_id, Number(a.avanco_fisico ?? 0)]))
+  const avancoDe = new Map(doEscopo(avanco).map((a) => [a.projeto_id, Number(a.avanco_fisico ?? 0)]))
   const dispersao = ativos
     .filter((p) => (p.valor_orcado ?? 0) > 0)
     .map((p) => ({
@@ -194,6 +264,24 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
   // Rotulado direto só quem sai da faixa de equilíbrio; o resto fica na dica.
   const foraDaFaixa = dispersao.filter((d) => Math.abs(d.fisico - d.desembolso) > 20)
 
+  // Quantos projetos param em cada fase — o farol da carteira.
+  const contagemPorFase = new Map<string, number>()
+  for (const p of projetos.filter((x) => x.ativo && (!tipoId || x.tipo_projeto_id === tipoId))) {
+    contagemPorFase.set(p.fase_id, (contagemPorFase.get(p.fase_id) ?? 0) + 1)
+  }
+
+  const medida = tipo
+    ? medirEvolucao({
+        tipo,
+        projetos: ativos,
+        tarefas: tarefasDoTipo,
+        avanco: doEscopo(avanco),
+        itensDeChecklist: checklist.length,
+        itensFeitos: checklist.filter((c) => c.concluido).length,
+      })
+    : null
+
+  const atrasadasVisiveis = doEscopo(atrasadas)
   const piorRetomada = retomar[0]
 
   return (
@@ -208,6 +296,96 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
 
       {erro && <div className="aviso">{erro}</div>}
 
+      {/* ------------- escolha do tipo: o painel se remonta ------------- */}
+      <div className="barra-de-tipo">
+        <button
+          className={tipoId === '' ? 'botao botao--ligado' : 'botao'}
+          onClick={() => escolherTipo('')}
+        >
+          Carteira inteira
+        </button>
+        {tipos.map((t) => (
+          <button
+            key={t.id}
+            className={tipoId === t.id ? 'botao botao--ligado' : 'botao'}
+            onClick={() => escolherTipo(t.id)}
+            title={`Mede avanço por ${t.mede_avanco_por.toLowerCase()}`}
+          >
+            {t.nome}
+          </button>
+        ))}
+      </div>
+
+      {tipo && (
+        <p className="ajuda">
+          {tipo.nome} mede avanço por <strong>{tipo.mede_avanco_por.toLowerCase()}</strong>
+          {tipo.usa_orcamento ? ', usa orçamento' : ', não usa orçamento'}
+          {tipo.usa_cronograma ? ' e tem cronograma.' : ' e não tem cronograma.'}{' '}
+          O painel abaixo se monta a partir disso.
+        </p>
+      )}
+
+      {/* ------------- o farol: onde a carteira está parada ------------- */}
+      {tipo && fases.length > 0 && (
+        <section className="secao">
+          <h2>
+            Fases <span className="conta">{ativos.length} projeto{ativos.length === 1 ? '' : 's'}</span>
+          </h2>
+          <FarolDaCarteira
+            fases={fases}
+            contagem={contagemPorFase}
+            faseEscolhida={faseEscolhida}
+            aoEscolher={setFaseEscolhida}
+          />
+          {faseEscolhida && (
+            <p className="ajuda">
+              Filtrado por fase. Clique de novo no mesmo farol para ver o tipo inteiro.
+            </p>
+          )}
+        </section>
+      )}
+
+      {/* ------------- evolução, do jeito que ESTE tipo mede ------------- */}
+      {tipo && medida && (
+        <section className="secao">
+          <h2>Evolução</h2>
+          <div className="painel">
+            <div className="ficha-numero">
+              <BarraDeEvolucao medida={medida} />
+            </div>
+            {tipo.usa_cronograma && (
+              <div className="ficha-numero">
+                <span className="rotulo">Tarefas por situação</span>
+                {tarefasDoTipo.length === 0 ? (
+                  <p className="vazio">Nenhuma tarefa nos projetos deste tipo.</p>
+                ) : (
+                  <ul className="lista-de-situacao">
+                    {[...new Set(tarefasDoTipo.map((t) => t.status))].map((st) => (
+                      <li key={st}>
+                        <span>{st.replace(/_/g, ' ').toLowerCase()}</span>
+                        <strong>{tarefasDoTipo.filter((t) => t.status === st).length}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+            <div className="ficha-numero">
+              <span className="rotulo">Etapas</span>
+              <span className="numero">
+                {doEscopo(avanco).reduce((t, a) => t + Number(a.etapas ?? 0), 0)}
+              </span>
+              <span className="apoio">
+                {doEscopo(avanco).reduce((t, a) => t + Number(a.etapas_concluidas ?? 0), 0)} concluídas
+                {tipo.usa_orcamento && veDinheiro
+                  ? ` · ${moeda(ativos.reduce((t, p) => t + (p.valor_orcado ?? 0), 0))} orçados`
+                  : ''}
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ---------------- FAIXA 1 · números ---------------- */}
       <div className="painel">
         <FichaDeNumero
@@ -216,11 +394,11 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
           apoio={`${urgentes} urgente${urgentes === 1 ? '' : 's'}`}
         />
 
-        {veDinheiro && (
+        {veDinheiro && (!tipo || tipo.usa_orcamento) && (
           <FichaDeNumero rotulo="Orçado na carteira" numero={moeda(orcado)} />
         )}
 
-        {veDinheiro && (
+        {veDinheiro && (!tipo || tipo.usa_orcamento) && (
           <FichaDeNumero
             rotulo="Desembolsado"
             numero={moeda(realizado)}
@@ -230,13 +408,13 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
 
         <FichaDeNumero
           rotulo="Tarefas atrasadas"
-          numero={String(atrasadas.length)}
+          numero={String(atrasadasVisiveis.length)}
           apoio={
-            atrasadas.length > 0
-              ? `pior: ${atrasadas[0].dias_atraso} dias — ${atrasadas[0].projeto_codigo}`
+            atrasadasVisiveis.length > 0
+              ? `pior: ${atrasadasVisiveis[0].dias_atraso} dias — ${atrasadasVisiveis[0].projeto_codigo}`
               : 'nenhuma tarefa vencida'
           }
-          destaque={atrasadas.length > 0 ? 'serio' : undefined}
+          destaque={atrasadasVisiveis.length > 0 ? 'serio' : undefined}
         />
 
         <FichaDeNumero
@@ -385,7 +563,7 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
           largo
           titulo="Avanço físico × desembolso"
           nota={
-            avanco.every((a) => Number(a.avanco_fisico ?? 0) === 0)
+            doEscopo(avanco).every((a) => Number(a.avanco_fisico ?? 0) === 0)
               ? 'Nenhuma etapa tem percentual concluído lançado, então todos os pontos ficam na base do gráfico. A diagonal marca o equilíbrio: acima dela o projeto entrega mais do que gasta.'
               : 'Acima da diagonal, entrega mais do que gasta; abaixo, gasta mais do que entrega.'
           }
@@ -481,7 +659,7 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
           <header>
             <h3>Tarefas atrasadas</h3>
           </header>
-          {atrasadas.length === 0 ? (
+          {atrasadasVisiveis.length === 0 ? (
             <p className="vazio">Nenhuma tarefa vencida — o que, com 130 tarefas sem data, diz menos do que parece.</p>
           ) : (
             <div className="tabela-rolavel">
@@ -495,7 +673,7 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {atrasadas.map((t) => (
+                  {atrasadasVisiveis.map((t) => (
                     <tr
                       key={t.id} className="linha-clicavel" onClick={() => aoAbrir(t.projeto_id)}
                       tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && aoAbrir(t.projeto_id)}

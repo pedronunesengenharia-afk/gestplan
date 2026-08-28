@@ -752,6 +752,17 @@ export async function reordenarTarefas(linhas: { id: string; ordem: number }[]):
 }
 
 /** O checklist de todas as tarefas de um projeto, de uma vez. */
+/** As tarefas de varios projetos de uma vez — o painel soma por tipo. */
+export async function tarefasDeProjetos(projetoIds: string[]): Promise<Tarefa[]> {
+  if (projetoIds.length === 0) return []
+  const { data, error } = await supabase
+    .from('tarefa')
+    .select('id, projeto_id, etapa_id, pai_id, codigo, nome, responsavel_id, status, marco, data_inicio_prev, data_fim_prev, data_fim_real, percentual_concluido, ordem')
+    .in('projeto_id', projetoIds)
+  erro('Nao foi possivel carregar as tarefas', error)
+  return (data ?? []) as Tarefa[]
+}
+
 export async function checklistDasTarefas(tarefaIds: string[]): Promise<ItemChecklist[]> {
   if (tarefaIds.length === 0) return []
   const { data, error } = await supabase

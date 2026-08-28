@@ -278,6 +278,132 @@ td.principal, th.principal { min-width: 20rem; white-space: normal; }
 .detalhe-tarefa .tabela-rolavel > table,
 .cartao-grafico .tabela-rolavel > table { min-width: 0; }
 
+/* ============================================================================
+   Farol de fases
+   Um LED por fase. Cor NUNCA sozinha: cada LED tem nome ao lado ou no title,
+   e o estado também muda a forma — aceso, anel, apagado.
+   ========================================================================= */
+.farol {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: var(--e1);
+  align-items: stretch;
+}
+.led {
+  display: flex; align-items: center; gap: var(--e2);
+  padding: var(--e2) var(--e3);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-cartao);
+  background: var(--superficie);
+  font-size: .78rem; color: var(--tinta-2);
+  transition: border-color var(--transicao), transform var(--transicao);
+}
+.led i {
+  width: .6rem; height: .6rem; border-radius: 50%; flex: none;
+  background: var(--g-vazio);
+  border: 2px solid var(--linha);
+  transition: background var(--transicao), box-shadow var(--transicao);
+}
+/* Vencida: acesa e cheia. Atual: acesa, pulsando. Futura: anel apagado.
+   Travada: vermelha e cheia. A forma distingue mesmo sem cor. */
+.led--vencida i { background: var(--st-bom);     border-color: var(--st-bom);     box-shadow: 0 0 10px var(--st-bom) }
+.led--atual   i { background: var(--st-atencao); border-color: var(--st-atencao); box-shadow: 0 0 12px var(--st-atencao); animation: pulsa 2s ease-in-out infinite }
+.led--travada i { background: var(--st-critico); border-color: var(--st-critico); box-shadow: 0 0 12px var(--st-critico) }
+.led--arquivada i { background: var(--apagado);  border-color: var(--apagado) }
+.led--futura  i { background: transparent }
+.led--futura { color: var(--apagado); }
+.led--atual, .led--travada { color: var(--tinta); font-weight: 600; }
+.led--atual { border-color: var(--st-atencao); }
+.led--travada { border-color: var(--st-critico); }
+
+@keyframes pulsa {
+  0%, 100% { opacity: 1 }
+  50%      { opacity: .55 }
+}
+@media (prefers-reduced-motion: reduce) {
+  .led--atual i { animation: none }
+}
+
+.farol--compacto .nome-da-fase { display: none; }
+.farol--compacto .led { padding: var(--e1) var(--e2); }
+
+/* Farol da carteira: o LED vira botão de filtro, e o número diz em texto o
+   que a cor diz em luz. */
+.farol--carteira { gap: var(--e2); }
+.led--carteira { padding: 0; }
+.led--carteira button {
+  font: inherit; cursor: pointer; background: none; border: none;
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--e1);
+  padding: var(--e3) var(--e4); min-width: 7rem;
+}
+.led--carteira button:disabled { cursor: default; }
+.led--carteira strong {
+  font-family: var(--fonte-titulo); font-size: 1.5rem; font-weight: 700;
+  font-variant-numeric: tabular-nums; line-height: 1; color: var(--tinta);
+}
+.led--carteira .nome-da-fase { font-size: .72rem; color: var(--apagado); }
+.led--escolhida { border-color: var(--laranja); box-shadow: 0 0 0 1px var(--laranja) inset; }
+.led--carteira:hover { border-color: var(--apagado); }
+
+.so-leitor {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+
+/* ============================================================================
+   Elevação: cartão, ficha e gráfico passam a parecer objeto sobre a mesa.
+   A tabela continua reta — dado em grade não precisa de canto macio.
+   ========================================================================= */
+.cartao, .ficha-numero, .cartao-grafico, .cartao-kanban, .novo-comentario, .ficha {
+  border-radius: var(--raio-cartao);
+}
+.ficha-numero, .cartao-grafico {
+  box-shadow: var(--sombra-cartao);
+  transition: transform var(--transicao), box-shadow var(--transicao);
+}
+.cartao-kanban { transition: transform var(--transicao), border-color var(--transicao); }
+.cartao-kanban:hover { transform: translateY(-1px); }
+.botao { transition: background var(--transicao), border-color var(--transicao); }
+
+/* Respiro entre faixas do painel, sem afrouxar a tabela. */
+.painel + .painel { margin-top: var(--e5); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cartao-kanban, .ficha-numero, .cartao-grafico, .botao { transition: none }
+}
+
+/* Escolha do tipo: o painel inteiro se remonta a partir dela. */
+.barra-de-tipo { display: flex; flex-wrap: wrap; gap: var(--e2); margin-bottom: var(--e3); }
+.barra-de-tipo .botao { border-radius: var(--raio-cartao); font-size: .85rem; }
+
+/* Evolução: a barra repete o número, não o substitui. */
+.evolucao { display: flex; flex-direction: column; gap: var(--e1); }
+.evolucao .rotulo {
+  font-family: var(--fonte-dado); font-size: .68rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--apagado);
+}
+.evolucao .numero {
+  font-family: var(--fonte-titulo); font-weight: 700; font-size: 1.85rem;
+  line-height: 1.05; font-variant-numeric: tabular-nums;
+}
+.evolucao .apoio { font-size: .85rem; color: var(--apagado); }
+.evolucao .trilha {
+  height: .5rem; background: var(--g-vazio); border-radius: 99px; overflow: hidden;
+  margin: var(--e1) 0;
+}
+.evolucao .trilha span {
+  display: block; height: 100%; background: var(--st-bom); border-radius: 99px;
+  transition: width var(--transicao);
+}
+
+.lista-de-situacao { list-style: none; margin: var(--e1) 0 0; padding: 0; font-size: .85rem; }
+.lista-de-situacao li {
+  display: flex; justify-content: space-between; gap: var(--e3);
+  padding: .15rem 0; color: var(--tinta-2);
+}
+.lista-de-situacao strong { font-family: var(--fonte-dado); font-variant-numeric: tabular-nums; color: var(--tinta); }
+
+@media (prefers-reduced-motion: reduce) { .evolucao .trilha span { transition: none } }
+
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
   .lateral { flex-direction: row; align-items: center; gap: var(--e4); padding: var(--e3) var(--e4); flex-wrap: wrap; }
