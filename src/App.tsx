@@ -6,6 +6,7 @@ import { Entrar } from './paginas/Entrar'
 import { FronteiraDeErro } from './componentes/FronteiraDeErro'
 import { Painel } from './paginas/Painel'
 import { Chamados } from './paginas/Chamados'
+import { ChamadoPublico } from './paginas/ChamadoPublico'
 import { Carteira } from './paginas/Carteira'
 import { Projeto } from './paginas/Projeto'
 import { EditarProjeto } from './paginas/EditarProjeto'
@@ -32,6 +33,11 @@ export function App() {
   const [carregando, setCarregando] = useState(true)
   const [pagina, setPagina] = useState<Pagina>('painel')
   // Sem biblioteca de rotas por enquanto: a carteira abre o projeto por estado.
+  // A tela publica nao depende de sessao: quem chega por ?chamado abre um
+  // pedido sem entrar. Fica antes de tudo por isso.
+  const [publico, setPublico] = useState(
+    new URLSearchParams(window.location.search).has('chamado'),
+  )
   const [projetoAberto, setProjetoAberto] = useState<string | null>(null)
   // { id: null } = projeto novo; { id } = editando um existente.
   const [editando, setEditando] = useState<{ id: string | null } | null>(null)
@@ -65,8 +71,19 @@ export function App() {
       .catch(() => setPessoa(null))
   }, [sessao])
 
+  if (publico) {
+    return (
+      <ChamadoPublico
+        aoEntrar={() => {
+          setPublico(false)
+          window.history.replaceState(null, '', window.location.pathname)
+        }}
+      />
+    )
+  }
+
   if (carregando) return <div className="vazio">Carregando…</div>
-  if (!sessao) return <Entrar />
+  if (!sessao) return <Entrar aoAbrirChamado={() => setPublico(true)} />
 
   return (
     <div className={ehProducao ? 'app' : 'app app--ensaio'}>

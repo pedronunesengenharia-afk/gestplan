@@ -1396,6 +1396,47 @@ export async function abrirChamado(c: {
   return (data as string | null) ?? null
 }
 
+/**
+ * As empresas que o formulario publico oferece.
+ *
+ * Vem por funcao, nao pela tabela: o anonimo recebe id e nome das ativas, e o
+ * resto do cadastro — CNPJ, cidade, o que for — continua do lado de dentro.
+ */
+export async function empresasParaChamado(): Promise<{ id: string; nome: string }[]> {
+  const { data, error } = await supabase.rpc('empresas_para_chamado')
+  erro('Nao foi possivel carregar as empresas', error)
+  return (data ?? []) as { id: string; nome: string }[]
+}
+
+/**
+ * Abre chamado sem login, e devolve o codigo.
+ *
+ * A unica escrita do sistema que acontece sem sessao. Tudo que ela pode fazer
+ * esta na funcao do banco: criar projeto na fila configurada, na fase inicial,
+ * e guardar quem pediu. Limite de 3 por e-mail por hora e 30 no total.
+ */
+export async function abrirChamadoPublico(c: {
+  nome: string
+  email: string
+  empresa_id: string
+  titulo: string
+  descricao: string | null
+  setor: string | null
+  fone: string | null
+}): Promise<string | null> {
+  const { data, error } = await supabase.rpc('abrir_chamado_publico', {
+    p_nome: c.nome,
+    p_email: c.email,
+    p_empresa: c.empresa_id,
+    p_titulo: c.titulo,
+    p_descricao: c.descricao,
+    p_setor: c.setor,
+    p_fone: c.fone,
+  })
+  erroDeEscrita('Nao foi possivel abrir o chamado', error)
+  return (data as string | null) ?? null
+}
+
 /** Quem sou eu, do lado do GestPlan (não do lado do Auth). */
 export async function eu(): Promise<Pessoa | null> {
   const { data: sessao } = await supabase.auth.getUser()

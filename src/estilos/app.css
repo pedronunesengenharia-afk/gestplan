@@ -404,6 +404,30 @@ td.principal, th.principal { min-width: 20rem; white-space: normal; }
 
 @media (prefers-reduced-motion: reduce) { .evolucao .trilha span { transition: none } }
 
+/* A tela publica: sem menu, sem sessao, sem nada em volta. */
+.publico { display: grid; place-items: center; min-height: 100vh; padding: var(--e5) var(--e4); }
+.publico-cartao {
+  width: min(34rem, 100%);
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-cartao);
+  box-shadow: var(--sombra-cartao);
+  padding: var(--e6);
+  display: flex; flex-direction: column; gap: var(--e2);
+}
+.publico-cartao .marca { color: var(--tinta); margin-bottom: var(--e3); }
+.publico-cartao .marca i b { background: #fff; }
+.publico-cartao h1 { font-size: 1.5rem; margin-bottom: var(--e1); }
+.publico-cartao label { font-size: .82rem; color: var(--tinta-2); margin-top: var(--e2); }
+.publico-cartao .acoes { margin-top: var(--e4); }
+
+.codigo-chamado {
+  font-family: var(--fonte-dado); font-size: 1.9rem; font-weight: 500;
+  letter-spacing: .06em; color: var(--laranja);
+  background: var(--laranja-fundo); border-radius: var(--raio-cartao);
+  padding: var(--e3) var(--e4); text-align: center; margin: var(--e2) 0;
+}
+
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
   .lateral { flex-direction: row; align-items: center; gap: var(--e4); padding: var(--e3) var(--e4); flex-wrap: wrap; }

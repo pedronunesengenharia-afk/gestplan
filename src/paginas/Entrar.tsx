@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
  * Entrada por link no e-mail. Sem senha para guardar, esquecer ou vazar —
  * com dez pessoas, é o melhor negócio.
  */
-export function Entrar() {
+export function Entrar({ aoAbrirChamado }: { aoAbrirChamado: () => void }) {
   const [email, setEmail] = useState('')
   const [estado, setEstado] = useState<'parado' | 'enviando' | 'enviado'>('parado')
   const [erro, setErro] = useState<string | null>(null)
@@ -56,6 +56,15 @@ export function Entrar() {
               {estado === 'enviando' ? 'Enviando…' : 'Receber link de acesso'}
             </button>
             {erro && <div className="aviso">{erro}</div>}
+
+            {/* Quem precisa de manutencao nao tem login, e nao deveria
+                precisar de um para pedir socorro. */}
+            <p className="ajuda">
+              Precisa abrir um chamado de manutenção e não tem acesso?{' '}
+              <button type="button" className="voltar" onClick={aoAbrirChamado}>
+                Abrir sem entrar
+              </button>
+            </p>
           </>
         )}
       </form>

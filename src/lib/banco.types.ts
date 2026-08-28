@@ -670,6 +670,62 @@ export type Database = {
         }
         Relationships: []
       }
+      chamado_avulso: {
+        Row: {
+          criado_em: string
+          email: string
+          fone: string | null
+          nome: string
+          origem: string
+          projeto_id: string
+        }
+        Insert: {
+          criado_em?: string
+          email: string
+          fone?: string | null
+          nome: string
+          origem?: string
+          projeto_id: string
+        }
+        Update: {
+          criado_em?: string
+          email?: string
+          fone?: string | null
+          nome?: string
+          origem?: string
+          projeto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamado_avulso_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: true
+            referencedRelation: "projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamado_avulso_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: true
+            referencedRelation: "vw_projeto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamado_avulso_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: true
+            referencedRelation: "vw_projeto_edicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamado_avulso_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: true
+            referencedRelation: "vw_retomada"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comentario: {
         Row: {
           criado_em: string
@@ -4256,9 +4312,28 @@ export type Database = {
         }
         Returns: string
       }
+      abrir_chamado_publico: {
+        Args: {
+          p_descricao?: string
+          p_email: string
+          p_empresa: string
+          p_fone?: string
+          p_nome: string
+          p_setor?: string
+          p_titulo: string
+        }
+        Returns: string
+      }
       definir_rateio: {
         Args: { p_linhas: Json; p_projeto: string }
         Returns: undefined
+      }
+      empresas_para_chamado: {
+        Args: never
+        Returns: {
+          id: string
+          nome: string
+        }[]
       }
       posso_assinar: { Args: { p_projeto: string }; Returns: boolean }
       posso_editar_projeto: { Args: { p_projeto: string }; Returns: boolean }
