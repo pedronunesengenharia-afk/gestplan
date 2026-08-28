@@ -3483,6 +3483,56 @@ export type Database = {
           },
         ]
       }
+      tipo_etapa: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          descricao: string | null
+          duracao_dias: number | null
+          gera_tarefa: boolean
+          id: string
+          nome: string
+          ordem: number
+          pai_codigo: string | null
+          peso_percentual: number
+          tipo_projeto_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          descricao?: string | null
+          duracao_dias?: number | null
+          gera_tarefa?: boolean
+          id?: string
+          nome: string
+          ordem?: number
+          pai_codigo?: string | null
+          peso_percentual?: number
+          tipo_projeto_id: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          descricao?: string | null
+          duracao_dias?: number | null
+          gera_tarefa?: boolean
+          id?: string
+          nome?: string
+          ordem?: number
+          pai_codigo?: string | null
+          peso_percentual?: number
+          tipo_projeto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tipo_etapa_tipo_projeto_id_fkey"
+            columns: ["tipo_projeto_id"]
+            isOneToOne: false
+            referencedRelation: "tipo_projeto"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tipo_fase: {
         Row: {
           categoria: string

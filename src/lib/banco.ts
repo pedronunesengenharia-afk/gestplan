@@ -303,6 +303,7 @@ export type Tarefa = {
   marco: boolean
   data_inicio_prev: string | null
   data_fim_prev: string | null
+  data_inicio_real: string | null
   data_fim_real: string | null
   percentual_concluido: number
   ordem: number
@@ -386,7 +387,7 @@ export async function etapasDoProjeto(projetoId: string): Promise<Etapa[]> {
 export async function tarefasDoProjeto(projetoId: string): Promise<Tarefa[]> {
   const { data, error } = await supabase
     .from('tarefa')
-    .select('id, projeto_id, etapa_id, pai_id, codigo, nome, responsavel_id, status, marco, data_inicio_prev, data_fim_prev, data_fim_real, percentual_concluido, ordem')
+    .select('id, projeto_id, etapa_id, pai_id, codigo, nome, responsavel_id, status, marco, data_inicio_prev, data_fim_prev, data_inicio_real, data_fim_real, percentual_concluido, ordem')
     .eq('projeto_id', projetoId)
     .order('ordem')
   erro('Não foi possível carregar as tarefas', error)
@@ -763,7 +764,7 @@ export async function tarefasDeProjetos(projetoIds: string[]): Promise<Tarefa[]>
   if (projetoIds.length === 0) return []
   const { data, error } = await supabase
     .from('tarefa')
-    .select('id, projeto_id, etapa_id, pai_id, codigo, nome, responsavel_id, status, marco, data_inicio_prev, data_fim_prev, data_fim_real, percentual_concluido, ordem')
+    .select('id, projeto_id, etapa_id, pai_id, codigo, nome, responsavel_id, status, marco, data_inicio_prev, data_fim_prev, data_inicio_real, data_fim_real, percentual_concluido, ordem')
     .in('projeto_id', projetoIds)
   erro('Nao foi possivel carregar as tarefas', error)
   return (data ?? []) as Tarefa[]
