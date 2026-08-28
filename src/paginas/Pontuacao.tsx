@@ -153,7 +153,7 @@ export function Pontuacao({ id, aoVoltar }: { id: string; aoVoltar: () => void }
       {erro && foraDaFaixa.length === 0 && <div className="aviso">{erro}</div>}
       {recado && <div className="aviso aviso--ok">{recado}</div>}
 
-      <section className="ficha">
+      <section className="ficha-projeto">
         <div>
           <dt>Gravado no banco</dt>
           <dd>

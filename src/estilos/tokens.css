@@ -202,13 +202,13 @@ a { color: var(--laranja); }
 
 /* Tabela larga rola dentro de si; a página nunca rola de lado. */
 .tabela-rolavel { overflow-x: auto; border: 1px solid var(--linha); background: var(--superficie); }
-table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+table { border-collapse: collapse; width: 100%; font-size: .87rem; }
 /* Densidade de ferramenta, não de folheto: quem passa o dia aqui quer ver
    mais linhas sem rolar. O alvo de clique continua confortável porque a
    linha inteira é clicável, não um link de 12px dentro dela. */
 th, td {
   text-align: left;
-  padding: .3rem var(--e3);
+  padding: .3rem .6rem;
   border-bottom: 1px solid var(--linha-suave);
   line-height: 1.4;
 }

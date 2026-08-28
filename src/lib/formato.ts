@@ -10,6 +10,25 @@ export function moeda(v: number | null | undefined): string {
   return moedaBR.format(v)
 }
 
+/**
+ * Dinheiro abreviado, para ficha de painel.
+ *
+ * "R$ 4.478.846,25" nao cabe num cartao de indicador e, num painel, o centavo
+ * nao muda decisao nenhuma. O valor exato continua a um passo — no apoio da
+ * ficha e na tabela.
+ */
+export function moedaCurta(v: number | null | undefined): string {
+  if (v === null || v === undefined) return '—'
+  const abs = Math.abs(v)
+  if (abs >= 1_000_000) {
+    return `R$ ${(v / 1_000_000).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} mi`
+  }
+  if (abs >= 10_000) {
+    return `R$ ${(v / 1_000).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} mil`
+  }
+  return moeda(v)
+}
+
 /** Data ISO (AAAA-MM-DD) para dd/mm/aaaa, sem passar por fuso. */
 export function data(iso: string | null | undefined): string {
   if (!iso) return '—'

@@ -6,6 +6,7 @@ import {
   type Projeto as ProjetoDado, type Tarefa, type TipoProjeto,
 } from '../lib/banco'
 import { CamposDoTipo } from '../componentes/CamposDoTipo'
+import { AcompanhamentoDoProjeto } from '../componentes/AcompanhamentoDoProjeto'
 import { ConversaEArquivos } from '../componentes/ConversaEArquivos'
 import { EsqueletoDeTabela } from '../componentes/Esqueleto'
 import { emOrdemDaArvore } from '../lib/arvore'
@@ -132,7 +133,7 @@ export function Projeto({
         </div>
       </header>
 
-      <dl className="ficha">
+      <dl className="ficha-projeto">
         <div><dt>Empresa</dt><dd>{projeto.empresa_nome}</dd></div>
         <div><dt>Gerente</dt><dd>{projeto.gerente_nome ?? '—'}</dd></div>
         <div><dt>Frente</dt><dd>{projeto.frente ?? '—'}</dd></div>
@@ -155,6 +156,14 @@ export function Projeto({
         valores={projeto.campos}
         faseAtualId={projeto.fase_id}
       />
+
+      {/* Acompanhamento no tempo: só faz sentido onde há cronograma. */}
+      {(tipo?.usa_cronograma ?? false) && (etapas.length > 0 || tarefas.length > 0) && (
+        <section className="secao">
+          <h2>Acompanhamento</h2>
+          <AcompanhamentoDoProjeto projeto={projeto} etapas={etapas} tarefas={tarefas} />
+        </section>
+      )}
 
       <section className="secao">
         <h2>

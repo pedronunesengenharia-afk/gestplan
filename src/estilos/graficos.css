@@ -89,6 +89,13 @@
 }
 .painel .largo { grid-column: 1 / -1; }
 
+/* Faixa de indicadores: numero e curto, entao cabe muito mais por linha que
+   um grafico. Cinco KPIs numa linha leem como painel; em duas linhas e meia,
+   leem como lista. */
+.painel--numeros { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr)); }
+.painel--numeros .ficha-numero { padding: var(--e3) var(--e4); }
+.painel--numeros .numero { font-size: 1.6rem; }
+
 /* Ficha de número — quando a resposta é um número, não é gráfico. */
 .ficha-numero {
   background: var(--superficie);

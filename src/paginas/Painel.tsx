@@ -16,7 +16,7 @@ import { FarolDaCarteira } from '../componentes/Farol'
 import { BarraDeEvolucao, medirEvolucao } from '../componentes/EvolucaoDoTipo'
 import { FichaDeNumero, Grafico, type Serie } from '../componentes/Grafico'
 import { guardarParametros, lerParametros } from '../lib/url'
-import { competencia as formatarCompetencia, data as formatarData, moeda } from '../lib/formato'
+import { competencia as formatarCompetencia, data as formatarData, moeda, moedaCurta } from '../lib/formato'
 
 /**
  * O painel da carteira.
@@ -123,9 +123,20 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
     let vivo = true
     if (!tipoId) {
       setFases([])
-      setTarefasDoTipo([])
       setChecklist([])
-      return
+      // Sem tipo escolhido o painel é da carteira inteira — e a situação das
+      // tarefas é um dos poucos indicadores com dado farto hoje. Carregar 151
+      // linhas para somar três números é barato; deixar o bloco mudo, não.
+      if (projetos.length > 0) {
+        tarefasDeProjetos(projetos.filter((p) => p.ativo).map((p) => p.id))
+          .then((ts) => vivo && setTarefasDoTipo(ts))
+          .catch(() => vivo && setTarefasDoTipo([]))
+      } else {
+        setTarefasDoTipo([])
+      }
+      return () => {
+        vivo = false
+      }
     }
     const t = tipos.find((x) => x.id === tipoId)
     const ids = projetos.filter((p) => p.tipo_projeto_id === tipoId).map((p) => p.id)
@@ -281,6 +292,30 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
       })
     : null
 
+  // Cor de estado com rótulo ao lado, sempre — a legenda abaixo da barra.
+  const ROTULO_STATUS: Record<string, string> = {
+    NAO_INICIADA: 'não iniciada',
+    EM_ANDAMENTO: 'em andamento',
+    BLOQUEADA: 'bloqueada',
+    CONCLUIDA: 'concluída',
+    CANCELADA: 'cancelada',
+  }
+  const COR_STATUS: Record<string, string> = {
+    NAO_INICIADA: 'var(--linha)',
+    EM_ANDAMENTO: 'var(--g1)',
+    BLOQUEADA: 'var(--st-critico)',
+    CONCLUIDA: 'var(--st-bom)',
+    CANCELADA: 'var(--apagado)',
+  }
+  const situacaoDasTarefas = [...new Set(tarefasDoTipo.map((t) => t.status))]
+    .map((st) => ({
+      status: st,
+      rotulo: ROTULO_STATUS[st] ?? st,
+      cor: COR_STATUS[st] ?? 'var(--g-vazio)',
+      n: tarefasDoTipo.filter((t) => t.status === st).length,
+    }))
+    .sort((a, b) => b.n - a.n)
+
   const atrasadasVisiveis = doEscopo(atrasadas)
   const piorRetomada = retomar[0]
 
@@ -387,7 +422,7 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
       )}
 
       {/* ---------------- FAIXA 1 · números ---------------- */}
-      <div className="painel">
+      <div className="painel painel--numeros">
         <FichaDeNumero
           rotulo="Projetos ativos"
           numero={String(ativos.length)}
@@ -395,14 +430,18 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
         />
 
         {veDinheiro && (!tipo || tipo.usa_orcamento) && (
-          <FichaDeNumero rotulo="Orçado na carteira" numero={moeda(orcado)} />
+          <FichaDeNumero
+            rotulo="Orçado na carteira"
+            numero={moedaCurta(orcado)}
+            apoio={moeda(orcado)}
+          />
         )}
 
         {veDinheiro && (!tipo || tipo.usa_orcamento) && (
           <FichaDeNumero
             rotulo="Desembolsado"
-            numero={moeda(realizado)}
-            apoio={`${consumo.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}% do orçado`}
+            numero={moedaCurta(realizado)}
+            apoio={`${moeda(realizado)} · ${consumo.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}% do orçado`}
           />
         )}
 
@@ -428,6 +467,36 @@ export function Painel({ aoAbrir }: { aoAbrir: (id: string) => void }) {
           destaque={retomar.length > 0 ? 'atencao' : undefined}
         />
       </div>
+
+      {/* Situação das tarefas: vale para a carteira inteira e para um tipo só. */}
+      {tarefasDoTipo.length > 0 && (
+        <section className="cartao-grafico" style={{ marginBottom: 'var(--e5)' }}>
+          <header>
+            <h3>Situação das tarefas</h3>
+            <span className="nota">
+              {tarefasDoTipo.length} tarefa{tarefasDoTipo.length === 1 ? '' : 's'}
+              {tipo ? ` em ${tipo.nome}` : ' na carteira'}
+            </span>
+          </header>
+          <div className="barra-situacao">
+            {situacaoDasTarefas.map((s) => (
+              <span
+                key={s.status}
+                style={{ width: `${(s.n / tarefasDoTipo.length) * 100}%`, background: s.cor }}
+                title={`${s.rotulo}: ${s.n}`}
+              />
+            ))}
+          </div>
+          <div className="legenda">
+            {situacaoDasTarefas.map((s) => (
+              <span key={s.status}>
+                <i style={{ background: s.cor }} />
+                {s.rotulo} <strong className="num">{s.n}</strong>
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ---------------- FAIXA 2 · curva S e fluxo ---------------- */}
       <div className="painel">

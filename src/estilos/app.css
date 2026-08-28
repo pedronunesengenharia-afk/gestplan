@@ -72,13 +72,17 @@
 .selo--fase { background: var(--superficie-2); color: var(--tinta-2); }
 .pontos-total { color: var(--apagado); font-size: .78rem; }
 
-.ficha {
+/* A ficha de dados do projeto. Chamava-se `.ficha` e colidia com o chip de
+   filtro da carteira — a mesma armadilha do `.cartao`: nome generico usado por
+   duas coisas diferentes. O chip virava um quadro de 194x64. */
+.ficha-projeto {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   gap: var(--e4); margin: 0 0 var(--e6);
   padding: var(--e4); border: 1px solid var(--linha); background: var(--superficie);
+  border-radius: var(--raio-cartao);
 }
-.ficha dt, .campos dt { color: var(--apagado); font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
-.ficha dd { margin: var(--e1) 0 0; }
+.ficha-projeto dt, .campos dt { color: var(--apagado); font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
+.ficha-projeto dd { margin: var(--e1) 0 0; }
 
 .secao { margin-bottom: var(--e6); }
 .secao h2 {
@@ -273,7 +277,7 @@ td .selo, td .marca-etapa { white-space: nowrap; }
 /* A coluna do nome pede largura explicitamente. Sem isso o layout automático
    a trata como a mais estreita — ela é a única que quebra, e quebrar é o que
    o navegador entende por "cabe em pouco espaço". */
-td.principal, th.principal { min-width: 20rem; white-space: normal; }
+td.principal, th.principal { min-width: 13rem; white-space: normal; }
 .tabela-rolavel > table { min-width: 54rem; }
 .detalhe-tarefa .tabela-rolavel > table,
 .cartao-grafico .tabela-rolavel > table { min-width: 0; }
@@ -353,7 +357,7 @@ td.principal, th.principal { min-width: 20rem; white-space: normal; }
    Elevação: cartão, ficha e gráfico passam a parecer objeto sobre a mesa.
    A tabela continua reta — dado em grade não precisa de canto macio.
    ========================================================================= */
-.cartao, .ficha-numero, .cartao-grafico, .cartao-kanban, .novo-comentario, .ficha {
+.cartao, .ficha-numero, .cartao-grafico, .cartao-kanban, .novo-comentario, .ficha-projeto {
   border-radius: var(--raio-cartao);
 }
 .ficha-numero, .cartao-grafico {
@@ -427,6 +431,30 @@ td.principal, th.principal { min-width: 20rem; white-space: normal; }
   background: var(--laranja-fundo); border-radius: var(--raio-cartao);
   padding: var(--e3) var(--e4); text-align: center; margin: var(--e2) 0;
 }
+
+/* Medidores: barra de progresso le bem em 0%, que e onde o grafico de barra
+   falha — Recharts nao desenha retangulo de valor zero. */
+.medidores { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--e3); }
+.medidores li { display: flex; flex-direction: column; gap: var(--e1); }
+.medidor-topo { display: flex; justify-content: space-between; gap: var(--e3); font-size: .88rem; }
+.medidor-topo .dado { color: var(--apagado); font-size: .78rem; }
+.medidores .trilha { height: .5rem; background: var(--g-vazio); border-radius: 99px; overflow: hidden; }
+.medidores .trilha span {
+  display: block; height: 100%; background: var(--st-bom); border-radius: 99px;
+  transition: width var(--transicao);
+}
+.medidores .apoio { font-size: .75rem; color: var(--apagado); }
+
+/* Situacao das tarefas: uma barra empilhada, com a legenda ao lado. */
+/* O trilho e transparente de proposito: o pedaco "nao iniciada" ja e cinza, e
+   cinza sobre cinza nao se ve. Cada pedaco desenha a si mesmo. */
+.barra-situacao {
+  display: flex; height: 1.1rem; border-radius: 99px; overflow: hidden; gap: 2px;
+}
+.barra-situacao span { display: block; }
+.legenda strong { font-family: var(--fonte-dado); font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) { .medidores .trilha span { transition: none } }
 
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
