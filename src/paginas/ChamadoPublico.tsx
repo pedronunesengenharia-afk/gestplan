@@ -3,7 +3,7 @@ import {
   abrirChamadoPublico, empresasParaChamado,
   ErroDoBanco,
 } from '../lib/banco'
-import { ehHomolog, ehProducao, refDoBanco } from '../lib/supabase'
+import { ehHomolog, refDoBanco } from '../lib/supabase'
 
 /**
  * O chamado que se abre sem entrar no sistema.
@@ -76,12 +76,9 @@ export function ChamadoPublico({ aoEntrar }: { aoEntrar: () => void }) {
   if (codigo) {
     return (
       <div className="publico">
-      {!ehProducao && (
-        <div
-          className={ehHomolog ? 'tarja-ambiente' : 'tarja-ambiente tarja-ambiente--perigo'}
-          role="status"
-        >
-          {ehHomolog ? 'HOMOLOGAÇÃO' : 'DESENVOLVIMENTO'} · banco {refDoBanco}
+      {ehHomolog && (
+        <div className="tarja-ambiente" role="status">
+          HOMOLOGAÇÃO · banco {refDoBanco} — os dados aqui são descartáveis
         </div>
       )}
 
@@ -120,12 +117,9 @@ export function ChamadoPublico({ aoEntrar }: { aoEntrar: () => void }) {
 
   return (
     <div className="publico">
-      {!ehProducao && (
-        <div
-          className={ehHomolog ? 'tarja-ambiente' : 'tarja-ambiente tarja-ambiente--perigo'}
-          role="status"
-        >
-          {ehHomolog ? 'HOMOLOGAÇÃO' : 'DESENVOLVIMENTO'} · banco {refDoBanco}
+      {ehHomolog && (
+        <div className="tarja-ambiente" role="status">
+          HOMOLOGAÇÃO · banco {refDoBanco} — os dados aqui são descartáveis
         </div>
       )}
       <div className="publico-cartao">

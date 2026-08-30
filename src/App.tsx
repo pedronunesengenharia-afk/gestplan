@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { ehHomolog, ehProducao, refDoBanco, supabase } from './lib/supabase'
+import { ambiente, ehHomolog, ehProducao, refDoBanco, supabase } from './lib/supabase'
 import { eu, vincularMeuAcesso, type Pessoa } from './lib/banco'
 import { Entrar } from './paginas/Entrar'
 import { FronteiraDeErro } from './componentes/FronteiraDeErro'
@@ -91,23 +91,15 @@ export function App() {
   if (!sessao) return <Entrar aoAbrirChamado={() => setPublico(true)} />
 
   return (
-    <div className={ehProducao ? 'app' : 'app app--ensaio'}>
-      {/* Impossível de confundir com a tela real: largura toda, laranja de
-          sinal, e por cima de tudo. O custo de um aviso feio é zero; o de
-          confundir homologação com produção já foi medido. */}
-      {!ehProducao && (
-        <div
-          className={ehHomolog ? 'tarja-ambiente' : 'tarja-ambiente tarja-ambiente--perigo'}
-          role="status"
-        >
-          {ehHomolog ? (
-            <>HOMOLOGAÇÃO · banco {refDoBanco} — os dados aqui são descartáveis</>
-          ) : (
-            <>
-              DESENVOLVIMENTO · banco {refDoBanco} — este .env pode ser o de produção. Para
-              testar, use npm run dev:homolog
-            </>
-          )}
+    <div className={ehHomolog ? 'app app--ensaio' : 'app'}>
+      {/* A tarja é só de HOMOLOGAÇÃO, onde "dados descartáveis" é verdade e
+          precisa ser impossível de ignorar. Em desenvolvimento ela saiu: o
+          `dev` aponta para o banco real e a tarja virava ruído em toda sessão
+          de trabalho — e aviso que aparece sempre deixa de ser aviso.
+          Qual banco está atrás continua legível no rodapé da lateral. */}
+      {ehHomolog && (
+        <div className="tarja-ambiente" role="status">
+          HOMOLOGAÇÃO · banco {refDoBanco} — os dados aqui são descartáveis
         </div>
       )}
       <nav className="lateral">
@@ -147,6 +139,14 @@ export function App() {
           )}
           <br />
           <button onClick={() => supabase.auth.signOut()}>sair</button>
+          {!ehProducao && (
+            <>
+              <br />
+              <span title="Modo do Vite e projeto Supabase desta sessão">
+                {ambiente} · {refDoBanco.slice(0, 8)}
+              </span>
+            </>
+          )}
         </div>
       </nav>
 

@@ -10,9 +10,10 @@ npm run preview
 
 Abra **http://localhost:4173** — não o 5173.
 
-A diferença importa: o `dev` mostra uma tarja vermelha no topo dizendo que o
-`.env` pode ser o de produção. O `preview` serve o build de produção, sem
-tarja e mais rápido. É o mesmo banco nos dois.
+O `preview` serve o build de produção: mais rápido para carregar e sem o
+recarregamento automático do `dev`, que pode piscar a tela no meio de uma
+frase. É o mesmo banco nos dois — se der algum problema com a porta 4173, o
+5173 serve igual.
 
 Entre com **e-mail e senha** — a senha está definida. Deixe a aba aberta.
 
