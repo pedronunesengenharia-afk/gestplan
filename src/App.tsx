@@ -6,6 +6,7 @@ import { Entrar } from './paginas/Entrar'
 import { FronteiraDeErro } from './componentes/FronteiraDeErro'
 import { Painel } from './paginas/Painel'
 import { Chamados } from './paginas/Chamados'
+import { Conta } from './paginas/Conta'
 import { ChamadoPublico } from './paginas/ChamadoPublico'
 import { Carteira } from './paginas/Carteira'
 import { Projeto } from './paginas/Projeto'
@@ -17,7 +18,7 @@ import { Avaliacao } from './paginas/Avaliacao'
 import { Empresas } from './paginas/Empresas'
 import { Equipe } from './paginas/Equipe'
 
-type Pagina = 'painel' | 'carteira' | 'chamados' | 'empresas' | 'equipe'
+type Pagina = 'painel' | 'carteira' | 'chamados' | 'empresas' | 'equipe' | 'conta'
 
 const PAGINAS: { chave: Pagina; nome: string }[] = [
   { chave: 'painel', nome: 'Painel' },
@@ -25,6 +26,7 @@ const PAGINAS: { chave: Pagina; nome: string }[] = [
   { chave: 'chamados', nome: 'Chamados' },
   { chave: 'empresas', nome: 'Empresas' },
   { chave: 'equipe', nome: 'Equipe' },
+  { chave: 'conta', nome: 'Conta' },
 ]
 
 export function App() {
@@ -51,8 +53,11 @@ export function App() {
       setSessao(data.session)
       setCarregando(false)
     })
-    const { data: sub } = supabase.auth.onAuthStateChange((_evento, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((evento, s) => {
       setSessao(s)
+      // Quem acabou de entrar comeca no Painel, nao na tela onde estava antes
+      // de sair. Renovacao de token nao mexe em nada.
+      if (evento === 'SIGNED_IN') setPagina('painel')
     })
     return () => sub.subscription.unsubscribe()
   }, [])
@@ -219,6 +224,7 @@ export function App() {
           ) : (
             <Carteira aoAbrir={setProjetoAberto} aoNovo={() => setEditando({ id: null })} />
           ))}
+        {pagina === 'conta' && <Conta />}
         {pagina === 'empresas' && <Empresas />}
         {pagina === 'equipe' && <Equipe />}
         </FronteiraDeErro>

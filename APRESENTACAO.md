@@ -14,7 +14,14 @@ A diferença importa: o `dev` mostra uma tarja vermelha no topo dizendo que o
 `.env` pode ser o de produção. O `preview` serve o build de produção, sem
 tarja e mais rápido. É o mesmo banco nos dois.
 
-Entre com o seu e-mail, clique no link que chegar, e deixe a aba aberta.
+Entre com **e-mail e senha** — a senha está definida. Deixe a aba aberta.
+
+> **Não use o link por e-mail na apresentação.** O Supabase limita quantos
+> links manda por hora no plano gratuito; se você tentar duas ou três vezes,
+> o e-mail simplesmente não chega e não há o que fazer além de esperar. A
+> senha não depende disso.
+>
+> Para trocar a senha: menu **Conta**. Vale a partir da próxima entrada.
 
 > Se a apresentação for numa tela de 1440px ou menos, a tabela da carteira
 > rola de lado nas duas últimas colunas de dinheiro. Em 1600 ou mais, cabe
@@ -118,13 +125,18 @@ Repare no código: `CIM-2026-024`. Continua a numeração dos projetos reais
 importados do desktop. Chamado não é uma coisa à parte — é um projeto na fila
 do TI.
 
-### 7 · Equipe e permissão
+### 7 · Equipe, permissão e acesso
 
 Menu **Equipe**: cadastre alguém com nome e e-mail, e dê um papel por empresa.
 A coluna **acesso** mostra quem já entra e quem só existe no cadastro.
 
 Vale dizer em voz alta: quem for cadastrado com um e-mail entra sozinho no
-primeiro link que pedir — o sistema liga o login à pessoa pelo e-mail.
+primeiro link que pedir — o sistema liga o login à pessoa pelo e-mail. Na
+primeira entrada, ela define a senha dela em **Conta**, e da segunda em diante
+entra direto.
+
+Ninguém manda senha para ninguém: quem define é o dono dela. Senha que chega
+pronta por mensagem já vazou antes de ser usada.
 
 ---
 
