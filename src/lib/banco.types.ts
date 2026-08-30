@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   graphql_public: {
     Tables: {
@@ -2479,7 +2479,6 @@ export type Database = {
           cargo: string | null
           criado_em: string
           criado_por: string | null
-          custo_hora: number
           email: string | null
           fone: string | null
           fornecedor_id: string | null
@@ -2498,7 +2497,6 @@ export type Database = {
           cargo?: string | null
           criado_em?: string
           criado_por?: string | null
-          custo_hora?: number
           email?: string | null
           fone?: string | null
           fornecedor_id?: string | null
@@ -2517,7 +2515,6 @@ export type Database = {
           cargo?: string | null
           criado_em?: string
           criado_por?: string | null
-          custo_hora?: number
           email?: string | null
           fone?: string | null
           fornecedor_id?: string | null
@@ -2547,6 +2544,32 @@ export type Database = {
             columns: ["fornecedor_id"]
             isOneToOne: false
             referencedRelation: "fornecedor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pessoa_custo: {
+        Row: {
+          atualizado_em: string
+          custo_hora: number
+          pessoa_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          custo_hora?: number
+          pessoa_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          custo_hora?: number
+          pessoa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pessoa_custo_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: true
+            referencedRelation: "pessoa"
             referencedColumns: ["id"]
           },
         ]
