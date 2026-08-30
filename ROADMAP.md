@@ -53,14 +53,10 @@ Destrava o gráfico de capacidade, que estava vazio por falta de dado — não d
 código. Não precisou de migração: `alocacao` já existia com a RLS certa
 (leitura por `pode_ver_interno`, escrita por `pode_editar_projeto`).
 
-> **Uma decisão a tomar:** `alocacao.custo_hora` e `pessoa.custo_hora` são
-> dinheiro e hoje ficam atrás de `pode_ver_interno`, não de
-> `pode_ver_valores` — quem alcança o projeto lê o custo-hora de quem está
-> nele. Por isso a tela de alocação **não grava nem mostra `custo_hora`**, e o
-> valor fica em zero. Antes de alguém preencher esse campo, a política precisa
-> mudar. Está escrito aqui para não ser descoberto depois.
+> A tela de alocação **não grava nem mostra `custo_hora`**: a coluna de
+> `alocacao` continua atrás de `pode_ver_interno`. Veja 1b.
 
-### 1b · `pessoa_le` não faz o que promete — **defeito achado, a corrigir**
+### 1b · `pessoa_le` não fazia o que prometia — **corrigido**
 
 A política diz, no próprio comentário, *"o resto da equipe vê a lista
 interna"*. Ela não faz isso. O `exists` dela consulta `pessoa_papel`, que tem
@@ -82,10 +78,21 @@ o dono vai ver:
 - **Painel** — capacidade sempre vazia, porque `vw_capacidade` junta com
   `pessoa`.
 
-Correção: uma função `security definer` em `app` que responda "esta pessoa tem
-papel em alguma empresa que eu alcanço?" sem passar pela RLS de
-`pessoa_papel` — nos moldes de `app.empresas_visiveis()`. Precisa de migração
-nova e dos testes correspondentes em `07_alocacao.sql`.
+Corrigido pela migração `20260830120000`, com `app.é_da_minha_equipe()` —
+`security definer`, nos moldes de `app.empresas_visiveis()`. Onze verificações
+novas em `07_alocacao.sql`, que falham contra a política antiga.
+
+Junto veio o que a correção obrigava: **`custo_hora` saiu de `pessoa`** e foi
+para `pessoa_custo`, só do proprietário. Enquanto cada um só se enxergava, o
+custo-hora estava protegido por acidente; abrir a lista sem mover a coluna
+entregaria o custo-hora da equipe inteira para a equipe inteira. RLS é por
+linha, não por coluna, e view aqui não amplia acesso — então a coluna muda de
+casa, como `projeto_valor` e `etapa_valor` já fazem.
+
+**Falta ainda:** `alocacao.custo_hora` e `apontamento_hora.custo_hora`/`valor`
+seguem atrás de `pode_ver_interno`. Hoje estão todos em zero e nenhuma tela os
+escreve, então não vazam nada — mas a porta é a mesma, e antes de qualquer
+apontamento de hora existir eles precisam do mesmo tratamento.
 
 ### 2 · Notificação
 

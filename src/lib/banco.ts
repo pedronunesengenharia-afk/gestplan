@@ -59,7 +59,6 @@ export type Pessoa = {
   cargo: string | null
   setor: string | null
   vinculo: string
-  custo_hora: number
   proprietario: boolean
   ativo: boolean
   auth_user_id: string | null
@@ -219,7 +218,7 @@ export async function salvarEmpresa(e: Partial<Empresa>): Promise<Empresa> {
 export async function pessoas(): Promise<Pessoa[]> {
   const { data, error } = await supabase
     .from('pessoa')
-    .select('id, nome, email, fone, cargo, setor, vinculo, custo_hora, proprietario, ativo, auth_user_id')
+    .select('id, nome, email, fone, cargo, setor, vinculo, proprietario, ativo, auth_user_id')
     .order('nome')
   erro('Não foi possível carregar as pessoas', error)
   return (data ?? []) as Pessoa[]
@@ -1301,7 +1300,6 @@ export type PessoaEdicao = {
   cargo: string | null
   setor: string | null
   vinculo: string
-  custo_hora: number
   ativo: boolean
 }
 
@@ -1322,6 +1320,33 @@ export async function salvarPessoa(p: PessoaEdicao): Promise<string> {
   const { data, error } = await supabase.from('pessoa').upsert(p).select('id').single()
   erroDeEscrita('Nao foi possivel salvar a pessoa', error)
   return (data as { id: string }).id
+}
+
+/**
+ * O custo-hora da equipe, de `pessoa_custo`.
+ *
+ * Mora fora de `pessoa` desde a migracao 20260830120000: a lista de pessoas e
+ * visivel para a equipe interna e o custo-hora nao e. Quem nao e proprietario
+ * recebe um mapa VAZIO — nao um erro, porque a RLS filtra linha, nao recusa a
+ * pergunta. Linha ausente vale zero.
+ */
+export async function custosHora(): Promise<Map<string, number>> {
+  const { data, error } = await supabase.from('pessoa_custo').select('pessoa_id, custo_hora')
+  erro('Nao foi possivel carregar o custo-hora', error)
+  return new Map((data ?? []).map((l) => [l.pessoa_id as string, Number(l.custo_hora)]))
+}
+
+/** Zero apaga a linha: a tabela e esparsa, e ausencia ja significa zero. */
+export async function salvarCustoHora(pessoaId: string, valor: number): Promise<void> {
+  if (valor <= 0) {
+    const { error } = await supabase.from('pessoa_custo').delete().eq('pessoa_id', pessoaId)
+    erroDeEscrita('Nao foi possivel limpar o custo-hora', error)
+    return
+  }
+  const { error } = await supabase
+    .from('pessoa_custo')
+    .upsert({ pessoa_id: pessoaId, custo_hora: valor, atualizado_em: new Date().toISOString() })
+  erroDeEscrita('Nao foi possivel salvar o custo-hora', error)
 }
 
 export async function papeisDaEquipe(): Promise<PapelDaPessoa[]> {
@@ -1444,7 +1469,7 @@ export async function eu(): Promise<Pessoa | null> {
   if (!sessao.user) return null
   const { data, error } = await supabase
     .from('pessoa')
-    .select('id, nome, email, fone, cargo, setor, vinculo, custo_hora, proprietario, ativo, auth_user_id')
+    .select('id, nome, email, fone, cargo, setor, vinculo, proprietario, ativo, auth_user_id')
     .eq('auth_user_id', sessao.user.id)
     .maybeSingle()
   erro('Não foi possível identificar o usuário', error)

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
-  darPapel, empresas as carregarEmpresas, papeisDaEquipe, pessoas,
-  salvarPessoa, tirarPapel,
+  custosHora, darPapel, empresas as carregarEmpresas, eu as carregarEu,
+  papeisDaEquipe, pessoas, salvarCustoHora, salvarPessoa, tirarPapel,
   ErroDoBanco, PAPEIS, VINCULOS,
   type Empresa, type PapelDaPessoa, type Pessoa, type PessoaEdicao,
 } from '../lib/banco'
@@ -18,11 +18,18 @@ import { EsqueletoDeTabela } from '../componentes/Esqueleto'
  * Papel é por EMPRESA, não por pessoa: o mesmo alguém pode ser gerente numa e
  * só enxergar a outra. Quem escreve aqui é o proprietário — a política de
  * `pessoa`, `pessoa_papel` e `convite` é `app.é_proprietario()`.
+ *
+ * O CUSTO-HORA não mora em `pessoa`, e sim em `pessoa_custo`, desde a migração
+ * 20260830120000. A lista de pessoas é visível para a equipe interna e o
+ * custo-hora não é — RLS é por linha, não por coluna, então a única forma de
+ * separar as duas coisas é a coluna morar em outra tabela, como já acontece
+ * com `projeto_valor` e `etapa_valor`. Por isso o campo só aparece para o
+ * proprietário, e é gravado numa chamada à parte.
  */
 
 const VAZIA: PessoaEdicao = {
   nome: '', email: null, fone: null, cargo: null, setor: null,
-  vinculo: 'CLT', custo_hora: 0, ativo: true,
+  vinculo: 'CLT', ativo: true,
 }
 
 export function Equipe() {
@@ -30,16 +37,23 @@ export function Equipe() {
   const [papeis, setPapeis] = useState<PapelDaPessoa[]>([])
   const [listaEmpresas, setListaEmpresas] = useState<Empresa[]>([])
   const [rascunho, setRascunho] = useState<PessoaEdicao | null>(null)
+  const [custos, setCustos] = useState<Map<string, number>>(new Map())
+  const [custoRascunho, setCustoRascunho] = useState('0')
+  const [souDono, setSouDono] = useState(false)
   const [novoPapel, setNovoPapel] = useState<{ pessoa: string; empresa: string; papel: string } | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [ocupado, setOcupado] = useState(false)
 
   async function recarregar() {
-    const [ps, pp, es] = await Promise.all([pessoas(), papeisDaEquipe(), carregarEmpresas()])
+    const [ps, pp, es, ch, quemSouEu] = await Promise.all([
+      pessoas(), papeisDaEquipe(), carregarEmpresas(), custosHora(), carregarEu(),
+    ])
     setLista(ps)
     setPapeis(pp)
     setListaEmpresas(es)
+    setCustos(ch)
+    setSouDono(quemSouEu?.proprietario ?? false)
   }
 
   useEffect(() => {
@@ -75,7 +89,7 @@ export function Equipe() {
           <h1>Equipe</h1>
           <button
             className="botao botao--acao"
-            onClick={() => setRascunho(rascunho ? null : { ...VAZIA })}
+            onClick={() => { setCustoRascunho('0'); setRascunho(rascunho ? null : { ...VAZIA }) }}
           >
             {rascunho ? 'Cancelar' : 'Acrescentar pessoa'}
           </button>
@@ -149,16 +163,22 @@ export function Equipe() {
                 </select>
               </dd>
             </div>
-            <div className="campo-linha">
-              <dt><label htmlFor="p-custo">Custo por hora</label></dt>
-              <dd>
-                <input
-                  id="p-custo" className="campo num" type="number" step="0.01" min="0"
-                  value={rascunho.custo_hora}
-                  onChange={(e) => setRascunho({ ...rascunho, custo_hora: Number(e.target.value) || 0 })}
-                />
-              </dd>
-            </div>
+            {souDono && (
+              <div className="campo-linha">
+                <dt><label htmlFor="p-custo">Custo por hora</label></dt>
+                <dd>
+                  <input
+                    id="p-custo" className="campo num" type="number" step="0.01" min="0"
+                    value={custoRascunho}
+                    onChange={(e) => setCustoRascunho(e.target.value)}
+                  />
+                  <p className="ajuda">
+                    Guardado em <code>pessoa_custo</code>, que só o proprietário alcança. Zero
+                    apaga a linha.
+                  </p>
+                </dd>
+              </div>
+            )}
             <div className="campo-linha">
               <dt>Situação</dt>
               <dd>
@@ -179,7 +199,13 @@ export function Equipe() {
               disabled={ocupado || rascunho.nome.trim() === ''}
               onClick={() =>
                 comOBanco(async () => {
-                  await salvarPessoa({ ...rascunho, nome: rascunho.nome.trim() })
+                  const id = await salvarPessoa({ ...rascunho, nome: rascunho.nome.trim() })
+                  // Só o proprietário alcança `pessoa_custo`; para os outros o
+                  // campo nem aparece, e chamar aqui só daria erro da RLS.
+                  if (souDono) {
+                    const valor = Number(custoRascunho.replace(',', '.')) || 0
+                    if (valor !== (custos.get(id) ?? 0)) await salvarCustoHora(id, valor)
+                  }
                   setRascunho(null)
                 })}
             >
@@ -289,12 +315,13 @@ export function Equipe() {
                   <td className="acoes-linha">
                     <button
                       className="voltar"
-                      onClick={() =>
+                      onClick={() => {
+                        setCustoRascunho(String(custos.get(p.id) ?? 0))
                         setRascunho({
                           id: p.id, nome: p.nome, email: p.email, fone: p.fone, cargo: p.cargo,
-                          setor: p.setor, vinculo: p.vinculo, custo_hora: p.custo_hora,
-                          ativo: p.ativo,
-                        })}
+                          setor: p.setor, vinculo: p.vinculo, ativo: p.ativo,
+                        })
+                      }}
                     >
                       editar
                     </button>

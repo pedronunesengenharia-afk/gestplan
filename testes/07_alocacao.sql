@@ -146,14 +146,10 @@ select 'a10ca000-0000-0000-0000-000000000002', p.id,
        'bbbbbbbb-0000-0000-0000-000000000003', 60
   from projeto p where p.nome = 'Segundo projeto';
 
--- A soma é medida pelo DONO, e há um motivo que não é conveniência: hoje a
--- política `pessoa_le` deixa quem não é proprietário enxergando apenas a si
--- mesmo, porque o EXISTS dela consulta `pessoa_papel`, que tem RLS própria
--- restrita à própria linha. Como `vw_capacidade` junta com `pessoa`, ela volta
--- vazia para um gerente. Está registrado no ROADMAP como defeito a corrigir;
--- enquanto não for, medir a aritmética da view pelo dono é o que se pode
--- afirmar com verdade.
-select vestir('11111111-1111-1111-1111-111111111111');   -- DONO
+-- Medido pelo GERENTE de propósito. Até a migração 20260830120000 isto era
+-- zero: `pessoa_le` deixava quem não é proprietário enxergando só a si mesmo,
+-- e como `vw_capacidade` junta com `pessoa`, a view voltava vazia para ele.
+-- Se a política regredir, é aqui que se descobre.
 
 select teste('capacidade soma a dedicação da mesma pessoa em dois projetos',
   (select dedicacao_total from vw_capacidade
@@ -175,28 +171,23 @@ select teste('a capacidade é security_invoker, não a soma de todo mundo',
 -- -----------------------------------------------------------------------------
 -- 6 · Alocação encerrada e alocação futura ficam fora da conta de hoje
 -- -----------------------------------------------------------------------------
--- Quem MUDA é o gerente, porque ele edita o projeto. Quem LÊ a capacidade é o
--- dono, pelo motivo explicado acima.
+-- Quem muda e quem lê é o mesmo gerente: ele edita o projeto e enxerga a
+-- equipe.
 select vestir('22222222-2222-2222-2222-222222222222');
+
 update alocacao set data_fim = current_date - 1
  where id = 'a10ca000-0000-0000-0000-000000000002';
-select vestir('11111111-1111-1111-1111-111111111111');
 select teste('alocação que já terminou não pesa mais na capacidade',
   medir_dedicacao() = 60);
 
-select vestir('22222222-2222-2222-2222-222222222222');
 update alocacao set data_inicio = current_date + 30, data_fim = null
  where id = 'a10ca000-0000-0000-0000-000000000002';
-select vestir('11111111-1111-1111-1111-111111111111');
 select teste('alocação que ainda não começou também não pesa',
   medir_dedicacao() = 60);
 
-select vestir('22222222-2222-2222-2222-222222222222');
 update alocacao set ativo = false where id = 'a10ca000-0000-0000-0000-000000000001';
-select vestir('11111111-1111-1111-1111-111111111111');
 select teste('alocação desligada sai da capacidade', medir_dedicacao() is null);
 
-select vestir('22222222-2222-2222-2222-222222222222');
 update alocacao set ativo = true where id = 'a10ca000-0000-0000-0000-000000000001';
 
 -- -----------------------------------------------------------------------------
@@ -249,20 +240,68 @@ begin
 end $$;
 
 -- -----------------------------------------------------------------------------
--- 8 · O custo-hora ainda NÃO tem porta de dinheiro
+-- 8 · A equipe se enxerga, e o custo-hora não vem junto
 -- -----------------------------------------------------------------------------
--- Este não é um teste de regra cumprida: é um teste que registra uma regra que
--- FALTA. `alocacao.custo_hora` está atrás de `pode_ver_interno`, não de
--- `pode_ver_valores` — quem alcança o projeto lê o custo-hora de quem está
--- nele. Por isso a tela não grava esse campo, e ele fica em zero.
---
--- Quando a política mudar, este teste passa a falhar, e é exatamente o que se
--- quer: ele obriga a trocar a asserção junto, de propósito, e não por acaso.
-select vestir('33333333-3333-3333-3333-333333333333');   -- ESTRUTURA, sem dinheiro
-select teste('hoje o custo-hora da alocação NÃO está atrás de pode_ver_valores',
-  conta($$select id from alocacao where custo_hora is not null$$) > 0);
-select teste('e por isso a tela o mantém em zero',
-  conta($$select id from alocacao where custo_hora <> 0$$) = 0);
+-- Estes nasceram de um defeito medido: `pessoa_le` prometia no comentário que
+-- "o resto da equipe vê a lista interna" e entregava "cada um vê a si mesmo",
+-- porque o exists dela lia `pessoa_papel` sob a RLS de `pessoa_papel`. Rodados
+-- contra a política antiga, os quatro primeiros falham.
+select vestir('22222222-2222-2222-2222-222222222222');   -- GERENTE
+select teste('gerente enxerga a equipe interna, não só a si mesmo',
+  conta('select id from pessoa') > 1);
+select teste('gerente enxerga a Estrutura pelo nome',
+  conta($$select id from pessoa where id='bbbbbbbb-0000-0000-0000-000000000003'$$) = 1);
+select teste('gerente enxerga o proprietário, que não tem linha em pessoa_papel',
+  conta($$select id from pessoa where proprietario$$) = 1);
+select teste('mas NÃO enxerga o fornecedor externo na lista interna',
+  conta($$select id from pessoa where id='bbbbbbbb-0000-0000-0000-000000000005'$$) = 0);
+
+select teste('gerente NÃO enxerga o custo-hora de ninguém',
+  conta('select pessoa_id from pessoa_custo') = 0);
+
+do $$
+begin
+  begin
+    insert into pessoa_custo (pessoa_id, custo_hora)
+    values ('bbbbbbbb-0000-0000-0000-000000000002', 200);
+    raise exception 'FALHOU: gerente gravou o próprio custo-hora';
+  exception
+    when insufficient_privilege then
+      perform teste('gerente NÃO grava custo-hora', true);
+    when others then
+      if sqlerrm like 'FALHOU%' then raise; end if;
+      perform teste('gerente NÃO grava custo-hora', true);
+  end;
+end $$;
+
+select vestir('33333333-3333-3333-3333-333333333333');   -- ESTRUTURA
+select teste('estrutura também enxerga a equipe', conta('select id from pessoa') > 1);
+select teste('estrutura NÃO enxerga custo-hora',  conta('select pessoa_id from pessoa_custo') = 0);
+
+select vestir('55555555-5555-5555-5555-555555555555');   -- EXTERNO
+select teste('externo continua enxergando só a si mesmo',
+  conta('select id from pessoa') = 1);
+select teste('externo NÃO enxerga custo-hora',
+  conta('select pessoa_id from pessoa_custo') = 0);
+
+select vestir('11111111-1111-1111-1111-111111111111');   -- DONO
+-- Sem número mágico: o cenário cresce a cada suíte nova, e a afirmação que
+-- importa é a comparação — o dono alcança o externo, o gerente não.
+select teste('o dono enxerga o fornecedor externo, que o gerente não enxerga',
+  conta($$select id from pessoa where id='bbbbbbbb-0000-0000-0000-000000000005'$$) = 1);
+do $$
+declare n int;
+begin
+  insert into pessoa_custo (pessoa_id, custo_hora)
+  values ('bbbbbbbb-0000-0000-0000-000000000003', 85)
+  on conflict (pessoa_id) do update set custo_hora = 85;
+  get diagnostics n = row_count;
+  perform teste('e é ele quem grava o custo-hora', n = 1);
+end $$;
+
+select vestir('22222222-2222-2222-2222-222222222222');
+select teste('e nem depois de gravado o gerente alcança o valor',
+  conta('select pessoa_id from pessoa_custo') = 0);
 
 reset role;
 select set_config('app.usuario', '', false);
