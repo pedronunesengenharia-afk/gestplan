@@ -454,12 +454,39 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
 
 @media (prefers-reduced-motion: reduce) { .medidores .trilha span { transition: none } }
 
+/* -------------------------------------------------------------------------
+   Meu trabalho e equipe do projeto
+   ------------------------------------------------------------------------- */
+
+/* A explicacao do grupo ("o prazo ja passou") vem depois da contagem e nao
+   deve competir com ela: mesma familia, um tom abaixo. */
+.conta--fraca { font-family: inherit; font-style: italic; }
+
+/* Linha vencida: a cor nao carrega o recado sozinha — a coluna do prazo ja
+   mostra a data, e o grupo se chama "Atrasadas". Isto e reforco, nao aviso. */
+.linha-vencida td { background: var(--vermelho-fundo); }
+
+/* O ponto da cor do tipo, antes do codigo do projeto. Marca de apoio: quem
+   nao distingue as cores continua lendo o codigo. */
+.ponto-tipo {
+  display: inline-block; width: .5rem; height: .5rem; border-radius: 50%;
+  margin-right: var(--e1); vertical-align: baseline;
+}
+
+/* Campos que moram dentro de celula de tabela: sem eles o input estica a
+   coluna e a tabela inteira desalinha. */
+.campo--dedicacao { width: 4.5rem; text-align: right; padding: var(--e1) var(--e2); }
+.campo--situacao  { font-size: .8rem; padding: var(--e1) var(--e2); width: auto; min-width: 9rem; }
+
+/* A faixa de indicadores desta tela precisa do respiro que o painel tem. */
+.painel--numeros { margin-bottom: var(--e5); }
+
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
   .lateral { flex-direction: row; align-items: center; gap: var(--e4); padding: var(--e3) var(--e4); flex-wrap: wrap; }
   .menu { flex-direction: row; flex-wrap: wrap; }
   .rodape-lateral { margin-top: 0; }
   .conteudo { padding: var(--e4); }
-  .ficha { grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); }
+  .ficha-projeto { grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); }
   .campos { grid-template-columns: 1fr; }
 }

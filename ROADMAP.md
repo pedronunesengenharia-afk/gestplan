@@ -1,0 +1,157 @@
+# GestPlan — o que falta para gerenciar todo tipo de projeto
+
+> Levantado em 30/08/2026, lendo o banco contra a tela. Os números aqui foram
+> conferidos, não estimados. Quando um item for entregue, marque e diga em que
+> commit — este arquivo só serve enquanto for verdade.
+
+## O diagnóstico
+
+O sistema está **completo para um tipo** e honesto sobre os outros quatro.
+
+`tipo_projeto` tem sete chaves de configuração. A tela obedece a quatro:
+
+| chave | a tela obedece? |
+|---|---|
+| `usa_orcamento` | sim |
+| `usa_cronograma` | sim |
+| `usa_pontuacao` | sim |
+| `mede_avanco_por` | sim |
+| `usa_etapas` | não — nem é lida |
+| `usa_medicao` | não — só existe como campo no tipo TypeScript |
+| `usa_recorrencia` | não — nem é lida |
+
+E a configuração é desigual: Investimento tem 21 campos próprios; TI tem 4 mais
+o modelo de etapas; Obra, Contrato e Manutenção têm 5 campos cada e nada além.
+**Três tipos estão declarados e não equipados.** Um projeto de "Contrato de
+serviço" hoje é um projeto com cinco campos e nenhum contrato. Uma "Manutenção
+recorrente" não recorre.
+
+### Os três gráficos vazios do painel têm a mesma causa
+
+Não é falha de gráfico. São tabelas em que nenhuma tela escreve:
+
+| gráfico vazio | tabela sem porta |
+|---|---|
+| Curva S sem a linha do planejado | `linha_base`, `linha_base_item` |
+| Fluxo mensal | `parcela` — as 401 linhas são regra, não data |
+| Capacidade da equipe | `alocacao` |
+
+Ao todo são cerca de vinte tabelas que nenhuma tela escreve: `alocacao`,
+`apontamento_hora`, `linha_base`, `medicao`, `contrato`, `contrato_aditivo`,
+`fornecedor`, `calendario`, `ocorrencia`, `evento`, `notificacao`, `ideia`,
+`convite`, `projeto_fase_hist`. O banco foi desenhado para o sistema inteiro; a
+tela cobriu a Fase 1.
+
+## A ordem
+
+### 1 · Alocação e agenda por pessoa — **feito**
+
+Pessoa alocada no projeto, com papel e percentual de dedicação; e a tela
+"Meu trabalho", que responde *o que é meu hoje* atravessando todos os projetos.
+
+Destrava o gráfico de capacidade, que estava vazio por falta de dado — não de
+código. Não precisou de migração: `alocacao` já existia com a RLS certa
+(leitura por `pode_ver_interno`, escrita por `pode_editar_projeto`).
+
+> **Uma decisão a tomar:** `alocacao.custo_hora` e `pessoa.custo_hora` são
+> dinheiro e hoje ficam atrás de `pode_ver_interno`, não de
+> `pode_ver_valores` — quem alcança o projeto lê o custo-hora de quem está
+> nele. Por isso a tela de alocação **não grava nem mostra `custo_hora`**, e o
+> valor fica em zero. Antes de alguém preencher esse campo, a política precisa
+> mudar. Está escrito aqui para não ser descoberto depois.
+
+### 1b · `pessoa_le` não faz o que promete — **defeito achado, a corrigir**
+
+A política diz, no próprio comentário, *"o resto da equipe vê a lista
+interna"*. Ela não faz isso. O `exists` dela consulta `pessoa_papel`, que tem
+RLS própria (`pessoa_id = app.pessoa_atual() or é_proprietario()`), então para
+quem não é proprietário o `exists` só pode ser verdadeiro para si mesmo — e a
+política inteira desaba para `id = app.pessoa_atual()`.
+
+Medido em `gestplan_teste`: o gerente enxerga **uma** pessoa, ele mesmo. Sem
+RLS, o mesmo `exists` dá verdadeiro.
+
+Passou despercebido porque só existe um usuário, e ele é o proprietário, para
+quem `é_proprietario()` atalha a condição. Com dez pessoas dentro, quem não for
+o dono vai ver:
+
+- **Equipe** — só a si mesmo;
+- **Tarefas** — a coluna Responsável em branco, e o seletor oferecendo só ele;
+- **Comentários** — nenhuma pessoa para mencionar;
+- **Equipe do projeto** — só ele na lista de alocáveis;
+- **Painel** — capacidade sempre vazia, porque `vw_capacidade` junta com
+  `pessoa`.
+
+Correção: uma função `security definer` em `app` que responda "esta pessoa tem
+papel em alguma empresa que eu alcanço?" sem passar pela RLS de
+`pessoa_papel` — nos moldes de `app.empresas_visiveis()`. Precisa de migração
+nova e dos testes correspondentes em `07_alocacao.sql`.
+
+### 2 · Notificação
+
+Hoje nada procura ninguém. Um sistema que só responde quando é aberto é
+consultado uma vez e esquecido — e esse é o maior risco de adoção com dez
+pessoas. Prazo virando, parecer pedido, chamado novo na fila do TI.
+
+Tabela `notificacao` pronta. Precisa de Edge Function para o envio (a chave de
+serviço não desce para o navegador) e de uma preferência por pessoa.
+
+### 3 · Fase 2 — tempo
+
+Calendário de trabalho, motor de CPM, Gantt, marcos e linha de base. Já
+planejado. `calendario`, `calendario_excecao`, `linha_base` e
+`tarefa_dependencia` estão no banco; os feriados já são semeados por
+`app.semear_feriados`. **A linha de base é o que enche a curva S.**
+
+`vw_agenda` também espera aqui: ela é a fonte do calendário e do iCal.
+
+### 4 · Parcela: regra vira data
+
+As 401 parcelas importadas são regra ("40% na aprovação, 30 dias"). Falta a
+tela que, quando o evento acontece, grava o vencimento. **É o que enche o
+fluxo mensal** — e é o que transforma o sistema em previsão de caixa.
+
+### 5 · Medição → equipa o tipo Obra
+
+`usa_medicao` já é `true` em Obra e `mede_avanco_por` já é `'MEDICAO'`. Sem as
+telas de `medicao` e `medicao_item`, o avanço de uma obra não tem de onde sair.
+
+### 6 · Recorrência → equipa o tipo Manutenção
+
+`usa_recorrencia` já é `true`. Falta o que gera a próxima ocorrência quando a
+anterior fecha.
+
+### 7 · Contrato e fornecedor → equipa o tipo Contrato
+
+`contrato`, `contrato_aditivo` e `fornecedor` existem e não têm tela. É também
+a base do portal do fornecedor, que é pós-virada.
+
+### 8 · Ocorrência e risco
+
+A tabela existe. É o que separa acompanhar de gerenciar: o que pode dar errado,
+quem cuida, o que foi feito.
+
+### 9 · Tempo de fase
+
+O dado já está sendo gravado em `projeto_fase_hist` desde o primeiro dia e
+nunca foi mostrado. "Viabilidade leva em média 40 dias" é o número que muda
+decisão, e custa uma view e um gráfico — nenhuma coluna nova.
+
+### 10 · Relatório em PDF
+
+Fase 4. Todo gráfico já tem "ver tabela"; o PDF é a mesma tabela impressa.
+
+## Duas dívidas que não são funcionalidade
+
+- **`gestplan-homolog` não existe.** Tudo foi testado contra produção,
+  inclusive por agente de navegador — o que já custou um preço trocado uma vez.
+  Enquanto for assim, todo teste é risco.
+- **A porta do chamado anônimo aceita cerca de 30 pedidos por hora** variando o
+  e-mail. Antes de divulgar o endereço para fora da empresa: captcha ou limite
+  por IP.
+
+## A regra que segura tudo isto
+
+Nada aqui pode virar `if (tipo === 'OBRA')`. Medição é `usa_medicao`,
+recorrência é `usa_recorrencia`, e as chaves já estão gravadas com o valor
+certo em cada tipo. O que falta é a tela obedecer.

@@ -1450,3 +1450,144 @@ export async function eu(): Promise<Pessoa | null> {
   erro('Não foi possível identificar o usuário', error)
   return (data as Pessoa) ?? null
 }
+
+// -----------------------------------------------------------------------------
+// Alocação — quem está em que projeto, e com quanto do seu tempo
+// -----------------------------------------------------------------------------
+//
+// A tabela `alocacao` existia desde a primeira migração e nenhuma tela escrevia
+// nela. Era por isso, e só por isso, que o gráfico de capacidade do painel
+// vinha vazio: faltava dado, não código.
+//
+// CUSTO_HORA FICA DE FORA, DE PROPÓSITO. A coluna existe em `alocacao` e em
+// `pessoa`, mas a política dessas tabelas é `pode_ver_interno` — quem alcança o
+// projeto lê o custo-hora de quem está nele. Enquanto isso não passar por
+// `pode_ver_valores`, esta tela não grava nem mostra o campo, e ele fica em
+// zero. Dinheiro tem porta própria; esta ainda não é.
+
+export type Alocacao = {
+  id: string
+  projeto_id: string
+  pessoa_id: string
+  pessoa_nome: string
+  papel: string | null
+  percentual_dedicacao: number
+  data_inicio: string | null
+  data_fim: string | null
+  ativo: boolean
+  /** Só vem preenchido em `minhasAlocacoes`, que atravessa projetos. */
+  projeto_codigo?: string
+  projeto_nome?: string
+}
+
+const CAMPOS_ALOCACAO =
+  'id, projeto_id, pessoa_id, papel, percentual_dedicacao, data_inicio, data_fim, ativo'
+
+/** Achata o `pessoa(nome)` que o PostgREST devolve aninhado. */
+function comNome(linha: Record<string, unknown>): Alocacao {
+  const pessoa = linha.pessoa as { nome: string } | null
+  const { pessoa: _, ...resto } = linha
+  return { ...(resto as Omit<Alocacao, 'pessoa_nome'>), pessoa_nome: pessoa?.nome ?? '—' }
+}
+
+export async function alocacoesDoProjeto(projetoId: string): Promise<Alocacao[]> {
+  const { data, error } = await supabase
+    .from('alocacao')
+    .select(`${CAMPOS_ALOCACAO}, pessoa(nome)`)
+    .eq('projeto_id', projetoId)
+    .order('ativo', { ascending: false })
+  erro('Não foi possível carregar a equipe do projeto', error)
+  return (data ?? []).map((l) => comNome(l as unknown as Record<string, unknown>))
+}
+
+/** As alocações de uma pessoa, atravessando os projetos que ela alcança. */
+export async function minhasAlocacoes(pessoaId: string): Promise<Alocacao[]> {
+  const { data, error } = await supabase
+    .from('alocacao')
+    .select(`${CAMPOS_ALOCACAO}, pessoa(nome), projeto!inner(codigo, nome, arquivado_em)`)
+    .eq('pessoa_id', pessoaId)
+    .eq('ativo', true)
+    .is('projeto.arquivado_em', null)
+  erro('Não foi possível carregar as suas alocações', error)
+
+  return (data ?? []).map((l) => {
+    const linha = l as unknown as Record<string, unknown>
+    const p = linha.projeto as { codigo: string; nome: string }
+    const { projeto: _, ...resto } = linha
+    return { ...comNome(resto), projeto_codigo: p.codigo, projeto_nome: p.nome }
+  })
+}
+
+export type AlocacaoEdicao = {
+  projeto_id: string
+  pessoa_id: string
+  papel: string | null
+  percentual_dedicacao: number
+  data_inicio: string | null
+  data_fim: string | null
+}
+
+export async function alocar(a: AlocacaoEdicao): Promise<string> {
+  const { data, error } = await supabase.from('alocacao').insert(a).select('id').single()
+  erroDeEscrita('Não foi possível alocar', error)
+  return (data as { id: string }).id
+}
+
+/** Devolve quantas linhas mudaram: zero é a RLS recusando em silêncio. */
+export async function atualizarAlocacao(
+  id: string,
+  dados: Partial<AlocacaoEdicao> & { ativo?: boolean },
+): Promise<number> {
+  const { data, error } = await supabase.from('alocacao').update(dados).eq('id', id).select('id')
+  erroDeEscrita('Não foi possível salvar a alocação', error)
+  return (data ?? []).length
+}
+
+export async function desalocar(id: string): Promise<number> {
+  const { data, error } = await supabase.from('alocacao').delete().eq('id', id).select('id')
+  erroDeEscrita('Não foi possível tirar a pessoa do projeto', error)
+  return (data ?? []).length
+}
+
+// -----------------------------------------------------------------------------
+// Meu trabalho — as tarefas de uma pessoa, em todos os projetos
+// -----------------------------------------------------------------------------
+//
+// Não usa `vw_agenda`, e a razão é medida: aquela view exige
+// `data_inicio_prev is not null`, porque nasceu para alimentar o calendário e o
+// iCal da Fase 2. A maior parte das tarefas importadas do desktop não tem data
+// — pela agenda, a tela abriria quase vazia e pareceria quebrada. Aqui a
+// pergunta é outra: o que é meu, com data ou sem.
+
+export type MinhaTarefa = Tarefa & {
+  projeto_codigo: string
+  projeto_nome: string
+  projeto_cor: string
+}
+
+export async function minhasTarefas(pessoaId: string): Promise<MinhaTarefa[]> {
+  const { data, error } = await supabase
+    .from('tarefa')
+    .select(
+      'id, projeto_id, etapa_id, pai_id, codigo, nome, responsavel_id, status, marco,' +
+        ' data_inicio_prev, data_fim_prev, data_inicio_real, data_fim_real,' +
+        ' percentual_concluido, ordem,' +
+        ' projeto!inner(codigo, nome, arquivado_em, tipo_projeto!inner(cor))',
+    )
+    .eq('responsavel_id', pessoaId)
+    .neq('status', 'CANCELADA')
+    .is('projeto.arquivado_em', null)
+  erro('Não foi possível carregar as suas tarefas', error)
+
+  return (data ?? []).map((l) => {
+    const linha = l as unknown as Record<string, unknown>
+    const p = linha.projeto as { codigo: string; nome: string; tipo_projeto: { cor: string } }
+    const { projeto: _, ...tarefa } = linha
+    return {
+      ...(tarefa as Tarefa),
+      projeto_codigo: p.codigo,
+      projeto_nome: p.nome,
+      projeto_cor: p.tipo_projeto.cor,
+    }
+  })
+}

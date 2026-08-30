@@ -5,6 +5,7 @@ import { eu, vincularMeuAcesso, type Pessoa } from './lib/banco'
 import { Entrar } from './paginas/Entrar'
 import { FronteiraDeErro } from './componentes/FronteiraDeErro'
 import { Painel } from './paginas/Painel'
+import { MeuTrabalho } from './paginas/MeuTrabalho'
 import { Chamados } from './paginas/Chamados'
 import { Conta } from './paginas/Conta'
 import { ChamadoPublico } from './paginas/ChamadoPublico'
@@ -18,10 +19,11 @@ import { Avaliacao } from './paginas/Avaliacao'
 import { Empresas } from './paginas/Empresas'
 import { Equipe } from './paginas/Equipe'
 
-type Pagina = 'painel' | 'carteira' | 'chamados' | 'empresas' | 'equipe' | 'conta'
+type Pagina = 'painel' | 'meu' | 'carteira' | 'chamados' | 'empresas' | 'equipe' | 'conta'
 
 const PAGINAS: { chave: Pagina; nome: string }[] = [
   { chave: 'painel', nome: 'Painel' },
+  { chave: 'meu', nome: 'Meu trabalho' },
   { chave: 'carteira', nome: 'Carteira' },
   { chave: 'chamados', nome: 'Chamados' },
   { chave: 'empresas', nome: 'Empresas' },
@@ -177,6 +179,21 @@ export function App() {
             />
           ) : (
             <Painel aoAbrir={setProjetoAberto} />
+          ))}
+
+        {pagina === 'meu' &&
+          (projetoAberto ? (
+            <Projeto
+              id={projetoAberto}
+              aoVoltar={() => setProjetoAberto(null)}
+              aoEditar={() => setEditando({ id: projetoAberto })}
+              aoAbrirEtapas={() => setEtapasDe(projetoAberto)}
+              aoAbrirTarefas={() => setTarefasDe(projetoAberto)}
+              aoAbrirPontuacao={() => setPontuacaoDe(projetoAberto)}
+              aoAbrirAvaliacao={() => setAvaliacaoDe(projetoAberto)}
+            />
+          ) : (
+            <MeuTrabalho aoAbrir={setProjetoAberto} />
           ))}
 
         {pagina === 'chamados' &&

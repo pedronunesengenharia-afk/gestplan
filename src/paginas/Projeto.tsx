@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import {
   etapasDoProjeto, eu as carregarEu, pessoas, pontuacaoDoProjeto,
-  projeto as carregarProjeto, tarefasDoProjeto, tipoDeProjeto,
+  possoEditarProjeto, projeto as carregarProjeto, tarefasDoProjeto, tipoDeProjeto,
   type Etapa, type LinhaPontuacao, type Pessoa,
   type Projeto as ProjetoDado, type Tarefa, type TipoProjeto,
 } from '../lib/banco'
 import { CamposDoTipo } from '../componentes/CamposDoTipo'
 import { AcompanhamentoDoProjeto } from '../componentes/AcompanhamentoDoProjeto'
+import { EquipeDoProjeto } from '../componentes/EquipeDoProjeto'
 import { ConversaEArquivos } from '../componentes/ConversaEArquivos'
 import { EsqueletoDeTabela } from '../componentes/Esqueleto'
 import { emOrdemDaArvore } from '../lib/arvore'
@@ -38,6 +39,7 @@ export function Projeto({
   const [equipe, setEquipe] = useState<Map<string, Pessoa>>(new Map())
   const [listaEquipe, setListaEquipe] = useState<Pessoa[]>([])
   const [minhaPessoaId, setMinhaPessoaId] = useState<string | null>(null)
+  const [soLeitura, setSoLeitura] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
 
@@ -52,13 +54,14 @@ export function Projeto({
       setProjeto(p)
       if (!p) return
 
-      const [t, es, ts, pts, gente, quemSouEu] = await Promise.all([
+      const [t, es, ts, pts, gente, quemSouEu, podeEditar] = await Promise.all([
         tipoDeProjeto(p.tipo_projeto_id),
         etapasDoProjeto(p.id),
         tarefasDoProjeto(p.id),
         pontuacaoDoProjeto(p.id),
         pessoas(),
         carregarEu(),
+        possoEditarProjeto(p.id),
       ])
       if (!vivo) return
       setTipo(t)
@@ -68,6 +71,7 @@ export function Projeto({
       setEquipe(new Map(gente.map((q) => [q.id, q])))
       setListaEquipe(gente)
       setMinhaPessoaId(quemSouEu?.id ?? null)
+      setSoLeitura(!podeEditar)
     }
 
     buscar()
@@ -164,6 +168,12 @@ export function Projeto({
           <AcompanhamentoDoProjeto projeto={projeto} etapas={etapas} tarefas={tarefas} />
         </section>
       )}
+
+      <EquipeDoProjeto
+        projetoId={projeto.id}
+        pessoasDisponiveis={listaEquipe}
+        soLeitura={soLeitura}
+      />
 
       <section className="secao">
         <h2>

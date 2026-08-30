@@ -114,13 +114,17 @@ e `posso_assinar`. A tela pergunta; não reescreve a regra em TypeScript.
 rodar_testes.bat
 ```
 
-Apaga o banco de teste, aplica as migrações e roda as três suítes — 99
+Apaga o banco de teste, aplica as migrações e roda as sete suítes — 183
 verificações:
 
 - `testes/01_regras.sql` — 40 de regra de negócio
 - `testes/02_permissao.sql` — 41 de permissão, uma por papel
 - `testes/03_permissao_fase1.sql` — 18 das regras que a Fase 1 destapou
   (dinheiro da EAP, quem assina parecer, quem edita comentário alheio)
+- `testes/04_chamado_e_acesso.sql` — 17 do chamado e do vínculo por e-mail
+- `testes/05_chamado_publico.sql` — 23 da porta sem login
+- `testes/06_modelo_de_etapas.sql` — 22 do modelo de etapas e do prazo em dias úteis
+- `testes/07_alocacao.sql` — 22 de alocação e capacidade
 
 **A suíte de permissão roda antes de todo deploy.** Ela já pegou dois
 vazamentos que nenhum teste de tela pegaria. Ao acrescentar tabela, papel ou
