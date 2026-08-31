@@ -26,6 +26,16 @@
   font: inherit; text-align: left; background: none; border: none;
   color: #8FB0B9; padding: var(--e2) var(--e3); border-radius: var(--raio);
   cursor: pointer; border-left: 2px solid transparent;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--e2);
+}
+
+/* O contador de avisos não lidos. Laranja porque é a cor de sinal do sistema —
+   a mesma do foco e da fase que está travando. Some quando zera: contador em
+   zero é ruído que ensina a ignorar o contador. */
+.selo-contador {
+  background: var(--laranja); color: #FFF;
+  font-family: var(--fonte-dado); font-size: .64rem; line-height: 1;
+  padding: .18rem .32rem; border-radius: 99px; min-width: 1.1rem; text-align: center;
 }
 .menu button:hover { color: #EAF2F4; background: rgba(255,255,255,.04); }
 .menu button[aria-current='page'] {
@@ -480,6 +490,45 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
 
 /* A faixa de indicadores desta tela precisa do respiro que o painel tem. */
 .painel--numeros { margin-bottom: var(--e5); }
+
+/* -------------------------------------------------------------------------
+   Caixa de avisos
+   ------------------------------------------------------------------------- */
+.lista-avisos { list-style: none; margin: 0; padding: 0; }
+
+.aviso-item {
+  display: flex; align-items: flex-start; gap: var(--e3);
+  padding: var(--e3) 0; border-bottom: 1px solid var(--linha);
+}
+.aviso-item:last-child { border-bottom: none; }
+
+/* Lido continua à vista, esmaecido — sumir seria perder o registro de que
+   aquilo aconteceu, que é metade do valor de uma caixa de avisos. */
+.aviso-item--lido .aviso-titulo { color: var(--tinta-2); font-weight: 400; }
+.aviso-item--lido .aviso-texto  { color: var(--apagado); }
+
+.aviso-corpo {
+  flex: 1; min-width: 0; font: inherit; text-align: left; cursor: pointer;
+  background: none; border: none; padding: 0;
+  display: flex; flex-direction: column; gap: var(--e1);
+}
+.aviso-corpo:hover .aviso-titulo { color: var(--laranja); }
+
+.aviso-titulo { font-weight: 600; color: var(--tinta); }
+.aviso-texto  { color: var(--tinta-2); font-size: .85rem; }
+
+/* O ponto do não lido: a lista não depende só do peso da fonte para separar
+   lido de não lido — quem imprime em preto e branco também precisa ver. */
+.aviso-ponto {
+  display: inline-block; width: .42rem; height: .42rem; border-radius: 50%;
+  background: var(--laranja); margin-right: var(--e2); vertical-align: middle;
+}
+
+.aviso-lado {
+  display: flex; align-items: center; gap: var(--e2); flex-shrink: 0;
+  font-size: .7rem; color: var(--apagado);
+}
+.aviso-lado .marca-etapa { margin-left: 0; }
 
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }

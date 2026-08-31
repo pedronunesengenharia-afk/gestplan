@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { ambiente, ehHomolog, ehProducao, refDoBanco, supabase } from './lib/supabase'
-import { eu, vincularMeuAcesso, type Pessoa } from './lib/banco'
+import { contarAvisosNaoLidos, eu, vincularMeuAcesso, type Pessoa } from './lib/banco'
 import { Entrar } from './paginas/Entrar'
 import { FronteiraDeErro } from './componentes/FronteiraDeErro'
 import { Painel } from './paginas/Painel'
 import { MeuTrabalho } from './paginas/MeuTrabalho'
+import { Avisos } from './paginas/Avisos'
 import { Chamados } from './paginas/Chamados'
 import { Conta } from './paginas/Conta'
 import { ChamadoPublico } from './paginas/ChamadoPublico'
@@ -19,11 +20,12 @@ import { Avaliacao } from './paginas/Avaliacao'
 import { Empresas } from './paginas/Empresas'
 import { Equipe } from './paginas/Equipe'
 
-type Pagina = 'painel' | 'meu' | 'carteira' | 'chamados' | 'empresas' | 'equipe' | 'conta'
+type Pagina = 'painel' | 'meu' | 'avisos' | 'carteira' | 'chamados' | 'empresas' | 'equipe' | 'conta'
 
 const PAGINAS: { chave: Pagina; nome: string }[] = [
   { chave: 'painel', nome: 'Painel' },
   { chave: 'meu', nome: 'Meu trabalho' },
+  { chave: 'avisos', nome: 'Avisos' },
   { chave: 'carteira', nome: 'Carteira' },
   { chave: 'chamados', nome: 'Chamados' },
   { chave: 'empresas', nome: 'Empresas' },
@@ -42,6 +44,7 @@ export function App() {
   const [publico, setPublico] = useState(
     new URLSearchParams(window.location.search).has('chamado'),
   )
+  const [naoLidos, setNaoLidos] = useState(0)
   const [projetoAberto, setProjetoAberto] = useState<string | null>(null)
   // { id: null } = projeto novo; { id } = editando um existente.
   const [editando, setEditando] = useState<{ id: string | null } | null>(null)
@@ -77,6 +80,24 @@ export function App() {
       .then(setPessoa)
       .catch(() => setPessoa(null))
   }, [sessao])
+
+  // O contador do menu. Recarrega a cada minuto porque quem escreve aviso e um
+  // gatilho no banco, disparado por outra pessoa — nao ha nada nesta sessao
+  // para observar. Um minuto e frequente o bastante para parecer vivo e raro o
+  // bastante para nao pesar.
+  const recontarAvisos = () => {
+    contarAvisosNaoLidos().then(setNaoLidos).catch(() => setNaoLidos(0))
+  }
+
+  useEffect(() => {
+    if (!pessoa) {
+      setNaoLidos(0)
+      return
+    }
+    recontarAvisos()
+    const relogio = setInterval(recontarAvisos, 60_000)
+    return () => clearInterval(relogio)
+  }, [pessoa])
 
   if (publico) {
     return (
@@ -126,6 +147,11 @@ export function App() {
               aria-current={pagina === p.chave ? 'page' : undefined}
             >
               {p.nome}
+              {p.chave === 'avisos' && naoLidos > 0 && (
+                <span className="selo-contador" aria-label={`${naoLidos} não lidos`}>
+                  {naoLidos > 99 ? '99+' : naoLidos}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -194,6 +220,21 @@ export function App() {
             />
           ) : (
             <MeuTrabalho aoAbrir={setProjetoAberto} />
+          ))}
+
+        {pagina === 'avisos' &&
+          (projetoAberto ? (
+            <Projeto
+              id={projetoAberto}
+              aoVoltar={() => setProjetoAberto(null)}
+              aoEditar={() => setEditando({ id: projetoAberto })}
+              aoAbrirEtapas={() => setEtapasDe(projetoAberto)}
+              aoAbrirTarefas={() => setTarefasDe(projetoAberto)}
+              aoAbrirPontuacao={() => setPontuacaoDe(projetoAberto)}
+              aoAbrirAvaliacao={() => setAvaliacaoDe(projetoAberto)}
+            />
+          ) : (
+            <Avisos aoAbrirProjeto={setProjetoAberto} aoMudarContagem={recontarAvisos} />
           ))}
 
         {pagina === 'chamados' &&

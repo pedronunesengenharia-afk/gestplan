@@ -94,14 +94,37 @@ seguem atrás de `pode_ver_interno`. Hoje estão todos em zero e nenhuma tela os
 escreve, então não vazam nada — mas a porta é a mesma, e antes de qualquer
 apontamento de hora existir eles precisam do mesmo tratamento.
 
-### 2 · Notificação
+### 2 · Notificação — **dentro do sistema, feito**
 
-Hoje nada procura ninguém. Um sistema que só responde quando é aberto é
-consultado uma vez e esquecido — e esse é o maior risco de adoção com dez
-pessoas. Prazo virando, parecer pedido, chamado novo na fila do TI.
+Quatro gatilhos, todos tirados de dado que já existe e nenhum deles conhecendo
+o nome de um tipo de projeto:
 
-Tabela `notificacao` pronta. Precisa de Edge Function para o envio (a chave de
-serviço não desce para o navegador) e de uma preferência por pessoa.
+| evento | de onde sai |
+|---|---|
+| uma tarefa ficou sua | `tarefa.responsavel_id` |
+| mencionaram ou responderam você | `comentario.mencionados`, `responde_id` |
+| um parecer ficou pendente com você | `tipo_fase.exige_setores` + papel AVALIADOR |
+| seu projeto mudou de fase | `projeto.gerente_id` |
+
+`notificacao` continua **sem política de INSERT**, e é o que mais importa aqui:
+a única escrita possível é `app.notificar()`, `security definer`, chamada de
+dentro dos gatilhos. Ninguém forja aviso em nome de outra pessoa a partir do
+navegador. A caixa é privada até do proprietário.
+
+Tela **Avisos** no menu, com contador de não lidos que reconfere de minuto em
+minuto — quem escreve é um gatilho no banco, disparado por outra pessoa, e não
+há nada nesta sessão para observar.
+
+**Falta o e-mail.** Aviso dentro do sistema ainda exige abrir o sistema. O
+envio precisa de Edge Function (a chave de serviço não desce para o navegador),
+de um provedor de e-mail e de uma preferência por pessoa — quem quer receber o
+quê. É o próximo passo deste item, e o que fecha a frase "o sistema procura a
+pessoa".
+
+**Falta também o prazo virando.** Esse não sai de gatilho: nada acontece no
+banco quando um prazo vence sozinho. Precisa de `pg_cron` ou de um disparo
+externo diário. Enquanto não existir, quem cobre esse buraco é a tela
+**Meu trabalho**, que separa atrasadas de para hoje.
 
 ### 3 · Fase 2 — tempo
 

@@ -1616,3 +1616,76 @@ export async function minhasTarefas(pessoaId: string): Promise<MinhaTarefa[]> {
     }
   })
 }
+
+// -----------------------------------------------------------------------------
+// Notificacao — o sistema procurando a pessoa
+// -----------------------------------------------------------------------------
+//
+// A tela SO LE e marca lida. Quem escreve sao os gatilhos da migracao
+// 20260830140000, que rodam como dono da funcao: `notificacao` nao tem policy
+// de INSERT, e e assim que tem de ser. Se um dia bater a vontade de "abrir uma
+// policy so para o front conseguir escrever", a resposta e nao — seria abrir a
+// porta para forjar aviso em nome de outra pessoa.
+//
+// Nao ha funcao para ler a caixa alheia porque nao existe caixa alheia: a
+// politica e `pessoa_id = app.pessoa_atual()`, sem excecao nem para o dono.
+
+export type Notificacao = {
+  id: string
+  tipo: string
+  titulo: string
+  corpo: string | null
+  projeto_id: string | null
+  tarefa_id: string | null
+  lida_em: string | null
+  criado_em: string
+}
+
+const CAMPOS_AVISO = 'id, tipo, titulo, corpo, projeto_id, tarefa_id, lida_em, criado_em'
+
+export async function meusAvisos(limite = 100): Promise<Notificacao[]> {
+  const { data, error } = await supabase
+    .from('notificacao')
+    .select(CAMPOS_AVISO)
+    .order('criado_em', { ascending: false })
+    .limit(limite)
+  erro('Nao foi possivel carregar os avisos', error)
+  return (data ?? []) as Notificacao[]
+}
+
+/** So o numero, para o contador do menu — nao traz as linhas. */
+export async function contarAvisosNaoLidos(): Promise<number> {
+  const { count, error } = await supabase
+    .from('notificacao')
+    .select('id', { count: 'exact', head: true })
+    .is('lida_em', null)
+  erro('Nao foi possivel contar os avisos', error)
+  return count ?? 0
+}
+
+export async function marcarAvisoLido(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('notificacao')
+    .update({ lida_em: new Date().toISOString() })
+    .eq('id', id)
+  erroDeEscrita('Nao foi possivel marcar o aviso como lido', error)
+}
+
+export async function marcarTodosLidos(): Promise<void> {
+  const { error } = await supabase
+    .from('notificacao')
+    .update({ lida_em: new Date().toISOString() })
+    .is('lida_em', null)
+  erroDeEscrita('Nao foi possivel marcar os avisos como lidos', error)
+}
+
+/** Limpa o que ja foi lido. O nao lido fica: ninguem apaga o que nao viu. */
+export async function limparAvisosLidos(): Promise<number> {
+  const { data, error } = await supabase
+    .from('notificacao')
+    .delete()
+    .not('lida_em', 'is', null)
+    .select('id')
+  erroDeEscrita('Nao foi possivel limpar os avisos', error)
+  return (data ?? []).length
+}
