@@ -550,6 +550,56 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
 }
 .aviso-lado .marca-etapa { margin-left: 0; }
 
+/* -------------------------------------------------------------------------
+   Meus afazeres — a lista pessoal
+   ------------------------------------------------------------------------- */
+
+/* Uma linha so para anotar. O atrito entre lembrar e anotar e o que decide se
+   uma lista de afazeres e usada; data, prioridade e projeto ficam do lado,
+   opcionais, sem abrir formulario. */
+.afazer-caixa {
+  display: flex; flex-wrap: wrap; gap: var(--e2); margin-bottom: var(--e3);
+}
+.afazer-caixa .campo { flex: 1 1 14rem; }
+.afazer-caixa .campo--prazo      { flex: 0 0 9.5rem; }
+.afazer-caixa .campo--prioridade { flex: 0 0 7rem; }
+.afazer-caixa .campo--projeto    { flex: 0 1 13rem; min-width: 0; }
+.afazer-caixa .botao { flex: none; }
+
+.afazer-grupo { margin-top: var(--e4); }
+.afazer-grupo h3 {
+  font-size: .78rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--apagado); font-weight: 600; margin-bottom: var(--e1);
+}
+
+.lista-afazeres { list-style: none; margin: 0; padding: 0; }
+.afazer {
+  display: flex; align-items: flex-start; gap: var(--e3);
+  padding: var(--e2) 0; border-bottom: 1px solid var(--linha-suave);
+}
+.afazer:last-child { border-bottom: none; }
+.afazer-marca input { accent-color: var(--acao); width: 1.05rem; height: 1.05rem; margin-top: .2rem; }
+.afazer-corpo { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--e2); }
+.afazer-titulo {
+  font: inherit; background: none; border: none; padding: 0; cursor: text;
+  color: var(--tinta); text-align: left;
+}
+.afazer-titulo:hover { color: var(--acao); }
+.afazer-marcas { display: inline-flex; align-items: center; gap: var(--e2); font-size: .72rem; color: var(--apagado); }
+
+/* Feito continua a vista, riscado: some-lo perderia o registro do que foi
+   feito hoje, que e metade do valor de uma lista. */
+.afazer--feito .afazer-titulo { text-decoration: line-through; color: var(--apagado); }
+.afazer--feito .afazer-marcas { opacity: .6; }
+
+.prazo-vencido { color: var(--st-critico); font-weight: 500; }
+
+/* O apagar so aparece quando a linha e apontada: uma lista cheia de "x" pede
+   para ser apagada por engano. */
+.afazer-tirar { margin: 0; font-size: 1.1rem; line-height: 1; opacity: 0; color: var(--apagado); }
+.afazer:hover .afazer-tirar, .afazer-tirar:focus-visible { opacity: 1; }
+.afazer-tirar:hover { color: var(--vermelho-tinta); }
+
 @media (max-width: 780px) {
   .app { grid-template-columns: 1fr; }
   .lateral { flex-direction: row; align-items: center; gap: var(--e4); padding: var(--e3) var(--e4); flex-wrap: wrap; }

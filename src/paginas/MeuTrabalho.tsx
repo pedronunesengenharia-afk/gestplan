@@ -4,6 +4,7 @@ import {
   STATUS_TAREFA, type Alocacao, type MinhaTarefa, type Pessoa,
 } from '../lib/banco'
 import { FichaDeNumero } from '../componentes/Grafico'
+import { MeusAfazeres } from '../componentes/MeusAfazeres'
 import { EsqueletoDeTabela } from '../componentes/Esqueleto'
 import { data as formatarData } from '../lib/formato'
 
@@ -196,6 +197,8 @@ export function MeuTrabalho({ aoAbrir }: { aoAbrir: (projetoId: string) => void 
           compromisso assumido é maior que o tempo que existe.
         </div>
       )}
+
+      <MeusAfazeres pessoaId={pessoa.id} />
 
       {abertas.length === 0 ? (
         <p className="vazio">

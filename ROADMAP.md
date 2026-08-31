@@ -189,6 +189,22 @@ salvar.
 ouro proíbe. Foi preservado sem mudança para esta migração tratar de uma coisa
 só. O lugar disso é uma coluna em `tipo_projeto` dizendo que papéis editam.
 
+### 1d · Lista pessoal de afazeres — **feito**
+
+Migração `20260830210000`. Tabela `afazer`: lembrete que não é escopo de
+projeto — "ligar para o fornecedor", "revisar a ata". Não entra em cronograma
+nem conta avanço, porque forçar isso em `tarefa` sujaria o percentual de todo
+projeto e é assim que um cronograma deixa de significar alguma coisa.
+
+**Privada de verdade, inclusive do proprietário** — a política é
+`pessoa_id = app.pessoa_atual()`, sem exceção, como a de `notificacao`. É
+decisão de produto: uma lista pessoal que o chefe lê deixa de ser usada para o
+que serve e vira vitrine. Quem quiser acompanhar o trabalho de alguém tem a
+tarefa de projeto, que é pública para a equipe e é onde o combinado mora.
+
+Vive dentro do **Meu trabalho**, não numa tela própria: duas telas para a
+pergunta "o que é meu" é como se perde item.
+
 ## Duas dívidas que não são funcionalidade
 
 - **`gestplan-homolog` não existe.** Tudo foi testado contra produção,

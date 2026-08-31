@@ -1723,3 +1723,103 @@ export async function pessoasDoProjeto(projetoId: string): Promise<Pessoa[]> {
   erro('Nao foi possivel carregar a equipe do projeto', error)
   return (data ?? []) as Pessoa[]
 }
+
+// -----------------------------------------------------------------------------
+// Afazer — a lista pessoal
+// -----------------------------------------------------------------------------
+//
+// NAO e tarefa de projeto: nao entra em cronograma nem em avanco. E privada de
+// quem escreveu, inclusive do proprietario — a politica e
+// `pessoa_id = app.pessoa_atual()`, sem excecao, como a de `notificacao`.
+//
+// Por isso nao existe funcao para ler a lista de outra pessoa. Nao e omissao:
+// nao ha o que ler.
+
+export const PRIORIDADES_AFAZER = ['ALTA', 'NORMAL', 'BAIXA'] as const
+
+export type Afazer = {
+  id: string
+  titulo: string
+  detalhe: string | null
+  projeto_id: string | null
+  prazo: string | null
+  prioridade: string
+  feito_em: string | null
+  ordem: number
+  criado_em: string
+  /** Preenchido pela consulta, do embed — a tabela nao guarda. */
+  projeto_codigo?: string | null
+}
+
+const CAMPOS_AFAZER =
+  'id, titulo, detalhe, projeto_id, prazo, prioridade, feito_em, ordem, criado_em'
+
+export async function meusAfazeres(): Promise<Afazer[]> {
+  const { data, error } = await supabase
+    .from('afazer')
+    .select(`${CAMPOS_AFAZER}, projeto(codigo)`)
+    .order('ordem')
+    .order('criado_em')
+  erro('Nao foi possivel carregar os seus afazeres', error)
+
+  return (data ?? []).map((l) => {
+    const linha = l as unknown as Record<string, unknown>
+    const p = linha.projeto as { codigo: string } | null
+    const { projeto: _, ...resto } = linha
+    return { ...(resto as Afazer), projeto_codigo: p?.codigo ?? null }
+  })
+}
+
+export type AfazerEdicao = {
+  titulo: string
+  detalhe?: string | null
+  projeto_id?: string | null
+  prazo?: string | null
+  prioridade?: string
+  ordem?: number
+}
+
+/**
+ * Cria na PROPRIA lista.
+ *
+ * `pessoa_id` nao e parametro de proposito: quem decide de quem e o item e o
+ * banco, pelo `with check` da politica. Se a tela pudesse escolher, um dia
+ * escolheria errado.
+ */
+export async function criarAfazer(a: AfazerEdicao, pessoaId: string): Promise<string> {
+  const { data, error } = await supabase
+    .from('afazer')
+    .insert({ ...a, pessoa_id: pessoaId })
+    .select('id')
+    .single()
+  erroDeEscrita('Nao foi possivel criar o afazer', error)
+  return (data as { id: string }).id
+}
+
+export async function atualizarAfazer(
+  id: string,
+  dados: Partial<AfazerEdicao> & { feito_em?: string | null },
+): Promise<number> {
+  const { data, error } = await supabase.from('afazer').update(dados).eq('id', id).select('id')
+  erroDeEscrita('Nao foi possivel salvar o afazer', error)
+  return (data ?? []).length
+}
+
+export async function excluirAfazer(id: string): Promise<number> {
+  const { data, error } = await supabase.from('afazer').delete().eq('id', id).select('id')
+  erroDeEscrita('Nao foi possivel apagar o afazer', error)
+  return (data ?? []).length
+}
+
+/** So o que a escolha de projeto precisa: sem valor, sem pontuacao, sem fase. */
+export async function projetosParaEscolha(): Promise<
+  { id: string; codigo: string; nome: string }[]
+> {
+  const { data, error } = await supabase
+    .from('vw_projeto')
+    .select('id, codigo, nome')
+    .eq('ativo', true)
+    .order('codigo', { ascending: false })
+  erro('Nao foi possivel carregar os projetos', error)
+  return (data ?? []) as { id: string; codigo: string; nome: string }[]
+}
