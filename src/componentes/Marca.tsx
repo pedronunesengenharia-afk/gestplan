@@ -1,18 +1,22 @@
 /**
- * A marca, em SVG.
+ * A marca.
  *
- * Antes era um quadrado laranja com um furo — um marcador, não uma marca. A
- * prancheta pede o hexágono com o monograma GP e o gradiente que vai do azul
- * de confiança ao verde de ação, passando pelo teal de crescimento.
+ * O LOGOTIPO está fiel à prancheta: "GEST" no azul primário e "PLAN" em
+ * cinza, caixa alta, com a assinatura embaixo.
  *
- * É desenhado, não uma imagem: escala sem borrar, acompanha o tamanho da
- * fonte, e no tema escuro continua com a mesma cor — a marca não muda de cor
- * com o tema, senão deixa de ser marca.
+ * O SÍMBOLO é provisório, e está marcado como tal lá embaixo. O da prancheta é
+ * um hexágono de fitas dobradas onde o G e o P formam a silhueta; redesenhá-lo
+ * a partir de uma imagem deu duas versões parecidas-mas-erradas, e logotipo
+ * quase certo é pior que logotipo nenhum. O que está aqui é honesto no que é:
+ * hexágono, gradiente da marca, monograma na fonte da marca.
  *
- * O `id` do gradiente é único por instância porque a mesma página pode mostrar
- * a marca duas vezes (lateral e tela pública), e dois `defs` com o mesmo id
- * fazem o segundo herdar o primeiro — um bug que só aparece quando alguém põe
- * as duas na mesma tela.
+ * O logotipo é "GEST" no azul primário e "PLAN" em cinza, caixa alta, com a
+ * assinatura embaixo — como na prancheta. Na lateral escura as duas cores
+ * sobem de tom pelo CSS, porque #0056D2 sobre grafite não se lê.
+ *
+ * O `id` do gradiente é único por instância: a mesma página pode mostrar a
+ * marca duas vezes, e dois `defs` com o mesmo id fazem o segundo herdar o
+ * primeiro — um defeito que só aparece quando alguém põe as duas juntas.
  */
 
 import { useId } from 'react'
@@ -26,54 +30,57 @@ export function Marca({
   comAssinatura?: boolean
 }) {
   const id = useId()
-  const grad = `g-${id}`
-  const corte = `c-${id}`
+  const azulTeal = `at-${id}`
+  const hex = `hx-${id}`
 
   return (
     <div className={tamanho === 'grande' ? 'marca marca--grande' : 'marca'}>
       <svg viewBox="0 0 64 64" role="img" aria-label="GestPlan" focusable="false">
         <defs>
-          <linearGradient id={grad} x1="6" y1="58" x2="58" y2="6" gradientUnits="userSpaceOnUse">
+          {/* O gradiente da prancheta: azul de confiança, teal de crescimento,
+              verde de ação — nessa ordem, na diagonal. */}
+          <linearGradient id={azulTeal} x1="6" y1="58" x2="58" y2="6" gradientUnits="userSpaceOnUse">
             <stop offset="0" stopColor="#0056D2" />
-            <stop offset=".52" stopColor="#0097A7" />
+            <stop offset=".5" stopColor="#0097A7" />
             <stop offset="1" stopColor="#4CAF50" />
           </linearGradient>
 
-          {/* O monograma é VAZADO do hexágono, não desenhado por cima: assim a
-              marca funciona sobre qualquer fundo, claro ou escuro.
-
-              Letra de verdade, na fonte da marca, em vez de um desenho meu de
-              "G" e "P": num monograma de 27px na lateral, a diferença entre uma
-              letra bem desenhada e uma aproximação aparece — e a Urbanist já
-              está carregada. */}
-          <mask id={corte}>
+          {/* O monograma é VAZADO do hexágono: assim a marca assenta sobre
+              qualquer fundo, claro ou escuro, sem precisar de duas versões. */}
+          <mask id={hex}>
             <rect width="64" height="64" fill="#fff" />
             <text
-              x="32" y="33" fill="#000"
+              x="32" y="34" fill="#000"
               textAnchor="middle" dominantBaseline="central"
               fontFamily="var(--fonte-titulo)" fontWeight="800"
-              fontSize="30" letterSpacing="-1.5"
+              fontSize="29" letterSpacing="-1.5"
             >
               GP
             </text>
           </mask>
-      </defs>
+        </defs>
 
-        {/* Hexágono de pé, com canto levemente macio: a prancheta é de cantos
-            macios, e um vértice em ponta viva destoaria do resto do sistema. */}
+        {/* SÍMBOLO PROVISÓRIO, e é bom que fique escrito.
+            O da prancheta é um hexágono de fitas dobradas onde o G e o P
+            formam a própria silhueta. Redesenhei duas vezes a partir da imagem
+            e as duas ficaram parecidas-mas-erradas — e logotipo quase certo é
+            pior que logotipo nenhum, porque passa por certo.
+            Este aqui é honesto no que é: o hexágono e o gradiente da marca,
+            com o monograma na fonte da marca. Assim que o arquivo vetorial
+            existir em `public/marca.svg`, troque este bloco por um <img> e
+            apague este comentário. */}
         <path
-          d="M32 2.6 58.4 17.8a4.6 4.6 0 0 1 2.3 4v24.4a4.6 4.6 0 0 1-2.3 4L32 61.4
-             a4.6 4.6 0 0 1-4.6 0L5.6 50.2a4.6 4.6 0 0 1-2.3-4V21.8a4.6 4.6 0 0 1 2.3-4z"
-          fill={`url(#${grad})`}
-          mask={`url(#${corte})`}
+          d="M32 1.5 60 17.6v28.8L32 62.5 4 46.4V17.6z"
+          fill={`url(#${azulTeal})`}
+          mask={`url(#${hex})`}
         />
       </svg>
 
       <span className="marca-nome">
-        <b>Gest</b>Plan
-        {comAssinatura && (
-          <small>Gestão e Planejamento de Projetos</small>
-        )}
+        <span className="marca-logotipo">
+          <b>GEST</b><i>PLAN</i>
+        </span>
+        {comAssinatura && <small>Gestão e Planejamento de Projetos</small>}
       </span>
     </div>
   )

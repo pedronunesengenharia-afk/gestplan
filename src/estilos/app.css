@@ -16,18 +16,32 @@
 .marca { display: flex; align-items: center; gap: .6rem; }
 .marca svg { width: 1.7rem; height: 1.7rem; flex: none; }
 .marca-nome {
-  font-family: var(--fonte-titulo); font-weight: 500;
-  font-size: 1.15rem; letter-spacing: -.005em; line-height: 1.15;
+  font-family: var(--fonte-titulo);
+  line-height: 1.05;
 }
-/* "Gest" pesado, "Plan" leve — a hierarquia do logotipo da prancheta. Ali ela
-   e feita com duas cores; aqui, com peso e opacidade, porque a mesma marca
-   precisa assentar sobre a lateral escura e sobre a tela branca de entrada. */
-.marca-nome b { font-weight: 800; }
+/* O logotipo da prancheta: GEST no azul primario, PLAN em cinza, caixa alta.
+   Duas cores, nao dois pesos — foi a leitura errada da primeira tentativa. */
+.marca-logotipo {
+  display: block; font-size: 1.18rem; font-weight: 800;
+  letter-spacing: -.005em; text-transform: uppercase;
+}
+.marca-logotipo b { color: var(--azul); font-weight: 800; }
+.marca-logotipo i { color: var(--tinta-2); font-weight: 700; font-style: normal; }
+
 .marca-nome small {
   display: block;
-  font-family: var(--fonte-texto); font-weight: 400;
-  font-size: .6rem; letter-spacing: .045em; opacity: .68; margin-top: .12rem;
+  font-family: var(--fonte-texto); font-weight: 400; color: var(--apagado);
+  font-size: .62rem; letter-spacing: .01em; margin-top: .18rem;
+  text-transform: none;
 }
+
+/* Na lateral escura, #0056D2 sobre grafite nao se le e o cinza some. As duas
+   cores sobem de tom — a marca continua a mesma, o contraste e que muda. */
+/* Na lateral, a contraforma da marca e a propria lateral. */
+.lateral .marca { --superficie-marca: var(--petroleo); }
+.lateral .marca-logotipo b { color: #6FA8FF; }
+.lateral .marca-logotipo i { color: #CFD8DC; }
+.lateral .marca-nome small { color: #8FA6B2; }
 
 .marca--grande { gap: .8rem; }
 .marca--grande svg { width: 3.6rem; height: 3.6rem; }
@@ -83,7 +97,7 @@
   box-shadow: var(--sombra-cartao);
   padding: var(--e6);
 }
-.entrar .marca { color: var(--tinta); margin-bottom: var(--e4); }
+.entrar .marca { color: var(--tinta); margin-bottom: var(--e4); --superficie-marca: var(--superficie); }
 .entrar label { font-size: .85rem; color: var(--tinta-2); margin-bottom: calc(var(--e2) * -1); }
 .entrar .botao--acao { margin-top: var(--e2); padding: var(--e3) var(--e4); }
 

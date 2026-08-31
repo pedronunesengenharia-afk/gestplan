@@ -56,6 +56,11 @@
   --fundo:       #F5F5F5;   /* da prancheta */
   --superficie:  #FFFFFF;
   --superficie-2:#ECEFF1;
+  /* A contraforma da marca. NAO e `--superficie`: no tema escuro o vazado da
+     marca tem de continuar sendo o fundo de quem a exibe, e a lateral escura
+     nao usa a superficie do tema. Cada lugar que mostra a marca declara qual e
+     o fundo dela. */
+  --superficie-marca: #FFFFFF;
   --linha:       #CFD8DC;
   --linha-suave: #E3E8EA;
 
