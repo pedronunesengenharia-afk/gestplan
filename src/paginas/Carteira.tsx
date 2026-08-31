@@ -65,6 +65,19 @@ export function Carteira({
   const [frentes, setFrentes] = useState<string[]>([])
 
   const [erro, setErro] = useState<string | null>(null)
+  /**
+   * Os filtros comecam RECOLHIDOS no celular e abertos no computador.
+   *
+   * Seis campos de largura inteira empilhados ocupam a tela toda antes do
+   * primeiro projeto — medido no iPhone: ~600px de rolagem so de filtro. No
+   * computador eles cabem numa linha e nao atrapalham ninguem.
+   *
+   * A leitura e feita UMA vez, na montagem: quem gira o aparelho no meio do
+   * uso nao tem os filtros fechados na cara.
+   */
+  const [filtrosAbertos, setFiltrosAbertos] = useState(
+    () => typeof window === 'undefined' || window.innerWidth > 820,
+  )
   const [carregando, setCarregando] = useState(true)
 
   // As opções vêm do banco, nunca de uma lista escrita aqui.
@@ -207,7 +220,18 @@ export function Carteira({
 
       {visao === 'lista' && (
         <>
-          <div className="filtros">
+          <button
+            className="botao abrir-filtros"
+            onClick={() => setFiltrosAbertos(!filtrosAbertos)}
+            aria-expanded={filtrosAbertos}
+          >
+            {filtrosAbertos ? 'Esconder filtros' : 'Filtrar'}
+            {!filtrosAbertos && fichas.length > 0 && (
+              <span className="selo-contador">{fichas.length}</span>
+            )}
+          </button>
+
+          <div className={filtrosAbertos ? 'filtros' : 'filtros filtros--recolhidos'}>
             <input
               className="campo" type="search" placeholder="código ou nome"
               value={filtro.busca ?? ''}

@@ -163,6 +163,14 @@
   font: inherit; font-size: .78rem; background: none; border: none;
   color: var(--acao); cursor: pointer; padding: 0; text-decoration: underline;
 }
+/* No toque ele vira alvo de dedo: 20px de altura e menos da metade do piso de
+   44px, e "ver tabela" e justamente o que quem esta no celular mais usa —
+   grafico em tela pequena se le mal, tabela se le bem.
+   Vem DEPOIS da regra acima de proposito: media query nao acrescenta
+   especificidade, entao a ordem e que decide. */
+@media (pointer: coarse) {
+  .ver-tabela { min-height: 44px; padding: 0 var(--e2); }
+}
 
 /* Dica: some para quem pediu menos movimento. */
 .dica-grafico {

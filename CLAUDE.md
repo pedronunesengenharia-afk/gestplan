@@ -54,6 +54,31 @@ Consequência prática: a tela lê `tipo_projeto.usa_orcamento`,
 `tipo_fase.exige_setores`, `campo_definicao.tipo_dado` e se monta a partir
 disso. Ela não sabe o nome de nenhum tipo.
 
+## Tamanhos de tela
+
+O sistema é usado em computador, tablet e celular — Android e iOS. A quebra é
+em **820px**: acima, a lateral de sempre; abaixo, uma barra fixa em cima com a
+marca e outra embaixo com os destinos. 820 e não 768 porque o iPad de pé tem
+768, e com a lateral sobrariam 558px de conteúdo.
+
+Regras que não são gosto, e que já custaram defeito medido:
+
+- **`minmax(0, 1fr)` em coluna de grid que contém tabela.** `1fr` é
+  `minmax(auto, 1fr)`, e esse `auto` é o mínimo do conteúdo: uma tabela larga
+  estica a coluna e a **página inteira** passa a rolar de lado. Medido: 160px
+  na Carteira a 1280px.
+- **Campo com `font-size: 16px` no toque.** O Safari do iPhone dá zoom na
+  página quando o foco cai num campo menor que isso, e não volta. Não há como
+  desligar.
+- **`env(safe-area-inset-*)`** nas barras fixas, e `viewport-fit=cover` no
+  `index.html` — sem o segundo, o primeiro devolve zero.
+- **`100dvh`, nunca `100vh`** em tela cheia: no celular a barra do navegador
+  some e volta.
+- **Alvo de toque ≥ 44px** sob `@media (pointer: coarse)`.
+
+Mudou o layout? `node responsivo.mjs` mede sete tamanhos: rolagem horizontal da
+página, quem a causou, e alvos pequenos demais.
+
 ## Identidade
 
 A prancheta de marca é a fonte da verdade das cores, e ela vive em

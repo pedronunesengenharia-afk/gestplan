@@ -23,11 +23,20 @@ import { Marca } from './componentes/Marca'
 
 type Pagina = 'painel' | 'meu' | 'avisos' | 'carteira' | 'chamados' | 'empresas' | 'equipe' | 'conta'
 
-const PAGINAS: { chave: Pagina; nome: string }[] = [
-  { chave: 'painel', nome: 'Painel' },
-  { chave: 'meu', nome: 'Meu trabalho' },
-  { chave: 'avisos', nome: 'Avisos' },
-  { chave: 'carteira', nome: 'Carteira' },
+/**
+ * `principal` decide quem cabe na barra de baixo do celular.
+ *
+ * Oito destinos nao cabem no polegar. Os quatro marcados sao os que se usa no
+ * telefone — o que e meu, o que me chamaram, a carteira, o painel. Empresas,
+ * Equipe e Conta sao administracao: entram atras do "Mais".
+ *
+ * `curto` existe porque "Meu trabalho" nao cabe embaixo de um icone de 60px.
+ */
+const PAGINAS: { chave: Pagina; nome: string; curto?: string; principal?: boolean }[] = [
+  { chave: 'painel', nome: 'Painel', principal: true },
+  { chave: 'meu', nome: 'Meu trabalho', curto: 'Meu dia', principal: true },
+  { chave: 'avisos', nome: 'Avisos', principal: true },
+  { chave: 'carteira', nome: 'Carteira', principal: true },
   { chave: 'chamados', nome: 'Chamados' },
   { chave: 'empresas', nome: 'Empresas' },
   { chave: 'equipe', nome: 'Equipe' },
@@ -46,6 +55,8 @@ export function App() {
     new URLSearchParams(window.location.search).has('chamado'),
   )
   const [naoLidos, setNaoLidos] = useState(0)
+  // A folha do "Mais", no celular. No computador nunca abre: a lateral tem tudo.
+  const [maisAberto, setMaisAberto] = useState(false)
   const [projetoAberto, setProjetoAberto] = useState<string | null>(null)
   // { id: null } = projeto novo; { id } = editando um existente.
   const [editando, setEditando] = useState<{ id: string | null } | null>(null)
@@ -111,6 +122,20 @@ export function App() {
     )
   }
 
+  // Trocar de pagina fecha tudo que estava aberto por cima dela. Estava
+  // repetido no onClick de cada botao; agora e um lugar so, e a barra de baixo
+  // usa o mesmo.
+  const ir = (destino: Pagina) => {
+    setPagina(destino)
+    setProjetoAberto(null)
+    setEditando(null)
+    setEtapasDe(null)
+    setTarefasDe(null)
+    setPontuacaoDe(null)
+    setAvaliacaoDe(null)
+    setMaisAberto(false)
+  }
+
   if (carregando) return <div className="vazio">Carregando…</div>
   if (!sessao) return <Entrar aoAbrirChamado={() => setPublico(true)} />
 
@@ -126,6 +151,13 @@ export function App() {
           HOMOLOGAÇÃO · banco {refDoBanco} — os dados aqui são descartáveis
         </div>
       )}
+      {/* Barra de cima, so no celular e no tablet de pe: a marca e a saida.
+          No computador a lateral ja carrega as duas. */}
+      <header className="barra-topo">
+        <Marca />
+        <button className="voltar" onClick={() => supabase.auth.signOut()}>sair</button>
+      </header>
+
       <nav className="lateral">
         <Marca />
 
@@ -133,15 +165,7 @@ export function App() {
           {PAGINAS.map((p) => (
             <button
               key={p.chave}
-              onClick={() => {
-                setPagina(p.chave)
-                setProjetoAberto(null)
-                setEditando(null)
-                setEtapasDe(null)
-                setTarefasDe(null)
-                setPontuacaoDe(null)
-                setAvaliacaoDe(null)
-              }}
+              onClick={() => ir(p.chave)}
               aria-current={pagina === p.chave ? 'page' : undefined}
             >
               {p.nome}
@@ -285,6 +309,59 @@ export function App() {
         {pagina === 'equipe' && <Equipe />}
         </FronteiraDeErro>
       </main>
+
+      {/* Barra de baixo: so no celular e no tablet de pe. Fica fixa porque a
+          lateral de antes rolava para fora com a pagina — depois de rolar a
+          tela nao havia navegacao nenhuma. */}
+      <nav className="barra-baixo" aria-label="Navegação">
+        {PAGINAS.filter((p) => p.principal).map((p) => (
+          <button
+            key={p.chave}
+            onClick={() => ir(p.chave)}
+            aria-current={pagina === p.chave ? 'page' : undefined}
+          >
+            <span>{p.curto ?? p.nome}</span>
+            {p.chave === 'avisos' && naoLidos > 0 && (
+              <i className="selo-contador" aria-label={`${naoLidos} não lidos`}>
+                {naoLidos > 99 ? '99+' : naoLidos}
+              </i>
+            )}
+          </button>
+        ))}
+        <button
+          onClick={() => setMaisAberto(!maisAberto)}
+          aria-expanded={maisAberto}
+          aria-current={
+            PAGINAS.some((p) => !p.principal && p.chave === pagina) ? 'page' : undefined
+          }
+        >
+          <span>Mais</span>
+        </button>
+      </nav>
+
+      {maisAberto && (
+        <>
+          {/* O veu fecha a folha ao ser tocado. Sem ele, so o "Mais" fecharia,
+              e tocar fora e o que todo mundo tenta primeiro. */}
+          <button className="veu" aria-label="Fechar" onClick={() => setMaisAberto(false)} />
+          <div className="folha-menu" role="dialog" aria-label="Mais destinos">
+            {PAGINAS.filter((p) => !p.principal).map((p) => (
+              <button
+                key={p.chave}
+                onClick={() => ir(p.chave)}
+                aria-current={pagina === p.chave ? 'page' : undefined}
+              >
+                {p.nome}
+              </button>
+            ))}
+            <span className="folha-quem">
+              {pessoa ? pessoa.nome : sessao.user.email}
+              {!ehProducao && ` · ${ambiente} · ${refDoBanco.slice(0, 8)}`}
+            </span>
+            <button className="botao" onClick={() => supabase.auth.signOut()}>Sair</button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
