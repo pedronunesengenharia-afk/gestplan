@@ -171,6 +171,24 @@ decisão, e custa uma view e um gráfico — nenhuma coluna nova.
 
 Fase 4. Todo gráfico já tem "ver tabela"; o PDF é a mesma tabela impressa.
 
+### 1c · Alcance por pertencimento — **feito**
+
+Migração `20260830160000`. Papel na empresa deixou de dar alcance a projeto:
+alcança quem é gerente, solicitante ou alocado. O proprietário continua vendo
+tudo; o fornecedor continua entrando pelo contrato.
+
+Junto vieram as consequências, porque sem elas a regra criaria estado sem
+sentido: um trigger recusa responsável de tarefa que não está no projeto; o
+aviso de parecer só vai para avaliador que foi posto nele; o seletor de
+responsável e a lista de menção só oferecem quem está lá; e projeto criado por
+quem não é proprietário nasce com ele de gerente, senão sumiria no ato de
+salvar.
+
+**Dívida que ficou à vista:** `app.pode_editar_projeto` tem
+`tp.codigo = 'TI'` — nome de tipo dentro de código, exatamente o que a regra de
+ouro proíbe. Foi preservado sem mudança para esta migração tratar de uma coisa
+só. O lugar disso é uma coluna em `tipo_projeto` dizendo que papéis editam.
+
 ## Duas dívidas que não são funcionalidade
 
 - **`gestplan-homolog` não existe.** Tudo foi testado contra produção,

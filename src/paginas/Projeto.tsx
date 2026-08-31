@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  etapasDoProjeto, eu as carregarEu, pessoas, pontuacaoDoProjeto,
+  etapasDoProjeto, eu as carregarEu, pessoas, pessoasDoProjeto, pontuacaoDoProjeto,
   possoEditarProjeto, projeto as carregarProjeto, tarefasDoProjeto, tipoDeProjeto,
   type Etapa, type LinhaPontuacao, type Pessoa,
   type Projeto as ProjetoDado, type Tarefa, type TipoProjeto,
@@ -37,7 +37,12 @@ export function Projeto({
   const [tarefas, setTarefas] = useState<Tarefa[]>([])
   const [pontos, setPontos] = useState<LinhaPontuacao[]>([])
   const [equipe, setEquipe] = useState<Map<string, Pessoa>>(new Map())
+  // Duas listas, e a diferença importa: `listaEquipe` é todo mundo, para
+  // ESCOLHER quem alocar; `noProjeto` é quem já está nele, para mencionar em
+  // comentário — mencionar quem não alcança o projeto manda um aviso que leva
+  // a uma tela negada.
   const [listaEquipe, setListaEquipe] = useState<Pessoa[]>([])
+  const [noProjeto, setNoProjeto] = useState<Pessoa[]>([])
   const [minhaPessoaId, setMinhaPessoaId] = useState<string | null>(null)
   const [soLeitura, setSoLeitura] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
@@ -63,6 +68,9 @@ export function Projeto({
         carregarEu(),
         possoEditarProjeto(p.id),
       ])
+      const daCasa = await pessoasDoProjeto(p.id)
+      if (!vivo) return
+      setNoProjeto(daCasa)
       if (!vivo) return
       setTipo(t)
       setEtapas(es)
@@ -267,7 +275,7 @@ export function Projeto({
 
       <ConversaEArquivos
         projetoId={projeto.id}
-        equipe={listaEquipe}
+        equipe={noProjeto}
         minhaPessoaId={minhaPessoaId}
       />
 

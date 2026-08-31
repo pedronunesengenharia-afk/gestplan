@@ -15,6 +15,11 @@
 reset role;
 select set_config('app.usuario', '', false);
 
+-- Esta suíte mede ARITMÉTICA de capacidade, e aritmética não pode depender do
+-- que as suítes anteriores alocaram. As 02 e 03 põem gente nos projetos para
+-- testar papel; aqui a mesa começa limpa e cada linha é posta por um teste.
+delete from alocacao;
+
 -- Criada como superusuário, executada como quem vestir mandar: sem SECURITY
 -- DEFINER, ela enxerga o que o chamador enxerga — que é o ponto.
 create or replace function medir_dedicacao() returns numeric language sql as $fn$
@@ -108,9 +113,20 @@ end $$;
 -- -----------------------------------------------------------------------------
 -- 3 · Financeiro vê o dinheiro, não o escopo — e equipe é escopo
 -- -----------------------------------------------------------------------------
+-- O financeiro precisa estar no projeto para enxergá-lo; quem o põe é o
+-- gerente. O que se mede depois é o PAPEL: estar dentro não dá poder de
+-- mexer na equipe.
+select vestir('22222222-2222-2222-2222-222222222222');
+insert into alocacao (projeto_id, pessoa_id, papel, percentual_dedicacao)
+values ('dddddddd-0000-0000-0000-000000000001',
+        'bbbbbbbb-0000-0000-0000-000000000004', 'Financeiro', 20);
+
 select vestir('44444444-4444-4444-4444-444444444444');   -- FINANCEIRO
 select teste('financeiro enxerga a equipe do projeto',
   conta($$select id from alocacao where id='a10ca000-0000-0000-0000-000000000001'$$) = 1);
+select teste('inclusive a própria linha dele',
+  conta($$select id from alocacao
+           where pessoa_id='bbbbbbbb-0000-0000-0000-000000000004'$$) = 1);
 
 do $$
 declare n int;
@@ -139,8 +155,18 @@ select teste('externo NÃO enxerga a capacidade de ninguém',
 -- -----------------------------------------------------------------------------
 select vestir('22222222-2222-2222-2222-222222222222');   -- GERENTE
 
--- O segundo projeto da Alfa, que o gerente alcança pela própria RLS: nada de
--- tabela temporária, que pertenceria ao superusuário e ele não leria.
+-- Para o gerente alocar alguém no 'Segundo projeto' ele precisa antes estar
+-- nele — desde 20260830160000, papel na empresa não alcança projeto. Quem o
+-- põe lá é o dono, que é como a coisa funciona de verdade.
+select vestir('11111111-1111-1111-1111-111111111111');
+insert into alocacao (projeto_id, pessoa_id, papel, percentual_dedicacao)
+select p.id, 'bbbbbbbb-0000-0000-0000-000000000002', 'Gerente', 10
+  from projeto p where p.nome = 'Segundo projeto';
+
+select vestir('22222222-2222-2222-2222-222222222222');
+select teste('o gerente passa a alcançar o projeto depois de posto nele',
+  conta($$select id from projeto where nome = 'Segundo projeto'$$) = 1);
+
 insert into alocacao (id, projeto_id, pessoa_id, percentual_dedicacao)
 select 'a10ca000-0000-0000-0000-000000000002', p.id,
        'bbbbbbbb-0000-0000-0000-000000000003', 60

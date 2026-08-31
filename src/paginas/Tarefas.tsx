@@ -3,7 +3,7 @@ import {
   atualizarTarefa, checklistDasTarefas, criarDependencia, criarItemChecklist,
   criarTarefa, dependenciasDasTarefas, etapasDoProjeto, eu as carregarEu,
   excluirDependencia, excluirItemChecklist, excluirTarefa, marcarItemChecklist,
-  pessoas as carregarPessoas, possoEditarProjeto, projeto as carregarProjeto,
+  pessoasDoProjeto, possoEditarProjeto, projeto as carregarProjeto,
   reordenarTarefas, tarefasDoProjeto, tipoDeProjeto,
   ErroDoBanco, STATUS_TAREFA, TIPOS_DE_DEPENDENCIA,
   type Dependencia, type Etapa, type ItemChecklist, type Pessoa,
@@ -97,7 +97,7 @@ export function Tarefas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
         tipoDeProjeto(p.tipo_projeto_id),
         tarefasDoProjeto(id),
         etapasDoProjeto(id),
-        carregarPessoas(),
+        pessoasDoProjeto(id),
         carregarEu(),
         possoEditarProjeto(id),
       ])
@@ -339,13 +339,24 @@ export function Tarefas({ id, aoVoltar }: { id: string; aoVoltar: () => void }) 
                       </td>
                       <td>
                         {emEdicao ? (
-                          <select
-                            className="campo" value={rascunho.responsavel_id}
-                            onChange={(e) => setRascunho({ ...rascunho, responsavel_id: e.target.value })}
-                          >
-                            <option value="">—</option>
-                            {equipe.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                          </select>
+                          <>
+                            <select
+                              className="campo" value={rascunho.responsavel_id}
+                              onChange={(e) => setRascunho({ ...rascunho, responsavel_id: e.target.value })}
+                            >
+                              <option value="">—</option>
+                              {/* Só quem está no projeto. O banco recusa o resto
+                                  desde a migração 20260830160000, e oferecer o
+                                  que vai ser recusado é armar uma cilada. */}
+                              {equipe.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                            </select>
+                            {equipe.length === 0 && (
+                              <p className="ajuda">
+                                Ninguém está neste projeto ainda. Aloque a pessoa em
+                                <strong> Equipe do projeto</strong> antes de dar tarefa a ela.
+                              </p>
+                            )}
+                          </>
                         ) : (
                           equipe.find((p) => p.id === t.responsavel_id)?.nome ?? '—'
                         )}

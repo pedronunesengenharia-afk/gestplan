@@ -36,6 +36,19 @@ select '99999999-0000-0000-0000-000000000001','Projeto reservado da Beta',
 -- Tira a Beta do rateio do projeto principal, para o teste de isolamento ficar limpo.
 delete from projeto_empresa where projeto_id = 'dddddddd-0000-0000-0000-000000000001';
 
+-- =============================================================================
+-- Desde a migração 20260830160000, papel na empresa NÃO dá alcance a projeto:
+-- alcança quem é gerente do projeto ou foi alocado nele. O gerente já alcança
+-- 'Ampliação do galpão' por ser o gerente dele; a estrutura e o financeiro
+-- precisam ser postos lá para que os testes ABAIXO continuem medindo o que
+-- sempre mediram — o que cada PAPEL pode fazer dentro do que alcança.
+--
+-- O que a alocação NÃO faz é dar poder: é justamente isso que os testes de
+-- dinheiro e de escopo continuam provando, agora com a pessoa lá dentro.
+insert into alocacao (projeto_id, pessoa_id, percentual_dedicacao) values
+  ('dddddddd-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000003', 50),
+  ('dddddddd-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000004', 20);
+
 set role authenticated;
 
 -- -----------------------------------------------------------------------------
@@ -51,11 +64,16 @@ select teste('dono enxerga a trilha de auditoria',   conta('select id from event
 -- Gerente de projetos — só a Empresa Alfa
 -- -----------------------------------------------------------------------------
 select vestir('22222222-2222-2222-2222-222222222222');
-select teste('gerente enxerga só os projetos da sua empresa', conta('select id from projeto') = 2);
+select teste('gerente enxerga só o projeto em que foi posto',
+  conta('select id from projeto') = 1);
 select teste('gerente NÃO enxerga o projeto reservado da Beta',
   conta($$select id from projeto where id='99999999-0000-0000-0000-000000000001'$$) = 0);
-select teste('gerente enxerga os valores dos projetos dele',
-  conta('select projeto_id from projeto_valor') = 2);
+-- O que mudou em 20260830160000: 'Segundo projeto' é da MESMA empresa dele, e
+-- antes ele o enxergava por isso. Ninguém o pôs lá.
+select teste('gerente NÃO enxerga projeto da própria empresa em que não foi posto',
+  conta($$select id from projeto where nome = 'Segundo projeto'$$) = 0);
+select teste('gerente enxerga os valores do projeto dele',
+  conta('select projeto_id from projeto_valor') = 1);
 select teste('gerente enxerga uma empresa só',       conta('select id from empresa') = 1);
 select teste('gerente enxerga o custo lançado',      conta('select id from custo') = 1);
 select teste('gerente NÃO enxerga a trilha de auditoria de tudo',
@@ -65,20 +83,24 @@ select teste('gerente NÃO enxerga a trilha de auditoria de tudo',
 -- Estrutura / operação — vê o projeto, NÃO vê o dinheiro
 -- -----------------------------------------------------------------------------
 select vestir('33333333-3333-3333-3333-333333333333');
-select teste('estrutura enxerga os projetos da empresa', conta('select id from projeto') = 2);
+select teste('estrutura enxerga o projeto em que foi alocada',
+  conta('select id from projeto') = 1);
+select teste('e NÃO enxerga o outro projeto da mesma empresa',
+  conta($$select id from projeto where nome = 'Segundo projeto'$$) = 0);
 select teste('estrutura enxerga as tarefas',             conta('select id from tarefa') = 3);
 select teste('estrutura NÃO enxerga valor nenhum',       conta('select projeto_id from projeto_valor') = 0);
 select teste('estrutura NÃO enxerga custo',              conta('select id from custo') = 0);
 select teste('estrutura NÃO enxerga parcela',            conta('select id from parcela') = 0);
 select teste('estrutura NÃO enxerga contrato',           conta('select id from contrato') = 0);
 select teste('na carteira, a linha aparece e o valor vem vazio',
-  conta($$select id from vw_projeto where valor_orcado is null$$) = 2);
+  conta($$select id from vw_projeto where valor_orcado is null$$) = 1);
 
 -- -----------------------------------------------------------------------------
 -- Financeiro / Compras — vê o dinheiro, não mexe no escopo
 -- -----------------------------------------------------------------------------
 select vestir('44444444-4444-4444-4444-444444444444');
-select teste('financeiro enxerga os valores',  conta('select projeto_id from projeto_valor') = 2);
+select teste('financeiro enxerga os valores do projeto em que foi posto',
+  conta('select projeto_id from projeto_valor') = 1);
 select teste('financeiro enxerga os custos',   conta('select id from custo') = 1);
 select teste('financeiro enxerga contratos',   conta('select id from contrato') = 1);
 
@@ -162,6 +184,7 @@ select set_config('request.jwt.claims',
 select teste('claim em request.jwt.claims identifica a pessoa',
   app.pessoa_atual() = 'bbbbbbbb-0000-0000-0000-000000000001');
 select teste('pelo JWT, o dono enxerga os projetos',   conta('select id from projeto') = 4);
+
 select teste('pelo JWT, o dono enxerga as empresas',   conta('select id from empresa') = 2);
 
 select set_config('request.jwt.claims',

@@ -39,6 +39,14 @@ insert into pessoa_papel (pessoa_id, empresa_id, papel) values
   ('bbbbbbbb-0000-0000-0000-000000000006','aaaaaaaa-0000-0000-0000-000000000001','AVALIADOR')
 on conflict do nothing;
 
+-- Desde 20260830160000 o papel diz o QUE se pode fazer, não ONDE. Para o
+-- avaliador assinar este projeto, alguém tem de tê-lo posto nele. Os testes
+-- abaixo continuam medindo o papel — com a pessoa lá dentro.
+insert into alocacao (projeto_id, pessoa_id, papel, percentual_dedicacao)
+values ('dddddddd-0000-0000-0000-000000000001',
+        'bbbbbbbb-0000-0000-0000-000000000006', 'Avaliação', 10)
+on conflict do nothing;
+
 set role authenticated;
 
 -- -----------------------------------------------------------------------------

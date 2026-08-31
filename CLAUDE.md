@@ -55,7 +55,7 @@ disso. Ela não sabe o nome de nenhum tipo.
 
 ## Banco de dados
 
-Vinte e três migrações em `supabase/migrations/`. Leia o cabeçalho de cada arquivo
+Vinte e quatro migrações em `supabase/migrations/`. Leia o cabeçalho de cada arquivo
 antes de mexer — todos explicam as decisões que carregam.
 
 ### Regras inegociáveis
@@ -93,6 +93,7 @@ antes de mexer — todos explicam as decisões que carregam.
 | `app.pessoa_atual()` | quem é o usuário da vez |
 | `app.é_proprietario()` | é o dono? |
 | `app.empresas_visiveis()` | quais empresas ele alcança (EXTERNO fica de fora) |
+| `app.é_parte(p, pessoa)` | **esta pessoa foi posta no projeto?** gerente, solicitante ou alocação ativa |
 | `app.pode_ver_projeto(p)` | alcança o projeto — **inclui o fornecedor pelo contrato** |
 | `app.pode_ver_interno(p)` | alcança o projeto **e não é externo** ← use esta nas tabelas |
 | `app.pode_editar_projeto(p)` | pode alterar escopo e cronograma |
@@ -104,6 +105,20 @@ antes de mexer — todos explicam as decisões que carregam.
 Política de tabela usa `pode_ver_interno`. Trocar uma pela outra reabre um
 vazamento que já foi pego uma vez.
 
+### Alcance é pertencimento, não empresa
+
+Desde a migração `20260830160000`, **papel na empresa não dá alcance a
+projeto**. As duas perguntas são separadas:
+
+- **onde** — `app.é_parte()`: você é o gerente, o solicitante, ou foi alocado;
+- **o quê** — o papel: editar, ver dinheiro, assinar parecer.
+
+Ter papel de gerente de projetos na Cemare não faz ninguém enxergar todos os
+projetos da Cemare. **Alocar deixou de ser opcional: é o ato de dar acesso.**
+Consequências que a tela já respeita: o seletor de responsável e a lista de
+menção só oferecem quem está no projeto, e um trigger recusa responsável de
+fora.
+
 **Para a tela perguntar**, três dessas estão espelhadas em `public`, que é o
 único schema que o PostgREST enxerga: `posso_editar_projeto`, `posso_ver_valores`
 e `posso_assinar`. A tela pergunta; não reescreve a regra em TypeScript.
@@ -114,7 +129,7 @@ e `posso_assinar`. A tela pergunta; não reescreve a regra em TypeScript.
 rodar_testes.bat
 ```
 
-Apaga o banco de teste, aplica as migrações e roda as oito suítes — 224
+Apaga o banco de teste, aplica as migrações e roda as oito suítes — 229
 verificações:
 
 - `testes/01_regras.sql` — 40 de regra de negócio
@@ -124,8 +139,8 @@ verificações:
 - `testes/04_chamado_e_acesso.sql` — 17 do chamado e do vínculo por e-mail
 - `testes/05_chamado_publico.sql` — 23 da porta sem login
 - `testes/06_modelo_de_etapas.sql` — 22 do modelo de etapas e do prazo em dias úteis
-- `testes/07_alocacao.sql` — 33 de alocação, capacidade e de quem enxerga a equipe
-- `testes/08_notificacao.sql` — 30 dos quatro gatilhos de aviso, e da porta fechada
+- `testes/07_alocacao.sql` — 35 de alocação, capacidade e de quem enxerga a equipe
+- `testes/08_notificacao.sql` — 31 dos quatro gatilhos de aviso, e da porta fechada
   que obriga eles a existirem
 
 **A suíte de permissão roda antes de todo deploy.** Ela já pegou dois

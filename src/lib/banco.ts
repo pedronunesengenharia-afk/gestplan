@@ -1689,3 +1689,37 @@ export async function limparAvisosLidos(): Promise<number> {
   erroDeEscrita('Nao foi possivel limpar os avisos', error)
   return (data ?? []).length
 }
+
+/**
+ * As pessoas que foram POSTAS num projeto: gerente, solicitante e alocados.
+ *
+ * Espelha `app.é_parte()`, e existe porque a tela precisa oferecer as MESMAS
+ * pessoas que o banco aceita. Desde a migracao 20260830160000, marcar como
+ * responsavel quem nao esta no projeto e recusado por trigger, e mencionar
+ * essa pessoa mandaria um aviso apontando para uma tela que a RLS nega.
+ *
+ * Nao e a regra reescrita em TypeScript: e a lista de escolha. Quem decide
+ * continua sendo o banco — se a tela errar, a escrita e recusada.
+ */
+export async function pessoasDoProjeto(projetoId: string): Promise<Pessoa[]> {
+  const [{ data: p, error: e1 }, alocacoes] = await Promise.all([
+    supabase.from('projeto').select('gerente_id, solicitante_id').eq('id', projetoId).maybeSingle(),
+    alocacoesDoProjeto(projetoId),
+  ])
+  erro('Nao foi possivel carregar a equipe do projeto', e1)
+
+  const dono = p as { gerente_id: string | null; solicitante_id: string | null } | null
+  const ids = new Set<string>()
+  if (dono?.gerente_id) ids.add(dono.gerente_id)
+  if (dono?.solicitante_id) ids.add(dono.solicitante_id)
+  for (const a of alocacoes) if (a.ativo) ids.add(a.pessoa_id)
+  if (ids.size === 0) return []
+
+  const { data, error } = await supabase
+    .from('pessoa')
+    .select('id, nome, email, fone, cargo, setor, vinculo, proprietario, ativo, auth_user_id')
+    .in('id', [...ids])
+    .order('nome')
+  erro('Nao foi possivel carregar a equipe do projeto', error)
+  return (data ?? []) as Pessoa[]
+}

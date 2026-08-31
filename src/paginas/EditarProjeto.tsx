@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   atualizarProjeto, camposDoTipo, criarProjeto, empresas as carregarEmpresas,
+  eu as carregarEu,
   etapasDoProjeto, fasesDoTipo, mudarFase, pareceresDoProjeto,
   pessoas as carregarPessoas, projetoParaEdicao, rateioDoProjeto, salvarRateio,
   setores as carregarSetores, tarefasDoProjeto, tiposDeProjeto, transicoesDaFase,
@@ -262,6 +263,15 @@ export function EditarProjeto({
       } else {
         // Só na criação vão tipo, empresa e fase: depois eles não mudam por
         // aqui — fase anda por transição, tipo e empresa não andam.
+        // Desde a migração 20260830160000 o alcance vem de pertencimento:
+        // gerente, solicitante ou alocado. Um projeto criado sem gerente por
+        // quem não é proprietário desapareceria no ato de salvar, e a pessoa
+        // veria "não existe ou você não alcança" logo depois de criá-lo.
+        // Quem cria e não escolheu gerente fica sendo o gerente.
+        if (!carga.gerente_id) {
+          const eu = await carregarEu()
+          if (eu && !eu.proprietario) carga.gerente_id = eu.id
+        }
         alvo = await criarProjeto({
           ...carga,
           tipo_projeto_id: dados.tipo_projeto_id,

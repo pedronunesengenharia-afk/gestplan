@@ -46,6 +46,14 @@ returns text language sql security definer as $fn$
    order by criado_em desc limit 1;
 $fn$;
 
+-- Desde 20260830160000, responsável por tarefa tem de ser gente do projeto — e
+-- a 07 limpou as alocações para medir capacidade. Esta suíte põe de volta os
+-- três que ela usa, como o dono faria.
+insert into alocacao (projeto_id, pessoa_id, percentual_dedicacao) values
+  ('dddddddd-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000003', 30),
+  ('dddddddd-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000004', 20)
+on conflict do nothing;
+
 set role authenticated;
 
 -- -----------------------------------------------------------------------------
@@ -127,19 +135,19 @@ select teste('responder a si mesmo mencionando a si mesmo não gera aviso nenhum
 -- -----------------------------------------------------------------------------
 -- 3 e 4 · A fase mudou
 -- -----------------------------------------------------------------------------
--- PROJETO PRÓPRIO, e a razão é uma falha medida: a primeira versão destes
+-- PROJETOS PRÓPRIOS, e a razão é uma falha medida: a primeira versão destes
 -- testes movia o projeto do cenário e batia em "a fase Execução exige todas as
 -- tarefas com data prevista" — porque uma suíte anterior o havia deixado lá.
 -- Suíte que depende de onde a anterior parou é suíte que quebra sozinha.
 --
--- O gatilho de `projeto_fase_hist` dispara também na CRIAÇÃO do projeto, que é
--- a primeira entrada em fase que existe. Então nascer na fase já basta, e
--- nenhuma regra de saída entra no caminho.
-select vestir('11111111-1111-1111-1111-111111111111');
+-- Os dois nascem na fase inicial e depois entram na fase que cobra parecer. A
+-- diferença entre eles é UMA: no primeiro o avaliador foi posto no projeto, no
+-- segundo não. É essa diferença que a regra de 20260830160000 introduziu.
+select vestir('11111111-1111-1111-1111-111111111111');   -- DONO
 
--- Nascer direto em Avaliação exige o que Viabilidade cobra para ser deixada —
--- `campo_definicao.exigido_para_sair_de`. O banco cobra do projeto novo o
--- mesmo que cobraria de um que passasse por lá, e está certo.
+-- Os campos que Viabilidade cobra para ser deixada vão preenchidos desde já:
+-- `campo_definicao.exigido_para_sair_de` cobra do projeto novo o mesmo que
+-- cobraria de um que passasse por lá.
 insert into projeto (id, nome, tipo_projeto_id, fase_id, empresa_id, gerente_id, campos)
 select '9a150000-0000-0000-0000-000000000001', 'Projeto que avisa',
        tp.id, f.id, 'aaaaaaaa-0000-0000-0000-000000000001',
@@ -148,17 +156,68 @@ select '9a150000-0000-0000-0000-000000000001', 'Projeto que avisa',
                           'vi_alternativas',  'Reformar ou construir novo')
   from tipo_projeto tp
   join tipo_fase f on f.tipo_projeto_id = tp.id
- where tp.codigo = 'INVESTIMENTO' and f.codigo = 'AVALIACAO';
+ where tp.codigo = 'INVESTIMENTO' and f.codigo = 'SOLICITACAO';
 
-select teste('o gerente do projeto é avisado da entrada em fase',
+insert into projeto (id, nome, tipo_projeto_id, fase_id, empresa_id, gerente_id, campos)
+select '9a150000-0000-0000-0000-000000000002', 'Projeto sem avaliador dentro',
+       tp.id, f.id, 'aaaaaaaa-0000-0000-0000-000000000001',
+       'bbbbbbbb-0000-0000-0000-000000000002',
+       jsonb_build_object('vi_situacao_atual', 'Outro caso',
+                          'vi_alternativas',  'Outra alternativa')
+  from tipo_projeto tp
+  join tipo_fase f on f.tipo_projeto_id = tp.id
+ where tp.codigo = 'INVESTIMENTO' and f.codigo = 'SOLICITACAO';
+
+select teste('o gerente do projeto é avisado já da criação',
   avisos_reais('bbbbbbbb-0000-0000-0000-000000000002', 'PROJETO_MUDOU_DE_FASE', '9a150000-0000-0000-0000-000000000001') = 1);
 
-select teste('o avaliador é cobrado do parecer na fase que o exige',
+-- Só no primeiro o avaliador é posto dentro.
+insert into alocacao (projeto_id, pessoa_id, papel, percentual_dedicacao)
+values ('9a150000-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000006', 'Avaliação', 10);
+
+-- Sair da Viabilidade exige orçamento com pelo menos um item valorado. Os dois
+-- projetos ganham o seu, como um de verdade teria antes de ir para avaliação.
+insert into etapa (id, projeto_id, codigo, nome, peso_percentual) values
+  ('e7a9a000-0000-0000-0000-000000000001', '9a150000-0000-0000-0000-000000000001',
+   '1', 'Cobertura metálica', 100),
+  ('e7a9a000-0000-0000-0000-000000000002', '9a150000-0000-0000-0000-000000000002',
+   '1', 'Cobertura metálica', 100);
+update etapa_valor set quantidade = 1, preco_unitario = 50000
+ where etapa_id in ('e7a9a000-0000-0000-0000-000000000001',
+                    'e7a9a000-0000-0000-0000-000000000002');
+
+-- Solicitação → Avaliação não existe em `tipo_transicao`, e o banco recusa: a
+-- regra de fluxo é dado, não código. Passa pela Viabilidade, como um projeto
+-- de verdade passaria.
+do $$
+declare v_fase uuid;
+begin
+  for v_fase in
+    select f.id from tipo_fase f join tipo_projeto t on t.id = f.tipo_projeto_id
+     where t.codigo = 'INVESTIMENTO' and f.codigo in ('VIABILIDADE','AVALIACAO')
+     order by f.ordem
+  loop
+    update projeto set fase_id = v_fase where id in ('9a150000-0000-0000-0000-000000000001', '9a150000-0000-0000-0000-000000000002');
+  end loop;
+end $$;
+
+select teste('o gerente é avisado de cada entrada em fase',
+  avisos_reais('bbbbbbbb-0000-0000-0000-000000000002', 'PROJETO_MUDOU_DE_FASE', '9a150000-0000-0000-0000-000000000001') = 3);
+
+select teste('o avaliador que foi posto no projeto é cobrado do parecer',
   avisos_reais('bbbbbbbb-0000-0000-0000-000000000006', 'PARECER_PENDENTE', '9a150000-0000-0000-0000-000000000001') = 1);
 
 select teste('o aviso de parecer nomeia os setores que travam a saída',
   texto_do_aviso('bbbbbbbb-0000-0000-0000-000000000006', 'PARECER_PENDENTE', '9a150000-0000-0000-0000-000000000001')
     like '%FINANCEIRO%');
+
+-- O que a regra de 20260830160000 mudou: antes dela, TODO avaliador da empresa
+-- era cobrado, inclusive de projeto que não conseguiria abrir. Um aviso que
+-- leva a uma tela negada ensina a ignorar avisos.
+select teste('o avaliador NÃO é cobrado de projeto em que não foi posto',
+  avisos_reais('bbbbbbbb-0000-0000-0000-000000000006', 'PARECER_PENDENTE', '9a150000-0000-0000-0000-000000000002') = 0);
+select teste('mas o gerente é avisado desse também',
+  avisos_reais('bbbbbbbb-0000-0000-0000-000000000002', 'PROJETO_MUDOU_DE_FASE', '9a150000-0000-0000-0000-000000000002') = 3);
 
 select teste('quem não é avaliador NÃO é cobrado de parecer',
   avisos_reais('bbbbbbbb-0000-0000-0000-000000000003', 'PARECER_PENDENTE', '9a150000-0000-0000-0000-000000000001') = 0);
@@ -169,20 +228,6 @@ select teste('quem não é avaliador NÃO é cobrado de parecer',
 select teste('nem o proprietário enxerga a caixa de aviso alheia',
   conta($$select id from notificacao
            where pessoa_id <> 'bbbbbbbb-0000-0000-0000-000000000001'$$) = 0);
-
--- Uma fase sem exigência de setor avisa o gerente e não cobra parecer.
-insert into projeto (id, nome, tipo_projeto_id, fase_id, empresa_id, gerente_id)
-select '9a150000-0000-0000-0000-000000000002', 'Projeto sem parecer devido',
-       tp.id, f.id, 'aaaaaaaa-0000-0000-0000-000000000001',
-       'bbbbbbbb-0000-0000-0000-000000000002'
-  from tipo_projeto tp
-  join tipo_fase f on f.tipo_projeto_id = tp.id
- where tp.codigo = 'INVESTIMENTO' and f.codigo = 'SOLICITACAO';
-
-select teste('fase sem exige_setores não cobra parecer de ninguém',
-  avisos_reais('bbbbbbbb-0000-0000-0000-000000000006', 'PARECER_PENDENTE', '9a150000-0000-0000-0000-000000000002') = 0);
-select teste('mas o gerente é avisado dessa entrada também',
-  avisos_reais('bbbbbbbb-0000-0000-0000-000000000002', 'PROJETO_MUDOU_DE_FASE', '9a150000-0000-0000-0000-000000000002') = 1);
 
 -- -----------------------------------------------------------------------------
 -- 5 · Cada um só enxerga a própria caixa
