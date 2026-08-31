@@ -11,3 +11,6 @@ supabase/.branches
 supabase/.temp
 supabase/config.toml
 *.tsbuildinfo
+
+# lixo do Python, do validador de paleta
+__pycache__/
