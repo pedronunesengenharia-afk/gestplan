@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  atualizarAfazer, criarAfazer, excluirAfazer, meusAfazeres, projetosParaEscolha,
-  type Afazer,
+  atualizarAfazer, criarAfazer, empresas as carregarEmpresas, excluirAfazer,
+  meusAfazeres, projetosParaEscolha,
+  type Afazer, type Empresa,
 } from '../lib/banco'
 import { data as formatarData } from '../lib/formato'
 
@@ -55,26 +56,31 @@ const ROTULO_PRIORIDADE: Record<string, string> = {
 export function MeusAfazeres({ pessoaId }: { pessoaId: string }) {
   const [lista, setLista] = useState<Afazer[]>([])
   const [projetos, setProjetos] = useState<{ id: string; codigo: string; nome: string }[]>([])
+  const [listaEmpresas, setListaEmpresas] = useState<Empresa[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState(false)
   const [mostrarFeitos, setMostrarFeitos] = useState(false)
   const [editando, setEditando] = useState<string | null>(null)
+  /** Qual linha esta com o prazo aberto para troca. */
+  const [editandoPrazo, setEditandoPrazo] = useState<string | null>(null)
 
   // O que a caixa de escrita está montando.
   const [titulo, setTitulo] = useState('')
   const [prazo, setPrazo] = useState('')
   const [projeto, setProjeto] = useState('')
+  const [empresa, setEmpresa] = useState('')
   const [prioridade, setPrioridade] = useState('NORMAL')
   const caixa = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     let vivo = true
-    Promise.all([meusAfazeres(), projetosParaEscolha()])
-      .then(([a, p]) => {
+    Promise.all([meusAfazeres(), projetosParaEscolha(), carregarEmpresas()])
+      .then(([a, p, e]) => {
         if (!vivo) return
         setLista(a)
         setProjetos(p)
+        setListaEmpresas(e.filter((x) => x.ativo))
       })
       .catch((e: Error) => vivo && setErro(e.message))
       .finally(() => {
@@ -107,6 +113,7 @@ export function MeusAfazeres({ pessoaId }: { pessoaId: string }) {
           titulo: t,
           prazo: prazo || null,
           projeto_id: projeto || null,
+          empresa_id: empresa || null,
           prioridade,
           // Novo item entra no topo: quem acabou de anotar quer ver anotado.
           ordem: Math.min(0, ...lista.map((a) => a.ordem)) - 1,
@@ -116,6 +123,9 @@ export function MeusAfazeres({ pessoaId }: { pessoaId: string }) {
       setTitulo('')
       setPrazo('')
       setProjeto('')
+      // A empresa NAO e limpa: quem esta anotando tres coisas da Cemare nao
+      // quer escolher Cemare tres vezes. Prazo e titulo mudam a cada item; a
+      // empresa costuma ser a mesma na sequencia.
       setPrioridade('NORMAL')
     })
     caixa.current?.focus()
@@ -190,11 +200,41 @@ export function MeusAfazeres({ pessoaId }: { pessoaId: string }) {
               {ROTULO_PRIORIDADE[a.prioridade]}
             </span>
           )}
+          {a.empresa_nome && <span className="marca-etapa">{a.empresa_nome}</span>}
           {a.projeto_codigo && <span className="marca-etapa">{a.projeto_codigo}</span>}
-          {a.prazo && (
-            <span className={ondeCai(a) === 'atrasado' ? 'dado prazo-vencido' : 'dado'}>
-              {formatarData(a.prazo)}
-            </span>
+
+          {/* O prazo e o que mais muda depois de anotado — "isso fica para
+              segunda" e a frase mais comum de uma lista de afazeres. Entao ele
+              e um botao que vira campo, e nao um texto morto. */}
+          {editandoPrazo === a.id ? (
+            <input
+              className="campo campo--prazo-linha"
+              type="date"
+              defaultValue={a.prazo ?? ''}
+              autoFocus
+              aria-label={`Prazo de ${a.titulo}`}
+              onBlur={() => setEditandoPrazo(null)}
+              onKeyDown={(e) => { if (e.key === 'Escape') setEditandoPrazo(null) }}
+              onChange={(e) => {
+                const novo = e.target.value || null
+                setEditandoPrazo(null)
+                if (novo !== a.prazo) {
+                  comOBanco(async () => { await atualizarAfazer(a.id, { prazo: novo }) })
+                }
+              }}
+            />
+          ) : (
+            <button
+              className={
+                ondeCai(a) === 'atrasado'
+                  ? 'dado prazo-do-afazer prazo-vencido'
+                  : a.prazo ? 'dado prazo-do-afazer' : 'prazo-do-afazer prazo-vazio'
+              }
+              onClick={() => setEditandoPrazo(a.id)}
+              title="Mudar o prazo — apagar o campo tira o prazo"
+            >
+              {a.prazo ? formatarData(a.prazo) : '+ prazo'}
+            </button>
           )}
         </span>
       </span>
@@ -247,6 +287,16 @@ export function MeusAfazeres({ pessoaId }: { pessoaId: string }) {
           <option value="ALTA">alta</option>
           <option value="NORMAL">normal</option>
           <option value="BAIXA">baixa</option>
+        </select>
+        <select
+          className="campo campo--empresa" value={empresa}
+          onChange={(e) => setEmpresa(e.target.value)}
+          aria-label="Empresa (opcional)" title="De que empresa e este lembrete"
+        >
+          <option value="">sem empresa</option>
+          {listaEmpresas.map((e) => (
+            <option key={e.id} value={e.id}>{e.nome}</option>
+          ))}
         </select>
         <select
           className="campo campo--projeto" value={projeto}

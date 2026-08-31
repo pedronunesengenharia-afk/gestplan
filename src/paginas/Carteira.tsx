@@ -8,6 +8,7 @@ import { moeda, data } from '../lib/formato'
 import { EsqueletoDeTabela } from '../componentes/Esqueleto'
 import { Kanban } from './Kanban'
 import { guardarParametros, lerParametros } from '../lib/url'
+import { BotaoImprimir, CabecalhoImpresso } from '../componentes/Imprimir'
 
 const SELO: Record<string, string> = {
   URGENTE: 'selo selo--urgente',
@@ -188,6 +189,15 @@ export function Carteira({
 
   return (
     <>
+      <CabecalhoImpresso
+        titulo="Carteira de projetos"
+        sub={
+          filtrando && total !== null
+            ? `${projetos.length} de ${total} projetos — a folha traz o que está filtrado`
+            : `${projetos.length} projetos, em ordem de prioridade`
+        }
+      />
+
       <header className="cabecalho-pagina">
         <div className="titulo-projeto">
           <h1>Carteira</h1>
@@ -205,6 +215,7 @@ export function Carteira({
               Kanban
             </button>
           </span>
+          <BotaoImprimir />
           <button className="botao botao--acao" onClick={aoNovo}>Novo projeto</button>
         </div>
         <p>

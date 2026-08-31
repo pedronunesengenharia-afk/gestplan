@@ -1742,22 +1742,24 @@ export type Afazer = {
   titulo: string
   detalhe: string | null
   projeto_id: string | null
+  empresa_id: string | null
   prazo: string | null
   prioridade: string
   feito_em: string | null
   ordem: number
   criado_em: string
-  /** Preenchido pela consulta, do embed — a tabela nao guarda. */
+  /** Preenchidos pela consulta, do embed — a tabela nao guarda. */
   projeto_codigo?: string | null
+  empresa_nome?: string | null
 }
 
 const CAMPOS_AFAZER =
-  'id, titulo, detalhe, projeto_id, prazo, prioridade, feito_em, ordem, criado_em'
+  'id, titulo, detalhe, projeto_id, empresa_id, prazo, prioridade, feito_em, ordem, criado_em'
 
 export async function meusAfazeres(): Promise<Afazer[]> {
   const { data, error } = await supabase
     .from('afazer')
-    .select(`${CAMPOS_AFAZER}, projeto(codigo)`)
+    .select(`${CAMPOS_AFAZER}, projeto(codigo), empresa(nome)`)
     .order('ordem')
     .order('criado_em')
   erro('Nao foi possivel carregar os seus afazeres', error)
@@ -1765,8 +1767,13 @@ export async function meusAfazeres(): Promise<Afazer[]> {
   return (data ?? []).map((l) => {
     const linha = l as unknown as Record<string, unknown>
     const p = linha.projeto as { codigo: string } | null
-    const { projeto: _, ...resto } = linha
-    return { ...(resto as Afazer), projeto_codigo: p?.codigo ?? null }
+    const e = linha.empresa as { nome: string } | null
+    const { projeto: _p, empresa: _e, ...resto } = linha
+    return {
+      ...(resto as Afazer),
+      projeto_codigo: p?.codigo ?? null,
+      empresa_nome: e?.nome ?? null,
+    }
   })
 }
 
@@ -1774,6 +1781,7 @@ export type AfazerEdicao = {
   titulo: string
   detalhe?: string | null
   projeto_id?: string | null
+  empresa_id?: string | null
   prazo?: string | null
   prioridade?: string
   ordem?: number

@@ -1,0 +1,97 @@
+/* ============================================================================
+   GestPlan · impressão
+
+   Sem biblioteca de PDF. O navegador já sabe gerar PDF — "Salvar como PDF" no
+   diálogo de impressão — e o que falta é a página parar de ser um aplicativo e
+   virar um documento. Isso é uma folha de estilo, não uma dependência de 300kB
+   que reimplementa a paginação em JavaScript e que alguém teria de manter.
+
+   A regra que orienta tudo aqui: **sai da folha o que não se pode fazer no
+   papel**. Menu, filtro, botão, campo de escrita e caixa de comentário viram
+   ruído num documento — ninguém clica numa folha impressa.
+   ========================================================================= */
+
+@media print {
+  /* O navegador tira cor de fundo por padrão, para economizar tinta. Aqui a
+     cor CARREGA INFORMAÇÃO — o chip do tipo, o farol da fase, a barra de
+     avanço — e sem ela o documento passa a mentir. */
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    size: A4;
+    margin: 14mm 12mm 16mm;
+  }
+
+  html, body {
+    background: #FFF;
+    /* 10.5pt: a tela é 15,5px, que no papel fica grande e come folha. */
+    font-size: 10.5pt;
+  }
+
+  /* A casca do aplicativo deixa de ser grade: o conteúdo ocupa a folha. */
+  .app { display: block; }
+  .conteudo { padding: 0; }
+
+  /* Some tudo que só faz sentido em tela. */
+  .lateral,
+  .barra-topo,
+  .barra-baixo,
+  .folha-menu,
+  .veu,
+  .tarja-ambiente,
+  .menu,
+  .filtros,
+  .abrir-filtros,
+  .alternador,
+  .voltar,
+  .botao,
+  .ver-tabela,
+  .novo-comentario,
+  .novo-anexo,
+  .acoes,
+  .afazer-caixa,
+  .afazer-tirar,
+  .selo-contador,
+  .so-imprimir-nao { display: none !important; }
+
+  /* O cabeçalho do documento, que só existe no papel: marca, título e quando
+     foi tirado. Sem a data, uma folha de carteira encontrada na mesa daqui a
+     três meses parece atual. */
+  .cabecalho-impresso { display: flex !important; }
+
+  /* O título da tela repetiria o do documento, logo abaixo dele. Os selos
+     ficam: tipo, fase e prioridade são informação, não enfeite. */
+  .cabecalho-pagina h1,
+  .cabecalho-pagina > p { display: none !important; }
+  .cabecalho-pagina { margin-bottom: 4mm; }
+
+  /* Nada de sombra nem de canto arredondado: no papel isso vira cinza sujo. */
+  .cartao, .cartao-grafico, .ficha-numero, .cartao-kanban, .tabela-rolavel,
+  .conversa li, .ficha-projeto {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  .tabela-rolavel { overflow: visible !important; background: none !important; }
+
+  /* Linha de tabela partida ao meio pela quebra de página é o defeito clássico
+     de impressão: metade do valor numa folha, metade na outra. */
+  tr, .afazer, .aviso-item, .led, .ficha-numero { break-inside: avoid; }
+  thead { display: table-header-group; }   /* repete o cabeçalho a cada folha */
+  h1, h2, h3 { break-after: avoid; }
+  .secao { break-inside: auto; }
+
+  /* O painel de gráficos vira duas colunas: em uma só, cada gráfico come meia
+     folha e o documento fica com o dobro de páginas. */
+  .painel { grid-template-columns: 1fr 1fr !important; gap: 8mm !important; }
+  .painel--numeros { grid-template-columns: repeat(5, 1fr) !important; }
+
+  /* Link com o endereço ao lado só ajuda quando o endereço significa alguma
+     coisa fora do sistema. Aqui não significa: são todos internos. */
+  a { text-decoration: none; color: inherit; }
+}
+
+/* Fora da impressão, o cabeçalho do documento não existe. */
+.cabecalho-impresso { display: none; }

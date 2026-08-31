@@ -8,6 +8,7 @@ import {
 import { CamposDoTipo } from '../componentes/CamposDoTipo'
 import { AcompanhamentoDoProjeto } from '../componentes/AcompanhamentoDoProjeto'
 import { EquipeDoProjeto } from '../componentes/EquipeDoProjeto'
+import { BotaoImprimir, CabecalhoImpresso } from '../componentes/Imprimir'
 import { ConversaEArquivos } from '../componentes/ConversaEArquivos'
 import { EsqueletoDeTabela } from '../componentes/Esqueleto'
 import { emOrdemDaArvore } from '../lib/arvore'
@@ -122,6 +123,11 @@ export function Projeto({
     <>
       <button className="voltar" onClick={aoVoltar}>← Carteira</button>
 
+      <CabecalhoImpresso
+        titulo={`${projeto.codigo} · ${projeto.nome}`}
+        sub={`${projeto.empresa_nome} · ${projeto.tipo_nome} · ${projeto.fase_nome}`}
+      />
+
       <header className="cabecalho-pagina">
         <div className="titulo-projeto">
           <span className="dado codigo-projeto">{projeto.codigo}</span>
@@ -129,6 +135,7 @@ export function Projeto({
         </div>
         <div className="selos">
           <button className="botao" onClick={aoEditar}>Editar</button>
+          <BotaoImprimir />
           <button className="botao" onClick={aoAbrirEtapas}>Etapas</button>
           <button className="botao" onClick={aoAbrirTarefas}>Tarefas</button>
           <button className="botao" onClick={aoAbrirAvaliacao}>Avaliação</button>

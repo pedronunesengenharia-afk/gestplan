@@ -47,6 +47,31 @@ values ('a4a2e000-0000-0000-0000-000000000002',
 select teste('e pode apontar para um projeto que ela alcança',
   conta($$select id from afazer where projeto_id is not null$$) = 1);
 
+-- E pode dizer de que empresa e, com ou sem projeto.
+insert into afazer (id, pessoa_id, titulo, empresa_id)
+values ('a4a2e000-0000-0000-0000-000000000004',
+        'bbbbbbbb-0000-0000-0000-000000000003',
+        'Cobrar a nota da Alfa', 'aaaaaaaa-0000-0000-0000-000000000001');
+select teste('e pode dizer de que empresa é, sem projeto nenhum',
+  conta($$select id from afazer
+           where empresa_id is not null and projeto_id is null$$) = 1);
+
+do $$
+begin
+  begin
+    insert into afazer (pessoa_id, titulo, empresa_id)
+    values ('bbbbbbbb-0000-0000-0000-000000000003', 'Item de empresa alheia',
+            'aaaaaaaa-0000-0000-0000-000000000002');
+    raise exception 'FALHOU: ligaram afazer a empresa que a pessoa nao alcanca';
+  exception
+    when insufficient_privilege then
+      perform teste('mas não a empresa que ela não alcança', true);
+    when others then
+      if sqlerrm like 'FALHOU%' then raise; end if;
+      perform teste('mas não a empresa que ela não alcança', true);
+  end;
+end $$;
+
 -- -----------------------------------------------------------------------------
 -- 2 · Ninguém escreve na lista de outro
 -- -----------------------------------------------------------------------------
@@ -95,7 +120,7 @@ select vestir('11111111-1111-1111-1111-111111111111');   -- DONO
 select teste('NEM O PROPRIETÁRIO enxerga a lista de outra pessoa',
   conta('select id from afazer') = 0);
 select teste('e ela continua lá, do lado de fora da RLS',
-  afazeres_reais('bbbbbbbb-0000-0000-0000-000000000003') = 2);
+  afazeres_reais('bbbbbbbb-0000-0000-0000-000000000003') = 3);
 
 do $$
 declare n int;
@@ -131,8 +156,10 @@ begin
   perform teste('a pessoa conclui o próprio item', n = 1);
 end $$;
 
+-- Tres na lista: o do prazo, o do projeto e o da empresa. Concluido um,
+-- sobram dois.
 select teste('e o item some dos pendentes',
-  conta('select id from afazer where feito_em is null') = 1);
+  conta('select id from afazer where feito_em is null') = 2);
 
 do $$
 declare n int;

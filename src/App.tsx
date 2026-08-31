@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { ambiente, ehHomolog, ehProducao, refDoBanco, supabase } from './lib/supabase'
 import { contarAvisosNaoLidos, eu, vincularMeuAcesso, type Pessoa } from './lib/banco'
@@ -57,6 +57,8 @@ export function App() {
   const [naoLidos, setNaoLidos] = useState(0)
   // A folha do "Mais", no celular. No computador nunca abre: a lateral tem tudo.
   const [maisAberto, setMaisAberto] = useState(false)
+  /** Quem estava logado da ultima vez que o estado de autenticacao mudou. */
+  const usuarioAnterior = useRef<string | null>(null)
   const [projetoAberto, setProjetoAberto] = useState<string | null>(null)
   // { id: null } = projeto novo; { id } = editando um existente.
   const [editando, setEditando] = useState<{ id: string | null } | null>(null)
@@ -70,11 +72,24 @@ export function App() {
       setSessao(data.session)
       setCarregando(false)
     })
-    const { data: sub } = supabase.auth.onAuthStateChange((evento, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_evento, s) => {
       setSessao(s)
-      // Quem acabou de entrar comeca no Painel, nao na tela onde estava antes
-      // de sair. Renovacao de token nao mexe em nada.
-      if (evento === 'SIGNED_IN') setPagina('painel')
+
+      // Quem acabou de entrar comeca no Painel. Quem so voltou para a aba
+      // continua onde estava.
+      //
+      // NAO da para confiar no evento `SIGNED_IN` para isso, e o comentario
+      // que estava aqui dizia o contrario. O `auth-js` reemite `SIGNED_IN` em
+      // pelo menos dois casos que nao sao entrada nenhuma: ao recuperar a
+      // sessao do armazenamento quando a aba volta a ter foco, e ao
+      // retransmitir por BroadcastChannel o que outra aba fez. O efeito era
+      // sair do sistema e voltar caindo no Painel, perdendo a tela aberta.
+      //
+      // O que decide agora e a IDENTIDADE mudar: de ninguem para alguem, ou de
+      // uma pessoa para outra. Reemissao com o mesmo usuario nao mexe em nada.
+      const quem = s?.user.id ?? null
+      if (quem !== null && quem !== usuarioAnterior.current) setPagina('painel')
+      usuarioAnterior.current = quem
     })
     return () => sub.subscription.unsubscribe()
   }, [])
@@ -91,7 +106,9 @@ export function App() {
       .then(() => eu())
       .then(setPessoa)
       .catch(() => setPessoa(null))
-  }, [sessao])
+    // Depende do ID, nao do objeto da sessao: o objeto e novo a cada reemissao
+    // de evento, e isso refazia duas idas ao banco toda vez que a aba voltava.
+  }, [sessao?.user.id])
 
   // O contador do menu. Recarrega a cada minuto porque quem escreve aviso e um
   // gatilho no banco, disparado por outra pessoa — nao ha nada nesta sessao

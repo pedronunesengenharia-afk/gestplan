@@ -23,6 +23,18 @@
   flex-direction: column;
   gap: var(--e5);
 }
+/* Cabecalho do documento impresso. Fica fora da media query de impressao
+   porque o `display: none` de fora e que o esconde na tela; aqui so a forma. */
+.cabecalho-impresso {
+  align-items: center; gap: 6mm; margin-bottom: 6mm;
+  padding-bottom: 3mm; border-bottom: 1.5pt solid var(--tinta);
+}
+.cabecalho-impresso img { height: 12mm; width: auto; }
+.cabecalho-impresso span { display: flex; flex-direction: column; line-height: 1.3; }
+.cabecalho-impresso strong { font-family: var(--fonte-titulo); font-size: 13pt; }
+.cabecalho-impresso em { font-style: normal; color: var(--tinta-2); font-size: 10pt; }
+.cabecalho-impresso small { font-family: var(--fonte-dado); font-size: 7.5pt; color: var(--apagado); }
+
 /* A marca. O arquivo vem de componentes/Marca.tsx; aqui so o tamanho. */
 .marca { display: flex; align-items: center; gap: .6rem; }
 .marca img { width: 1.9rem; height: auto; flex: none; }
@@ -577,6 +589,7 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
 .afazer-caixa .campo { flex: 1 1 14rem; }
 .afazer-caixa .campo--prazo      { flex: 0 0 9.5rem; }
 .afazer-caixa .campo--prioridade { flex: 0 0 7rem; }
+.afazer-caixa .campo--empresa    { flex: 0 1 10rem; min-width: 0; }
 .afazer-caixa .campo--projeto    { flex: 0 1 13rem; min-width: 0; }
 .afazer-caixa .botao { flex: none; }
 
@@ -605,6 +618,18 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
    feito hoje, que e metade do valor de uma lista. */
 .afazer--feito .afazer-titulo { text-decoration: line-through; color: var(--apagado); }
 .afazer--feito .afazer-marcas { opacity: .6; }
+
+/* O prazo da linha e um botao que vira campo: e o que mais muda depois de
+   anotado. Sem prazo ele fica discreto, como um convite — nao como um erro. */
+.prazo-do-afazer {
+  font: inherit; font-size: .72rem; background: none; border: none;
+  padding: var(--e1) var(--e2); border-radius: var(--raio);
+  color: var(--apagado); cursor: pointer;
+}
+.prazo-do-afazer:hover { background: var(--superficie-2); color: var(--tinta); }
+.prazo-vazio { opacity: 0; transition: opacity var(--transicao); }
+.afazer:hover .prazo-vazio, .prazo-vazio:focus-visible { opacity: 1; }
+.campo--prazo-linha { width: auto; padding: var(--e1) var(--e2); font-size: .78rem; }
 
 .prazo-vencido { color: var(--st-critico); font-weight: 500; }
 
