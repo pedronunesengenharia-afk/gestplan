@@ -11,42 +11,22 @@
   flex-direction: column;
   gap: var(--e5);
 }
-/* A marca. O hexagono e SVG (componentes/Marca.tsx); aqui so o tamanho e o
-   assentamento do logotipo ao lado dele. */
+/* A marca. O arquivo vem de componentes/Marca.tsx; aqui so o tamanho. */
 .marca { display: flex; align-items: center; gap: .6rem; }
-.marca svg { width: 1.7rem; height: 1.7rem; flex: none; }
-.marca-nome {
-  font-family: var(--fonte-titulo);
-  line-height: 1.05;
-}
-/* O logotipo da prancheta: GEST no azul primario, PLAN em cinza, caixa alta.
-   Duas cores, nao dois pesos — foi a leitura errada da primeira tentativa. */
+.marca img { width: 1.9rem; height: auto; flex: none; }
+
+.marca-nome { font-family: var(--fonte-titulo); line-height: 1.05; }
+/* Na lateral, o nome vem em texto porque o logotipo do arquivo e escuro. As
+   duas cores da prancheta sobem de tom para se lerem sobre o grafite. */
 .marca-logotipo {
-  display: block; font-size: 1.18rem; font-weight: 800;
+  display: block; font-size: 1.12rem; font-weight: 800;
   letter-spacing: -.005em; text-transform: uppercase;
 }
-.marca-logotipo b { color: var(--azul); font-weight: 800; }
-.marca-logotipo i { color: var(--tinta-2); font-weight: 700; font-style: normal; }
+.marca-logotipo b { color: #6FA8FF; font-weight: 800; }
+.marca-logotipo i { color: #CFD8DC; font-weight: 700; font-style: normal; }
 
-.marca-nome small {
-  display: block;
-  font-family: var(--fonte-texto); font-weight: 400; color: var(--apagado);
-  font-size: .62rem; letter-spacing: .01em; margin-top: .18rem;
-  text-transform: none;
-}
-
-/* Na lateral escura, #0056D2 sobre grafite nao se le e o cinza some. As duas
-   cores sobem de tom — a marca continua a mesma, o contraste e que muda. */
-/* Na lateral, a contraforma da marca e a propria lateral. */
-.lateral .marca { --superficie-marca: var(--petroleo); }
-.lateral .marca-logotipo b { color: #6FA8FF; }
-.lateral .marca-logotipo i { color: #CFD8DC; }
-.lateral .marca-nome small { color: #8FA6B2; }
-
-.marca--grande { gap: .8rem; }
-.marca--grande svg { width: 3.6rem; height: 3.6rem; }
-.marca--grande .marca-nome { font-size: 1.85rem; }
-.marca--grande .marca-nome small { font-size: .72rem; }
+/* Nas telas de entrada entra o logotipo inteiro, do arquivo. */
+.marca--grande img { width: min(15rem, 70%); }
 
 .menu { display: flex; flex-direction: column; gap: 1px; }
 .menu button {
