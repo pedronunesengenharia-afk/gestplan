@@ -19,6 +19,7 @@ import { Pontuacao } from './paginas/Pontuacao'
 import { Avaliacao } from './paginas/Avaliacao'
 import { Empresas } from './paginas/Empresas'
 import { Equipe } from './paginas/Equipe'
+import { Marca } from './componentes/Marca'
 
 type Pagina = 'painel' | 'meu' | 'avisos' | 'carteira' | 'chamados' | 'empresas' | 'equipe' | 'conta'
 
@@ -126,10 +127,7 @@ export function App() {
         </div>
       )}
       <nav className="lateral">
-        <div className="marca">
-          <i><b /></i>
-          <span>GestPlan</span>
-        </div>
+        <Marca />
 
         <div className="menu">
           {PAGINAS.map((p) => (

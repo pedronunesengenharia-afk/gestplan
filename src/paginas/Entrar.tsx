@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { Marca } from '../componentes/Marca'
 
 /**
  * A entrada, com dois caminhos.
@@ -65,10 +66,7 @@ export function Entrar({ aoAbrirChamado }: { aoAbrirChamado: () => void }) {
   return (
     <div className="entrar">
       <form onSubmit={modo === 'senha' ? entrarComSenha : pedirLink}>
-        <div className="marca">
-          <i><b /></i>
-          <span>GestPlan</span>
-        </div>
+        <Marca tamanho="grande" comAssinatura />
 
         {estado === 'enviado' ? (
           <>

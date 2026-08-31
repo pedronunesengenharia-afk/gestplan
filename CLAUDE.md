@@ -23,6 +23,7 @@ portal fica para depois da virada.
 - Supabase — Postgres 16, Auth, Storage, RLS, Edge Functions — região São Paulo
 - Hostinger para o front estático
 - Sem biblioteca de UI: CSS próprio com tokens em `src/estilos/tokens.css`
+- Tipografia Urbanist (interface e título) e IBM Plex Mono (número em coluna)
 - Sem biblioteca de Gantt: motor de CPM próprio, em TypeScript puro
 
 Antes de acrescentar dependência, pergunte. Cada uma é dívida que uma pessoa só
@@ -52,6 +53,40 @@ linha de `tipo_fase` ou `campo_definicao`. Vale para SQL e para TypeScript. É a
 Consequência prática: a tela lê `tipo_projeto.usa_orcamento`,
 `tipo_fase.exige_setores`, `campo_definicao.tipo_dado` e se monta a partir
 disso. Ela não sabe o nome de nenhum tipo.
+
+## Identidade
+
+A prancheta de marca é a fonte da verdade das cores, e ela vive em
+`src/estilos/tokens.css`. Nenhum componente escreve hexadecimal.
+
+| | | |
+|---|---|---|
+| `#0056D2` | primário | confiança — **ação**: botão, foco, link |
+| `#0097A7` | secundário | crescimento — estrutura e apoio |
+| `#4CAF50` | accento | ação — concluído, aprovado, em dia |
+| `#FF9800` | destaque | atenção — o que precisa de olho |
+| `#263238` | texto | e o material do tema escuro |
+| `#F5F5F5` | fundo | |
+
+**Cada matiz tem dois tons, e a razão é medida.** Os hexadecimais da prancheta
+foram feitos para PREENCHER. Como texto sobre branco, três deles não alcançam
+os 4,5 de contraste: `#FF9800` dá 2,16, `#4CAF50` dá 2,78, `#0097A7` dá 3,51.
+Então `--laranja` preenche e `--laranja-tinta` escreve. Use o `-tinta` sempre
+que a cor for texto.
+
+Peça a cor pelo **nome semântico** (`--acao`) e não pelo nome do pigmento
+(`--azul`): no dia em que a marca mudar, muda uma linha.
+
+**Cor de gráfico nunca é escolhida no olho.** A paleta está em
+`src/estilos/graficos.css` e é conferida por
+`python ferramentas/validar_paleta.py`, que mede faixa de luminosidade, croma,
+contraste e separação sob protanopia e deuteranopia — **todos os pares, não só
+os vizinhos**. Foi assim que se descobriu que a paleta anterior tinha duas
+séries com ΔE 0,8 sob deuteranopia. Mudou uma cor? Rode o validador.
+
+**Cor de tipo e de fase é dado**, em `tipo_projeto.cor` e `tipo_fase.cor`. A da
+fase sai da `categoria`, não do nome — fase nova de tipo novo já nasce com o
+farol certo.
 
 ## Banco de dados
 

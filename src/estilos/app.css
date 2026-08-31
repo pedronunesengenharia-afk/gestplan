@@ -4,28 +4,41 @@
 
 .lateral {
   background: var(--petroleo);
+  border-right: 1px solid rgba(255,255,255,.05);
   color: #EAF2F4;
   padding: var(--e5) var(--e4);
   display: flex;
   flex-direction: column;
   gap: var(--e5);
 }
-.marca { display: flex; align-items: center; gap: .55rem; }
-.marca i {
-  width: 1.35rem; height: 1.35rem; background: var(--laranja);
-  display: grid; place-items: center; flex: none;
+/* A marca. O hexagono e SVG (componentes/Marca.tsx); aqui so o tamanho e o
+   assentamento do logotipo ao lado dele. */
+.marca { display: flex; align-items: center; gap: .6rem; }
+.marca svg { width: 1.7rem; height: 1.7rem; flex: none; }
+.marca-nome {
+  font-family: var(--fonte-titulo); font-weight: 500;
+  font-size: 1.15rem; letter-spacing: -.005em; line-height: 1.15;
 }
-.marca i b { display: block; width: .44rem; height: .44rem; background: var(--petroleo-fundo); }
-.marca span {
-  font-family: var(--fonte-titulo); font-weight: 700; font-stretch: 112%;
-  font-size: .95rem; letter-spacing: .06em; text-transform: uppercase;
+/* "Gest" pesado, "Plan" leve — a hierarquia do logotipo da prancheta. Ali ela
+   e feita com duas cores; aqui, com peso e opacidade, porque a mesma marca
+   precisa assentar sobre a lateral escura e sobre a tela branca de entrada. */
+.marca-nome b { font-weight: 800; }
+.marca-nome small {
+  display: block;
+  font-family: var(--fonte-texto); font-weight: 400;
+  font-size: .6rem; letter-spacing: .045em; opacity: .68; margin-top: .12rem;
 }
+
+.marca--grande { gap: .8rem; }
+.marca--grande svg { width: 3.6rem; height: 3.6rem; }
+.marca--grande .marca-nome { font-size: 1.85rem; }
+.marca--grande .marca-nome small { font-size: .72rem; }
 
 .menu { display: flex; flex-direction: column; gap: 1px; }
 .menu button {
   font: inherit; text-align: left; background: none; border: none;
-  color: #8FB0B9; padding: var(--e2) var(--e3); border-radius: var(--raio);
-  cursor: pointer; border-left: 2px solid transparent;
+  color: #9FB6C0; padding: var(--e2) var(--e3); border-radius: var(--raio);
+  cursor: pointer; border-left: 3px solid transparent;
   display: flex; align-items: center; justify-content: space-between; gap: var(--e2);
 }
 
@@ -39,7 +52,7 @@
 }
 .menu button:hover { color: #EAF2F4; background: rgba(255,255,255,.04); }
 .menu button[aria-current='page'] {
-  color: #EAF2F4; background: rgba(255,255,255,.06); border-left-color: var(--laranja);
+  color: #EAF2F4; background: rgba(255,255,255,.06); border-left-color: var(--azul-claro);
 }
 
 .rodape-lateral {
@@ -56,10 +69,23 @@
 .cabecalho-pagina { margin-bottom: var(--e5); }
 .cabecalho-pagina p { color: var(--apagado); margin: var(--e1) 0 0; }
 
-.entrar { display: grid; place-items: center; min-height: 100vh; padding: var(--e4); }
-.entrar form { width: min(24rem, 100%); display: flex; flex-direction: column; gap: var(--e3); }
-.entrar .marca { color: var(--tinta); margin-bottom: var(--e2); }
-.entrar .marca i b { background: #fff; }
+/* A entrada e a primeira tela que alguem ve do sistema, e estava solta no meio
+   do nada. Vira cartao: a marca em cima, o formulario dentro, sombra para o
+   bloco assentar sobre o fundo — a mesma ideia de "objeto sobre a mesa" que
+   vale para o resto. */
+.entrar { display: grid; place-items: center; min-height: 100vh; padding: var(--e5); }
+.entrar form {
+  width: min(25rem, 100%);
+  display: flex; flex-direction: column; gap: var(--e3);
+  background: var(--superficie);
+  border: 1px solid var(--linha-suave);
+  border-radius: var(--raio-cartao);
+  box-shadow: var(--sombra-cartao);
+  padding: var(--e6);
+}
+.entrar .marca { color: var(--tinta); margin-bottom: var(--e4); }
+.entrar label { font-size: .85rem; color: var(--tinta-2); margin-bottom: calc(var(--e2) * -1); }
+.entrar .botao--acao { margin-top: var(--e2); padding: var(--e3) var(--e4); }
 
 .vazio { color: var(--apagado); padding: var(--e6) 0; text-align: center; }
 
@@ -67,7 +93,7 @@
 
 .voltar {
   font: inherit; font-size: .85rem; background: none; border: none;
-  color: var(--ciano); padding: 0; margin-bottom: var(--e4); cursor: pointer;
+  color: var(--acao); padding: 0; margin-bottom: var(--e4); cursor: pointer;
 }
 .voltar:hover { text-decoration: underline; }
 
@@ -75,7 +101,7 @@
 .linha-clicavel:hover { background: var(--superficie-2); }
 /* Mesmo laranja de sinal do foco global: quem navega por Tab não deve ter de
    aprender duas cores de foco. */
-.linha-clicavel:focus-visible { outline: 2px solid var(--laranja); outline-offset: -2px; }
+.linha-clicavel:focus-visible { outline: 2px solid var(--acao); outline-offset: -2px; }
 
 .titulo-projeto { display: flex; align-items: baseline; gap: var(--e3); flex-wrap: wrap; }
 .codigo-projeto { color: var(--apagado); font-size: .95rem; }
@@ -134,7 +160,7 @@ td.direita, th.direita { text-align: right; }
 /* Trava a fase de agora. */
 .exigencia--trava { color: var(--vermelho); background: var(--vermelho-fundo); }
 /* Ficou em branco numa fase que o projeto já deixou. */
-.exigencia--pendencia { color: var(--laranja); background: var(--laranja-fundo); }
+.exigencia--pendencia { color: var(--laranja-tinta); background: var(--laranja-fundo); }
 
 .ajuda { color: var(--apagado); font-size: .75rem; margin: var(--e1) 0 0; }
 .erro-campo { color: var(--vermelho); font-size: .78rem; margin: var(--e1) 0 0; }
@@ -145,7 +171,7 @@ td.direita, th.direita { text-align: right; }
 
 .marcadores { display: flex; flex-direction: column; gap: var(--e1); }
 .marcador { display: flex; align-items: center; gap: var(--e2); font-size: .9rem; cursor: pointer; }
-.marcador input { accent-color: var(--laranja); }
+.marcador input { accent-color: var(--acao); }
 
 select.campo { cursor: pointer; }
 textarea.campo { resize: vertical; font-family: inherit; }
@@ -349,11 +375,11 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
 }
 .led--carteira button:disabled { cursor: default; }
 .led--carteira strong {
-  font-family: var(--fonte-titulo); font-size: 1.5rem; font-weight: 700;
+  font-family: var(--fonte-titulo); font-size: 1.55rem; font-weight: 800;
   font-variant-numeric: tabular-nums; line-height: 1; color: var(--tinta);
 }
 .led--carteira .nome-da-fase { font-size: .72rem; color: var(--apagado); }
-.led--escolhida { border-color: var(--laranja); box-shadow: 0 0 0 1px var(--laranja) inset; }
+.led--escolhida { border-color: var(--acao); box-shadow: 0 0 0 1px var(--acao) inset; }
 .led--carteira:hover { border-color: var(--apagado); }
 
 .so-leitor {
@@ -372,8 +398,8 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
   box-shadow: var(--sombra-cartao);
   transition: transform var(--transicao), box-shadow var(--transicao);
 }
-.cartao-kanban { transition: transform var(--transicao), border-color var(--transicao); }
-.cartao-kanban:hover { transform: translateY(-1px); }
+.cartao-kanban { transition: transform var(--transicao), border-color var(--transicao), box-shadow var(--transicao); }
+.cartao-kanban:hover { transform: translateY(-2px); box-shadow: var(--sombra); }
 .botao { transition: background var(--transicao), border-color var(--transicao); }
 
 /* Respiro entre faixas do painel, sem afrouxar a tabela. */
@@ -435,8 +461,8 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
 
 .codigo-chamado {
   font-family: var(--fonte-dado); font-size: 1.9rem; font-weight: 500;
-  letter-spacing: .06em; color: var(--laranja);
-  background: var(--laranja-fundo); border-radius: var(--raio-cartao);
+  letter-spacing: .06em; color: var(--azul-tinta);
+  background: var(--azul-fundo); border-radius: var(--raio-cartao);
   padding: var(--e3) var(--e4); text-align: center; margin: var(--e2) 0;
 }
 
@@ -512,7 +538,7 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
   background: none; border: none; padding: 0;
   display: flex; flex-direction: column; gap: var(--e1);
 }
-.aviso-corpo:hover .aviso-titulo { color: var(--laranja); }
+.aviso-corpo:hover .aviso-titulo { color: var(--acao); }
 
 .aviso-titulo { font-weight: 600; color: var(--tinta); }
 .aviso-texto  { color: var(--tinta-2); font-size: .85rem; }

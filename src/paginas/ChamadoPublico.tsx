@@ -4,6 +4,7 @@ import {
   ErroDoBanco,
 } from '../lib/banco'
 import { ehHomolog, refDoBanco } from '../lib/supabase'
+import { Marca } from '../componentes/Marca'
 
 /**
  * O chamado que se abre sem entrar no sistema.
@@ -123,10 +124,7 @@ export function ChamadoPublico({ aoEntrar }: { aoEntrar: () => void }) {
         </div>
       )}
       <div className="publico-cartao">
-        <div className="marca">
-          <i><b /></i>
-          <span>GestPlan</span>
-        </div>
+        <Marca tamanho="grande" comAssinatura />
 
         <h1>Abrir chamado</h1>
         <p className="ajuda">

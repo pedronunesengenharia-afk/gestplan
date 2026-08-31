@@ -1,9 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import '@fontsource-variable/archivo'
-import '@fontsource/public-sans/400.css'
-import '@fontsource/public-sans/500.css'
-import '@fontsource/public-sans/600.css'
+// Urbanist para interface e titulo, como manda a prancheta de marca. A
+// variavel traz todos os pesos num arquivo so — sai mais leve que os tres
+// arquivos estaticos que estavam aqui antes.
+import '@fontsource-variable/urbanist'
 import '@fontsource/ibm-plex-mono/400.css'
 import '@fontsource/ibm-plex-mono/500.css'
 import './estilos/tokens.css'

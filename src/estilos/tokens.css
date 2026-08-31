@@ -1,99 +1,185 @@
 /* ============================================================================
    GestPlan · tokens
-   Identidade: profissional, cores fortes, impacto.
-   Toda cor da aplicação sai daqui. Nenhum componente escreve hexadecimal.
+   Fonte da verdade: a prancheta de marca. Toda cor da aplicação sai daqui;
+   nenhum componente escreve hexadecimal.
+
+   MAPA DE CORES DA MARCA
+     #0056D2  primário   confiança   → ação, foco, link, botão principal
+     #0097A7  secundário crescimento → estrutura, apoio, gráfico
+     #4CAF50  accento    ação        → concluído, aprovado, em dia
+     #FF9800  destaque   atenção     → o que precisa de olho, não o que deu certo
+     #263238  texto
+     #F5F5F5  fundo
+
+   POR QUE CADA COR TEM DOIS TONS. Os hexadecimais da prancheta foram feitos
+   para PREENCHER — botão, barra, ponto, fatia de gráfico. Como TEXTO sobre
+   branco, três deles não alcançam contraste de leitura: medido,
+   #FF9800 dá 2,16, #4CAF50 dá 2,78 e #0097A7 dá 3,51, contra um piso de 4,5.
+   Então cada matiz tem um par: a cor da prancheta preenche, um tom mais
+   fechado do MESMO matiz escreve. A identidade não muda; o texto fica legível.
+   Os tons de escrita foram medidos, não escolhidos no olho — todos passam de
+   4,5 tanto sobre branco quanto sobre o próprio fundo suave.
    ========================================================================= */
 
 :root {
-  /* --- marca ------------------------------------------------------------ */
-  --petroleo:      #08313D;
-  --petroleo-fundo:#04212A;
-  --laranja:       #F25C05;   /* sinal: ação, número, o que precisa de atenção */
-  --laranja-claro: #FF7A2E;
-  --ciano:         #009DB0;   /* estrutura, gráfico, apoio */
-  --verde:         #1F7A55;   /* concluído, aprovado */
-  --vermelho:      #C0392B;   /* atrasado, reprovado */
+  /* --- marca: PREENCHIMENTO --------------------------------------------- */
+  --azul:       #0056D2;   /* primário — confiança */
+  --azul-forte: #0046AC;   /* pressionado, e texto sobre fundo azul claro */
+  --azul-claro: #3B82F6;
+  --teal:       #0097A7;   /* secundário — crescimento */
+  --verde:      #4CAF50;   /* accento — ação, concluído */
+  --laranja:    #FF9800;   /* destaque — atenção */
+  --vermelho:   #D32F2F;
+
+  /* --- marca: ESCRITA (medida, ver cabeçalho) ---------------------------- */
+  --azul-tinta:     #0056D2;   /* 6,44 sobre branco */
+  --teal-tinta:     #00707A;   /* 5,84 */
+  --verde-tinta:    #2E7D32;   /* 5,13 */
+  --laranja-tinta:  #9A5B00;   /* 5,43 */
+  --vermelho-tinta: #C62828;   /* 5,62 */
+
+  /* --- nome semântico: o que a cor SIGNIFICA ----------------------------- */
+  /* Componente pede `--acao`, não `--azul`. No dia em que a marca trocar de
+     cor primária, muda uma linha aqui e não trinta lá dentro. */
+  --acao:       var(--azul);
+  --acao-forte: var(--azul-forte);
+
+  /* --- compatibilidade -------------------------------------------------- */
+  /* Nomes da identidade anterior, ainda usados em alguns arquivos. Ficam
+     apontando para o equivalente da marca nova em vez de sumirem de uma vez. */
+  --ciano:        var(--teal);
+  --laranja-claro:#FFAC33;
+  --petroleo:     #222E34;   /* o #263238 da prancheta, um passo mais fundo */
+  --petroleo-fundo:#1A2429;
 
   /* --- superfícies ------------------------------------------------------ */
-  --fundo:      #EFF3F4;
-  --superficie: #FFFFFF;
-  --superficie-2:#E2E9EB;
-  --linha:      #CBD6D9;
-  --linha-suave:#DEE6E8;
+  --fundo:       #F5F5F5;   /* da prancheta */
+  --superficie:  #FFFFFF;
+  --superficie-2:#ECEFF1;
+  --linha:       #CFD8DC;
+  --linha-suave: #E3E8EA;
 
   /* --- texto ------------------------------------------------------------ */
-  --tinta:    #0B222A;
-  --tinta-2:  #37505A;
-  --apagado:  #647C85;
+  --tinta:   #263238;       /* da prancheta */
+  --tinta-2: #455A64;
+  --apagado: #78909C;
 
-  /* --- fundos de aviso -------------------------------------------------- */
-  --laranja-fundo: #FCE6D8;
-  --ciano-fundo:   #D7EDF0;
-  --verde-fundo:   #DCEDE4;
-  --vermelho-fundo:#F8E0DD;
+  /* --- fundos suaves de aviso e selo ------------------------------------ */
+  --azul-fundo:    #E3F2FD;
+  --ciano-fundo:   #E0F7FA;
+  --verde-fundo:   #E8F5E9;
+  --laranja-fundo: #FFF3E0;
+  --vermelho-fundo:#FFEBEE;
 
   /* --- tipografia ------------------------------------------------------- */
-  --fonte-titulo: 'Archivo Variable', Archivo, system-ui, sans-serif;
-  --fonte-texto:  'Public Sans', -apple-system, 'Segoe UI', sans-serif;
+  /* Urbanist para interface e título, como manda a prancheta. O monoespaçado
+     não está lá e fica: número em coluna precisa de largura fixa, e é ele que
+     mantém os valores alinhados na tabela. */
+  --fonte-titulo: 'Urbanist Variable', Urbanist, system-ui, sans-serif;
+  --fonte-texto:  'Urbanist Variable', Urbanist, -apple-system, 'Segoe UI', sans-serif;
   --fonte-dado:   'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
 
   /* --- espaço e forma --------------------------------------------------- */
   --e1: .25rem;  --e2: .5rem;   --e3: .75rem;
   --e4: 1rem;    --e5: 1.5rem;  --e6: 2rem;   --e7: 3rem;
-  --raio: 2px;                  /* quase reto: ferramenta, não brinquedo */
-  /* Superfície ELEVADA — cartão, ficha, farol — pode ser mais macia sem que a
-     tabela deixe de ser tabela. O canto reto continua valendo onde há dado em
-     grade; aqui o que se quer é o bloco parecer um objeto sobre a mesa. */
-  --raio-cartao: 10px;
-  --sombra-cartao: 0 1px 2px rgba(8, 49, 61, .06), 0 8px 24px rgba(8, 49, 61, .07);
+
+  /* A prancheta é de cantos macios: botão arredondado, barra de progresso em
+     cápsula. O canto quase reto de antes vinha de outra ideia de produto. */
+  --raio:        6px;
+  --raio-cartao: 12px;
+  --raio-pilula: 999px;
+
+  --sombra:        0 1px 2px rgba(38, 50, 56, .06), 0 3px 10px rgba(38, 50, 56, .05);
+  --sombra-cartao: 0 1px 2px rgba(38, 50, 56, .05), 0 8px 24px rgba(38, 50, 56, .07);
+  --sombra-acao:   0 1px 2px rgba(0, 86, 210, .22), 0 6px 16px rgba(0, 86, 210, .18);
   --transicao: 140ms cubic-bezier(.2, .7, .3, 1);
-  --sombra: 0 1px 2px rgba(8, 49, 61, .08), 0 4px 12px rgba(8, 49, 61, .06);
 }
 
+/* ----------------------------------------------------------------------------
+   Tema escuro
+   Não é o claro invertido: as superfícies saem do #263238 da prancheta, que é
+   a cor de texto dela — o cinza-azulado da marca vira o material do escuro. As
+   cores de marca sobem de tom porque as da prancheta foram feitas para viver
+   sobre branco e somem sobre grafite.
+   ------------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema='claro']) {
-    --fundo:      #061920;
-    --superficie: #0D2A34;
-    --superficie-2:#123641;
-    --linha:      #1E4A57;
-    --linha-suave:#173A46;
-    --tinta:      #E4EFF1;
-    --tinta-2:    #AEC7CE;
-    --apagado:    #7C9AA3;
-    --laranja:    #FF7A2E;
-    --laranja-claro:#FF9455;
-    --ciano:      #2ABDD0;
-    --verde:      #5FBF95;
-    --vermelho:   #E8756A;
-    --laranja-fundo: #3A1E0F;
-    --ciano-fundo:   #0A2E34;
-    --verde-fundo:   #0F2E23;
-    --vermelho-fundo:#3A1917;
-    --sombra: 0 1px 2px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.25);
-    --sombra-cartao: 0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.3);
+    --azul:       #4C8DFF;
+    --azul-forte: #75A7FF;
+    --azul-claro: #75A7FF;
+    --teal:       #22B8CF;
+    --verde:      #66BB6A;
+    --laranja:    #FFA726;
+    --vermelho:   #EF5350;
+
+    --azul-tinta:     #8AB8FF;
+    --teal-tinta:     #4DD0E1;
+    --verde-tinta:    #81C784;
+    --laranja-tinta:  #FFB74D;
+    --vermelho-tinta: #EF9A9A;
+
+    --laranja-claro:#FFC166;
+    --petroleo:     #0F181C;
+    --petroleo-fundo:#0A1215;
+
+    --fundo:       #1B2429;
+    --superficie:  #263238;
+    --superficie-2:#32424A;
+    --linha:       #415460;
+    --linha-suave: #354751;
+    --tinta:       #ECEFF1;
+    --tinta-2:     #B0BEC5;
+    --apagado:     #8DA2AD;
+
+    --azul-fundo:    #16324F;
+    --ciano-fundo:   #0E3940;
+    --verde-fundo:   #17351C;
+    --laranja-fundo: #402C10;
+    --vermelho-fundo:#3E1F1F;
+
+    --sombra:        0 1px 2px rgba(0,0,0,.35), 0 3px 10px rgba(0,0,0,.3);
+    --sombra-cartao: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    --sombra-acao:   0 1px 2px rgba(0,0,0,.4), 0 6px 16px rgba(76,141,255,.25);
   }
 }
 
 :root[data-tema='escuro'] {
-  --fundo:      #061920;
-  --superficie: #0D2A34;
-  --superficie-2:#123641;
-  --linha:      #1E4A57;
-  --linha-suave:#173A46;
-  --tinta:      #E4EFF1;
-  --tinta-2:    #AEC7CE;
-  --apagado:    #7C9AA3;
-  --laranja:    #FF7A2E;
-  --laranja-claro:#FF9455;
-  --ciano:      #2ABDD0;
-  --verde:      #5FBF95;
-  --vermelho:   #E8756A;
-  --laranja-fundo: #3A1E0F;
-  --ciano-fundo:   #0A2E34;
-  --verde-fundo:   #0F2E23;
-  --vermelho-fundo:#3A1917;
-  --sombra: 0 1px 2px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.25);
-  --sombra-cartao: 0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.3);
+  --azul:       #4C8DFF;
+  --azul-forte: #75A7FF;
+  --azul-claro: #75A7FF;
+  --teal:       #22B8CF;
+  --verde:      #66BB6A;
+  --laranja:    #FFA726;
+  --vermelho:   #EF5350;
+
+  --azul-tinta:     #8AB8FF;
+  --teal-tinta:     #4DD0E1;
+  --verde-tinta:    #81C784;
+  --laranja-tinta:  #FFB74D;
+  --vermelho-tinta: #EF9A9A;
+
+  --laranja-claro:#FFC166;
+  --petroleo:     #0F181C;
+  --petroleo-fundo:#0A1215;
+
+  --fundo:       #1B2429;
+  --superficie:  #263238;
+  --superficie-2:#32424A;
+  --linha:       #415460;
+  --linha-suave: #354751;
+  --tinta:       #ECEFF1;
+  --tinta-2:     #B0BEC5;
+  --apagado:     #8DA2AD;
+
+  --azul-fundo:    #16324F;
+  --ciano-fundo:   #0E3940;
+  --verde-fundo:   #17351C;
+  --laranja-fundo: #402C10;
+  --vermelho-fundo:#3E1F1F;
+
+  --sombra:        0 1px 2px rgba(0,0,0,.35), 0 3px 10px rgba(0,0,0,.3);
+  --sombra-cartao: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  --sombra-acao:   0 1px 2px rgba(0,0,0,.4), 0 6px 16px rgba(76,141,255,.25);
 }
 
 /* ============================================================================
@@ -113,20 +199,22 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Urbanist é geométrica e desenha o "1" e o "l" muito parecidos. Nos títulos
+   isso não atrapalha; em número a gente usa o monoespaçado de qualquer jeito. */
 h1, h2, h3, h4 {
   font-family: var(--fonte-titulo);
   font-weight: 700;
-  letter-spacing: -.018em;
-  line-height: 1.15;
+  letter-spacing: -.014em;
+  line-height: 1.18;
   margin: 0;
   text-wrap: balance;
 }
-h1 { font-size: 1.9rem; font-stretch: 108%; }
-h2 { font-size: 1.35rem; font-stretch: 104%; }
+h1 { font-size: 1.95rem; }
+h2 { font-size: 1.3rem; }
 h3 { font-size: 1.05rem; font-weight: 600; }
 
-a { color: var(--laranja); }
-:focus-visible { outline: 2px solid var(--laranja); outline-offset: 2px; }
+a { color: var(--acao); }
+:focus-visible { outline: 2px solid var(--acao); outline-offset: 2px; }
 
 /* Números em coluna têm de alinhar. Sempre. */
 .dado, td.num, .moeda {
@@ -146,15 +234,24 @@ a { color: var(--laranja); }
   background: var(--superficie);
   color: var(--tinta);
   cursor: pointer;
+  transition: background var(--transicao), border-color var(--transicao),
+              box-shadow var(--transicao), transform var(--transicao);
 }
-.botao:hover:not(:disabled) { border-color: var(--apagado); }
+.botao:hover:not(:disabled) { border-color: var(--apagado); background: var(--superficie-2); }
+.botao:active:not(:disabled) { transform: translateY(1px); }
 .botao:disabled { opacity: .5; cursor: not-allowed; }
+
 .botao--acao {
-  background: var(--laranja);
-  border-color: var(--laranja);
+  background: var(--acao);
+  border-color: var(--acao);
   color: #fff;
+  box-shadow: var(--sombra-acao);
 }
-.botao--acao:hover:not(:disabled) { background: var(--laranja-claro); border-color: var(--laranja-claro); }
+.botao--acao:hover:not(:disabled) {
+  background: var(--acao-forte);
+  border-color: var(--acao-forte);
+}
+.botao--acao:disabled { box-shadow: none; }
 
 .campo {
   font: inherit;
@@ -164,13 +261,18 @@ a { color: var(--laranja); }
   border-radius: var(--raio);
   background: var(--superficie);
   color: var(--tinta);
+  transition: border-color var(--transicao), box-shadow var(--transicao);
 }
-.campo:focus { border-color: var(--ciano); }
+.campo:focus {
+  border-color: var(--acao);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--acao) 18%, transparent);
+}
 
 .cartao {
   background: var(--superficie);
-  border: 1px solid var(--linha);
-  border-radius: var(--raio);
+  border: 1px solid var(--linha-suave);
+  border-radius: var(--raio-cartao);
   padding: var(--e4);
 }
 
@@ -180,37 +282,43 @@ a { color: var(--laranja); }
   font-size: .68rem;
   letter-spacing: .06em;
   text-transform: uppercase;
-  padding: .18rem .42rem;
-  border-radius: var(--raio);
+  padding: .18rem .5rem;
+  border-radius: var(--raio-pilula);
   background: var(--superficie-2);
   color: var(--tinta-2);
 }
-.selo--urgente     { background: var(--laranja-fundo);  color: var(--laranja); }
-.selo--importante  { background: var(--ciano-fundo);    color: var(--ciano); }
+.selo--urgente     { background: var(--laranja-fundo);  color: var(--laranja-tinta); }
+.selo--importante  { background: var(--ciano-fundo);    color: var(--teal-tinta); }
 .selo--planejamento{ background: var(--superficie-2);   color: var(--apagado); }
-.selo--ok          { background: var(--verde-fundo);    color: var(--verde); }
-.selo--atrasado    { background: var(--vermelho-fundo); color: var(--vermelho); }
+.selo--ok          { background: var(--verde-fundo);    color: var(--verde-tinta); }
+.selo--atrasado    { background: var(--vermelho-fundo); color: var(--vermelho-tinta); }
 
 .aviso {
   border: 1px solid var(--linha-suave);
   border-left: 3px solid var(--laranja);
   background: var(--laranja-fundo);
+  color: var(--tinta);
   padding: var(--e3) var(--e4);
   border-radius: var(--raio);
   font-size: .93rem;
 }
 
 /* Tabela larga rola dentro de si; a página nunca rola de lado. */
-.tabela-rolavel { overflow-x: auto; border: 1px solid var(--linha); background: var(--superficie); }
+.tabela-rolavel {
+  overflow-x: auto;
+  border: 1px solid var(--linha-suave);
+  border-radius: var(--raio-cartao);
+  background: var(--superficie);
+}
 table { border-collapse: collapse; width: 100%; font-size: .87rem; }
 /* Densidade de ferramenta, não de folheto: quem passa o dia aqui quer ver
    mais linhas sem rolar. O alvo de clique continua confortável porque a
    linha inteira é clicável, não um link de 12px dentro dela. */
 th, td {
   text-align: left;
-  padding: .3rem .6rem;
+  padding: .38rem .7rem;
   border-bottom: 1px solid var(--linha-suave);
-  line-height: 1.4;
+  line-height: 1.45;
 }
 /* Hierarquia: código e valor são o que o olho procura na tabela; o resto
    recua meio tom para eles aparecerem sem precisar de negrito. */
@@ -227,6 +335,8 @@ th {
   background: var(--superficie-2);
   border-bottom: 1px solid var(--linha);
 }
+thead tr:first-child th:first-child { border-top-left-radius: var(--raio-cartao); }
+thead tr:first-child th:last-child  { border-top-right-radius: var(--raio-cartao); }
 tbody tr:last-child td { border-bottom: none; }
 
 @media (prefers-reduced-motion: reduce) {

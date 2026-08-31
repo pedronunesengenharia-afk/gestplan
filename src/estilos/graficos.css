@@ -2,80 +2,98 @@
    GestPlan · tokens de gráfico
    Complementa tokens.css. Nenhum gráfico escreve hexadecimal.
 
-   A paleta categórica NÃO foi escolhida no olho: passou nos seis checks do
-   validador (faixa de luminosidade, piso de croma, separação sob daltonismo,
-   piso de visão normal, contraste com a superfície) nos dois temas.
+   A paleta é ancorada na marca — começa no azul de confiança #0056D2 e passa
+   pelo teal de crescimento #0097A7 — mas NÃO é a prancheta copiada. Duas
+   razões, as duas medidas por `ferramentas/validar_paleta.py`:
 
-     claro  #0098BA #F05B00 #1E9463 #7B4FD0 #D03A78 #A38200
-            pior par adjacente ΔE 8,5 (protan) · visão normal 21,0
-     escuro #17A0C0 #E06508 #1FA36C #8C6BD8 #DE4C87 #AE8C10
-            pior par adjacente ΔE 10,2 (deutan) · visão normal 18,8
+     · o laranja e o verde da prancheta (#FF9800, #4CAF50) não alcançam
+       contraste sobre branco como dado fino: 2,16 e 2,78 contra o piso 2,6.
+       Entram num passo mais fechado do mesmo matiz.
+     · azul, teal e verde juntos são três matizes frios; sob daltonismo eles se
+       aproximam. A ordem intercala quente e frio para que séries VIZINHAS —
+       as que mais se confundem — fiquem o mais longe possível.
 
-   Mudou alguma cor? Rode o validador de novo antes de commitar. Duas cores que
-   um daltônico não separa é um gráfico que mente para 8% dos homens.
+   Resultado medido (rode `python ferramentas/validar_paleta.py`):
+
+     claro  #0056D2 #E8590C #0097A7 #C2255C #2F9E44 #9C36B5
+            vizinho mais próximo ΔE 21,3 (deutan) · pior par ΔE 12,7 (protan)
+     escuro #4C8DFF #FF922B #22B8CF #F06595 #51CF66 #CC5DE8
+            vizinho mais próximo ΔE 18,8 (protan) · pior par ΔE 8,7 (protan)
+
+   O validador nasceu ao trocar esta paleta e a primeira coisa que ele achou
+   foi um defeito na ANTIGA: no tema escuro, o laranja #E06508 e o ocre #AE8C10
+   ficavam com ΔE 0,8 sob deuteranopia — a mesma cor para 8% dos homens. O
+   comentário que estava aqui só media pares VIZINHOS, e esses dois eram a
+   série 2 e a 6. Por isso o validador confere todos os pares, não só os
+   vizinhos.
+
+   Mudou alguma cor? Rode o validador antes de commitar.
    ========================================================================= */
 
 :root {
   /* --- categórica: identidade. Ordem FIXA, nunca ciclada. ---------------- */
-  --g1: #0098BA;   /* ciano    */
-  --g2: #F05B00;   /* laranja  */
-  --g3: #1E9463;   /* verde    */
-  --g4: #7B4FD0;   /* roxo     */
-  --g5: #D03A78;   /* rosa     */
-  --g6: #A38200;   /* ocre     */
+  --g1: #0056D2;   /* azul da marca   */
+  --g2: #E8590C;   /* laranja fechado */
+  --g3: #0097A7;   /* teal da marca   */
+  --g4: #C2255C;   /* framboesa       */
+  --g5: #2F9E44;   /* verde fechado   */
+  --g6: #9C36B5;   /* roxo            */
   /* Uma sétima série não existe: vira "Outros", ou o gráfico vira pequenos
      múltiplos. Gerar mais uma cor quebra a separação que o validador garantiu. */
 
   /* --- sequencial: magnitude. Uma cor só, clara → escura. ---------------- */
-  --seq1: #D7EDF2;
-  --seq2: #A5D8E3;
-  --seq3: #6BBFD2;
-  --seq4: #2FA0BC;
-  --seq5: #0B7B96;
+  /* Rampa do azul da marca: magnitude é uma coisa só, então uma cor só. */
+  --seq1: #DCE9FB;
+  --seq2: #A9C6F4;
+  --seq3: #6E9EE9;
+  --seq4: #2F73DC;
+  --seq5: #0046AC;
 
   /* --- estado: reservadas. Nunca viram "série 4". ----------------------- */
-  --st-bom:     #1F7A55;
-  --st-atencao: #A38200;
-  --st-serio:   #E06508;
-  --st-critico: #C0392B;
+  /* Estado carrega texto além de cor, então usa o tom de ESCRITA do matiz —
+     os mesmos de tokens.css, medidos acima de 4,5 sobre branco. */
+  --st-bom:     #2E7D32;
+  --st-atencao: #9A5B00;
+  --st-serio:   #E8590C;
+  --st-critico: #C62828;
   /* Cor de estado anda sempre com rótulo ou ícone — nunca sozinha. */
 
   /* --- cenário do gráfico ----------------------------------------------- */
   --g-superficie: var(--superficie);
-  --g-grade:      #E6EDEF;   /* recessiva: a grade não compete com o dado */
-  --g-eixo:       #C3D0D4;
+  --g-grade:      #ECEFF1;   /* recessiva: a grade não compete com o dado */
+  --g-eixo:       #CFD8DC;
   --g-tinta:      var(--tinta);
   --g-tinta-2:    var(--apagado);
-  --g-vazio:      #EDF1F2;   /* fundo de barra, trilha de medidor */
+  --g-vazio:      #EEF1F3;   /* fundo de barra, trilha de medidor */
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema='claro']) {
-    --g1: #17A0C0; --g2: #E06508; --g3: #1FA36C;
-    --g4: #8C6BD8; --g5: #DE4C87; --g6: #AE8C10;
+    --g1: #4C8DFF; --g2: #FF922B; --g3: #22B8CF;
+    --g4: #F06595; --g5: #51CF66; --g6: #CC5DE8;
 
     /* Os passos do escuro são ESCOLHIDOS a partir da mesma rampa, não um
        espelho do claro — inverter dá cor que some no fundo. */
-    --seq1: #0C3742; --seq2: #14515F; --seq3: #1C6E80;
-    --seq4: #2A8CA1; --seq5: #3FAAC0;
+    --seq1: #12304F; --seq2: #1B4A7A; --seq3: #2766A8;
+    --seq4: #3A85D6; --seq5: #6BA6F0;
 
-    --st-bom: #5FBF95; --st-atencao: #C9A227;
-    --st-serio: #F08A4B; --st-critico: #E8756A;
+    --st-bom: #66BB6A; --st-atencao: #D6A429;
+    --st-serio: #FF922B; --st-critico: #EF5350;
 
-    --g-grade:  #1B3B45;
-    --g-eixo:   #2A4C57;
-    --g-vazio:  #123641;
+    --g-grade:  #33434B;
+    --g-eixo:   #47585F;
+    --g-vazio:  #32424A;
   }
 }
 
 :root[data-tema='escuro'] {
-  --g1: #17A0C0; --g2: #E06508; --g3: #1FA36C;
-  --g4: #8C6BD8; --g5: #DE4C87; --g6: #AE8C10;
-  --seq1: #0C3742; --seq2: #14515F; --seq3: #1C6E80;
-  --seq4: #2A8CA1; --seq5: #3FAAC0;
-  --st-bom: #5FBF95; --st-atencao: #C9A227;
-  --st-serio: #F08A4B; --st-critico: #E8756A;
-  --g-grade: #1B3B45; --g-eixo: #2A4C57; --g-vazio: #123641;
+  --g1: #4C8DFF; --g2: #FF922B; --g3: #22B8CF;
+  --g4: #F06595; --g5: #51CF66; --g6: #CC5DE8;
+  --seq1: #12304F; --seq2: #1B4A7A; --seq3: #2766A8;
+  --seq4: #3A85D6; --seq5: #6BA6F0;
+  --st-bom: #66BB6A; --st-atencao: #D6A429;
+  --st-serio: #FF922B; --st-critico: #EF5350;
+  --g-grade: #33434B; --g-eixo: #47585F; --g-vazio: #32424A;
 }
 
 /* ============================================================================
@@ -93,14 +111,18 @@
    um grafico. Cinco KPIs numa linha leem como painel; em duas linhas e meia,
    leem como lista. */
 .painel--numeros { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr)); }
-.painel--numeros .ficha-numero { padding: var(--e3) var(--e4); }
-.painel--numeros .numero { font-size: 1.6rem; }
+.painel--numeros .ficha-numero { padding: var(--e4); }
+.painel--numeros .numero { font-size: 1.7rem; }
 
-/* Ficha de número — quando a resposta é um número, não é gráfico. */
+/* Ficha de número — quando a resposta é um número, não é gráfico.
+
+   A borda ficou um tom mais leve e o peso passou para a sombra: na prancheta
+   os blocos são objetos sobre a mesa, não caixas desenhadas. Borda forte E
+   sombra dá o contorno duplo que faz uma tela parecer um formulário. */
 .ficha-numero {
   background: var(--superficie);
-  border: 1px solid var(--linha);
-  border-radius: var(--raio);
+  border: 1px solid var(--linha-suave);
+  border-radius: var(--raio-cartao);
   padding: var(--e4);
   display: flex; flex-direction: column; gap: var(--e1);
 }
@@ -108,18 +130,21 @@
   font-family: var(--fonte-dado); font-size: .68rem; letter-spacing: .1em;
   text-transform: uppercase; color: var(--apagado);
 }
+/* `font-stretch` saiu: a Archivo tinha eixo de largura, a Urbanist não — e
+   pedir largura a uma fonte que não tem faz o navegador esticar a letra na
+   marra, que é como um logotipo fica torto. */
 .ficha-numero .numero {
-  font-family: var(--fonte-titulo); font-weight: 700; font-stretch: 104%;
-  font-size: 1.85rem; line-height: 1.05; letter-spacing: -.02em;
+  font-family: var(--fonte-titulo); font-weight: 800;
+  font-size: 1.95rem; line-height: 1.05; letter-spacing: -.02em;
   font-variant-numeric: tabular-nums;
 }
 .ficha-numero .apoio { font-size: .85rem; color: var(--apagado) }
 
 .cartao-grafico {
   background: var(--superficie);
-  border: 1px solid var(--linha);
-  border-radius: var(--raio);
-  padding: var(--e4);
+  border: 1px solid var(--linha-suave);
+  border-radius: var(--raio-cartao);
+  padding: var(--e5);
   display: flex; flex-direction: column; gap: var(--e3);
   min-width: 0;                     /* deixa o SVG encolher dentro do grid */
 }
@@ -130,12 +155,13 @@
 /* Legenda: presente sempre que houver 2 séries ou mais. */
 .legenda { display: flex; flex-wrap: wrap; gap: var(--e3); font-size: .82rem }
 .legenda span { display: inline-flex; align-items: center; gap: .38rem; color: var(--tinta-2) }
+.legenda i { border-radius: 3px; }
 .legenda i { width: .7rem; height: .7rem; border-radius: 2px; flex: none }
 
 /* Alternar gráfico / tabela: o dado tem de estar legível sem enxergar cor. */
 .ver-tabela {
   font: inherit; font-size: .78rem; background: none; border: none;
-  color: var(--ciano); cursor: pointer; padding: 0; text-decoration: underline;
+  color: var(--acao); cursor: pointer; padding: 0; text-decoration: underline;
 }
 
 /* Dica: some para quem pediu menos movimento. */
