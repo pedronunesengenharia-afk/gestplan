@@ -1,0 +1,120 @@
+# =============================================================================
+# GestPlan · publicar
+#
+# A cada `git push` na main: confere, aplica as migrações e sobe o site.
+#
+# A ORDEM NÃO É ARBITRÁRIA e é o motivo de este arquivo existir. Já quebrou
+# três telas em produção — `pessoa_custo`, `afazer` e `afazer.empresa_id` —
+# porque o `dist` subiu antes da migração. Coluna nova não atrapalha a tela
+# antiga, que simplesmente não a pede; tela nova pedindo coluna que não existe
+# quebra na cara de quem usa. Aqui a ordem deixa de depender de alguém lembrar.
+#
+# E a suíte de permissão passa a rodar ANTES de todo deploy de verdade, como o
+# CLAUDE.md sempre mandou e nada impunha. Se ela falhar, o site não sobe.
+# =============================================================================
+
+name: Publicar
+
+on:
+  push:
+    branches: [main]
+  # Permite disparar à mão pela aba Actions, sem precisar de um commit.
+  workflow_dispatch:
+
+# Dois pushes seguidos não podem publicar fora de ordem: o segundo cancela o
+# primeiro em vez de os dois correrem para o mesmo FTP.
+concurrency:
+  group: publicar
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  conferir:
+    name: Conferir
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tipos
+        run: npx tsc -b
+
+      - name: Paleta de gráfico
+        run: python3 ferramentas/validar_paleta.py
+
+      - name: Migrações e as nove suítes
+        env:
+          PGPASSWORD: postgres
+          PSQL: psql -q -v ON_ERROR_STOP=1 -h localhost -U postgres -d gestplan_teste
+        run: |
+          psql -h localhost -U postgres -c 'create database gestplan_teste'
+          bash ferramentas/rodar_suites.sh
+
+  # ---------------------------------------------------------------------------
+  publicar:
+    name: Publicar
+    needs: conferir          # nada sobe se a conferência falhar
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      # --- 1 · BANCO PRIMEIRO --------------------------------------------
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Aplicar as migrações
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SENHA: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --password "$SENHA"
+          supabase db push --password "$SENHA"
+
+      # --- 2 · E SÓ ENTÃO A TELA -----------------------------------------
+      - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: npm run build
+
+      - name: Enviar para a Hostinger
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVIDOR }}
+          username: ${{ secrets.FTP_USUARIO }}
+          password: ${{ secrets.FTP_SENHA }}
+          # A barra no fim importa nos dois: sem ela o FTP cria uma pasta
+          # `dist` dentro do destino e o site abre em branco.
+          local-dir: ./dist/
+          server-dir: ${{ vars.FTP_PASTA }}
+          # Envia só o que mudou, comparando com o que já está lá. A primeira
+          # publicação sobe tudo; as seguintes, alguns kB.
+          state-name: .ftp-deploy-sync-state.json

@@ -9,7 +9,9 @@ dist/
 !.vscode/extensions.json
 supabase/.branches
 supabase/.temp
-supabase/config.toml
+# supabase/config.toml VAI versionado: e a configuracao do Supabase local, sem
+# segredo nenhum — tudo sensivel nele e referencia `env(...)`. Fora do Git, o
+# `supabase link` da integracao continua nao acha com que projeto falar.
 *.tsbuildinfo
 
 # lixo do Python, do validador de paleta

@@ -1,26 +1,21 @@
 #!/usr/bin/env bash
-# Roda as suites num banco descartavel dentro do container `gestplan-teste`.
-# O rodar_testes.bat procura psql ou o container do Supabase local; nesta
-# maquina nao ha nenhum dos dois, entao este atalho fala com o container direto.
+# Roda as suites contra um Postgres descartavel no container `gestplan-teste`.
+#
+# O rodar_testes.bat procura psql no PATH ou o container do Supabase local;
+# esta maquina nao tem nenhum dos dois, entao este atalho fala direto com um
+# container `postgres:16`. O roteiro em si vive em ferramentas/rodar_suites.sh,
+# que a integracao continua tambem usa.
 set -u
 cd "$(dirname "$0")"
 C=gestplan-teste
-docker start $C >/dev/null 2>&1
-docker exec $C psql -U postgres -c "drop database if exists gestplan_teste" \
-                    -c "create database gestplan_teste" >/dev/null 2>&1
-R() { docker exec -i $C psql -q -v ON_ERROR_STOP=1 -U postgres -d gestplan_teste < "$1" 2>&1; }
-R testes/00_stub_supabase.sql >/dev/null
-for f in supabase/migrations/*.sql; do
-  R "$f" >/dev/null 2>&1 || { echo "FALHOU a migracao $(basename "$f")"; R "$f" | grep -i error | head -3; exit 1; }
-done
-tot=0; falhou=0
-for f in testes/0[1-9]*.sql; do
-  saida=$(R "$f")
-  n=$(printf '%s' "$saida" | grep -c "^NOTICE:.*  ok   ")
-  tot=$((tot+n))
-  erro=$(printf '%s' "$saida" | grep -iE "FALHOU|^ERROR" | head -1)
-  if [ -n "$erro" ]; then falhou=1; printf "  %-28s %3d  <-- %s\n" "$(basename "$f")" "$n" "$erro"
-  else printf "  %-28s %3d\n" "$(basename "$f")" "$n"; fi
-done
-echo "  TOTAL: $tot"
-exit $falhou
+
+docker start $C > /dev/null 2>&1
+# `with (force)` derruba conexao aberta: sem isso o drop falha calado e as
+# migracoes rodam por cima do banco velho — e o erro que aparece e
+# "relation already exists", que nao diz nada sobre a causa.
+docker exec $C psql -U postgres -c "drop database if exists gestplan_teste with (force)" > /dev/null 2>&1
+docker exec $C psql -U postgres -c "create database gestplan_teste" > /dev/null 2>&1 \
+  || { echo "nao consegui criar o banco de teste — o Docker esta de pe?"; exit 1; }
+
+PSQL='docker exec -i gestplan-teste psql -q -v ON_ERROR_STOP=1 -U postgres -d gestplan_teste' \
+  ferramentas/rodar_suites.sh
