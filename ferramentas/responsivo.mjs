@@ -11,7 +11,21 @@ import { chromium, devices } from 'playwright'
  *     alguem errar o botao com o polegar.
  */
 
-const APP = 'http://localhost:4173'
+const APP = process.env.APP ?? 'http://localhost:4173'
+
+// SENHA NAO SE ESCREVE EM ARQUIVO VERSIONADO, nem de teste. Estava aqui, e foi
+// pega na conferencia antes do primeiro push — que e justamente para isso que
+// se confere antes de publicar um repositorio pela primeira vez.
+//
+//   $env:GESTPLAN_EMAIL='voce@empresa.com.br'
+//   $env:GESTPLAN_SENHA='...'
+//   node ferramentas/responsivo.mjs
+const EMAIL = process.env.GESTPLAN_EMAIL
+const SENHA = process.env.GESTPLAN_SENHA
+if (!EMAIL || !SENHA) {
+  console.error('defina GESTPLAN_EMAIL e GESTPLAN_SENHA no ambiente')
+  process.exit(1)
+}
 
 const TAMANHOS = [
   { nome: 'iPhone SE   375', vp: { width: 375, height: 667 }, movel: true },
@@ -38,8 +52,8 @@ for (const t of TAMANHOS) {
   await p.goto(APP, { waitUntil: 'networkidle' })
 
   // entrada
-  await p.fill('#email', 'pedronunesengenharia@gmail.com')
-  await p.fill('#senha', 'GestPlan#2026')
+  await p.fill('#email', EMAIL)
+  await p.fill('#senha', SENHA)
   await p.click('.botao--acao')
   await p.waitForTimeout(4000)
 
