@@ -27,7 +27,11 @@ done
 
 total=0
 falhou=0
-for f in testes/0[1-9]*.sql; do
+# `[0-9][0-9]_` e nao `0[1-9]`: com o padrao antigo a decima suite nunca era
+# encontrada, e o laco terminava em silencio dizendo que tudo passou. Suite que
+# nao roda e pior que suite que falha.
+for f in testes/[0-9][0-9]_*.sql; do
+  case "$(basename "$f")" in 00_*) continue;; esac
   saida=$(R "$f")
   n=$(printf '%s' "$saida" | grep -c "^NOTICE:.*  ok   ")
   total=$((total + n))

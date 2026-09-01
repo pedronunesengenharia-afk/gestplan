@@ -50,9 +50,9 @@ for %%f in (supabase\migrations\*.sql) do (
 )
 
 echo  [3/3] suites
-REM Roda toda suite testes\0N_*.sql em ordem, menos o stub. Suite nova entra
+REM Roda toda suite testes\NN_*.sql em ordem, menos o stub. Suite nova entra
 REM so criando o arquivo — nada a alterar aqui.
-for %%f in (testes\0*.sql) do (
+for %%f in (testes\[0-9][0-9]_*.sql) do (
   if /i not "%%~nxf"=="00_stub_supabase.sql" (
     echo        %%~nxf
     call :roda "%%f" || goto :erro

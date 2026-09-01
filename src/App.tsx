@@ -18,6 +18,8 @@ import { Etapas } from './paginas/Etapas'
 import { Tarefas } from './paginas/Tarefas'
 import { Pontuacao } from './paginas/Pontuacao'
 import { Avaliacao } from './paginas/Avaliacao'
+import { Ocorrencias } from './paginas/Ocorrencias'
+import { Decisoes } from './paginas/Decisoes'
 import { Empresas } from './paginas/Empresas'
 import { Equipe } from './paginas/Equipe'
 import { Marca } from './componentes/Marca'
@@ -68,6 +70,8 @@ export function App() {
   const [tarefasDe, setTarefasDe] = useState<string | null>(null)
   const [pontuacaoDe, setPontuacaoDe] = useState<string | null>(null)
   const [avaliacaoDe, setAvaliacaoDe] = useState<string | null>(null)
+  const [ocorrenciasDe, setOcorrenciasDe] = useState<string | null>(null)
+  const [decisoesDe, setDecisoesDe] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -152,7 +156,65 @@ export function App() {
     setTarefasDe(null)
     setPontuacaoDe(null)
     setAvaliacaoDe(null)
+    setOcorrenciasDe(null)
+    setDecisoesDe(null)
     setMaisAberto(false)
+  }
+
+  /**
+   * A tela de projeto, e qualquer sub-tela dela.
+   *
+   * EXISTE PORQUE HAVIA UM DEFEITO: este bloco estava escrito cinco vezes, e só
+   * a cópia da Carteira renderizava as sub-telas. Quem abrisse um projeto pelo
+   * Painel, pelo Meu trabalho, pelos Avisos ou pelos Chamados e clicasse em
+   * "Etapas" ou "Avaliação" via o botão não fazer nada — o estado mudava e
+   * ninguém desenhava a tela.
+   *
+   * Devolve `null` quando não há projeto aberto, e aí cada aba mostra a sua.
+   */
+  const telaDeProjeto = () => {
+    const voltarAoProjeto = () => {
+      setEtapasDe(null)
+      setTarefasDe(null)
+      setPontuacaoDe(null)
+      setAvaliacaoDe(null)
+      setOcorrenciasDe(null)
+      setDecisoesDe(null)
+    }
+
+    if (editando) {
+      return (
+        <EditarProjeto
+          id={editando.id}
+          aoSair={(idSalvo) => {
+            setEditando(null)
+            if (idSalvo) setProjetoAberto(idSalvo)
+          }}
+        />
+      )
+    }
+    if (etapasDe) return <Etapas id={etapasDe} aoVoltar={voltarAoProjeto} />
+    if (tarefasDe) return <Tarefas id={tarefasDe} aoVoltar={voltarAoProjeto} />
+    if (pontuacaoDe) return <Pontuacao id={pontuacaoDe} aoVoltar={voltarAoProjeto} />
+    if (avaliacaoDe) return <Avaliacao id={avaliacaoDe} aoVoltar={voltarAoProjeto} />
+    if (ocorrenciasDe) return <Ocorrencias id={ocorrenciasDe} aoVoltar={voltarAoProjeto} />
+    if (decisoesDe) return <Decisoes id={decisoesDe} aoVoltar={voltarAoProjeto} />
+    if (projetoAberto) {
+      return (
+        <Projeto
+          id={projetoAberto}
+          aoVoltar={() => setProjetoAberto(null)}
+          aoEditar={() => setEditando({ id: projetoAberto })}
+          aoAbrirEtapas={() => setEtapasDe(projetoAberto)}
+          aoAbrirTarefas={() => setTarefasDe(projetoAberto)}
+          aoAbrirPontuacao={() => setPontuacaoDe(projetoAberto)}
+          aoAbrirAvaliacao={() => setAvaliacaoDe(projetoAberto)}
+          aoAbrirOcorrencias={() => setOcorrenciasDe(projetoAberto)}
+          aoAbrirDecisoes={() => setDecisoesDe(projetoAberto)}
+        />
+      )
+    }
+    return null
   }
 
   if (carregando) return <div className="vazio">Carregando…</div>
@@ -233,98 +295,27 @@ export function App() {
             <code>supabase/primeiro_acesso.sql</code>.
           </div>
         )}
-        {pagina === 'painel' &&
-          (projetoAberto ? (
-            <Projeto
-              id={projetoAberto}
-              aoVoltar={() => setProjetoAberto(null)}
-              aoEditar={() => setEditando({ id: projetoAberto })}
-              aoAbrirEtapas={() => setEtapasDe(projetoAberto)}
-              aoAbrirTarefas={() => setTarefasDe(projetoAberto)}
-              aoAbrirPontuacao={() => setPontuacaoDe(projetoAberto)}
-              aoAbrirAvaliacao={() => setAvaliacaoDe(projetoAberto)}
-            />
-          ) : (
-            <Painel aoAbrir={setProjetoAberto} />
-          ))}
+        {pagina === 'painel' && (telaDeProjeto() ?? (
+          <Painel aoAbrir={setProjetoAberto} />
+        ))}
 
-        {pagina === 'meu' &&
-          (projetoAberto ? (
-            <Projeto
-              id={projetoAberto}
-              aoVoltar={() => setProjetoAberto(null)}
-              aoEditar={() => setEditando({ id: projetoAberto })}
-              aoAbrirEtapas={() => setEtapasDe(projetoAberto)}
-              aoAbrirTarefas={() => setTarefasDe(projetoAberto)}
-              aoAbrirPontuacao={() => setPontuacaoDe(projetoAberto)}
-              aoAbrirAvaliacao={() => setAvaliacaoDe(projetoAberto)}
-            />
-          ) : (
-            <MeuTrabalho aoAbrir={setProjetoAberto} />
-          ))}
+        {pagina === 'meu' && (telaDeProjeto() ?? (
+          <MeuTrabalho aoAbrir={setProjetoAberto} />
+        ))}
 
-        {pagina === 'avisos' &&
-          (projetoAberto ? (
-            <Projeto
-              id={projetoAberto}
-              aoVoltar={() => setProjetoAberto(null)}
-              aoEditar={() => setEditando({ id: projetoAberto })}
-              aoAbrirEtapas={() => setEtapasDe(projetoAberto)}
-              aoAbrirTarefas={() => setTarefasDe(projetoAberto)}
-              aoAbrirPontuacao={() => setPontuacaoDe(projetoAberto)}
-              aoAbrirAvaliacao={() => setAvaliacaoDe(projetoAberto)}
-            />
-          ) : (
-            <Avisos aoAbrirProjeto={setProjetoAberto} aoMudarContagem={recontarAvisos} />
-          ))}
+        {pagina === 'avisos' && (telaDeProjeto() ?? (
+          <Avisos aoAbrirProjeto={setProjetoAberto} aoMudarContagem={recontarAvisos} />
+        ))}
 
         {pagina === 'afazeres' && <Afazeres />}
 
-        {pagina === 'chamados' &&
-          (projetoAberto ? (
-            <Projeto
-              id={projetoAberto}
-              aoVoltar={() => setProjetoAberto(null)}
-              aoEditar={() => setEditando({ id: projetoAberto })}
-              aoAbrirEtapas={() => setEtapasDe(projetoAberto)}
-              aoAbrirTarefas={() => setTarefasDe(projetoAberto)}
-              aoAbrirPontuacao={() => setPontuacaoDe(projetoAberto)}
-              aoAbrirAvaliacao={() => setAvaliacaoDe(projetoAberto)}
-            />
-          ) : (
-            <Chamados aoAbrir={setProjetoAberto} />
-          ))}
+        {pagina === 'chamados' && (telaDeProjeto() ?? (
+          <Chamados aoAbrir={setProjetoAberto} />
+        ))}
 
-        {pagina === 'carteira' &&
-          (editando ? (
-            <EditarProjeto
-              id={editando.id}
-              aoSair={(idSalvo) => {
-                setEditando(null)
-                if (idSalvo) setProjetoAberto(idSalvo)
-              }}
-            />
-          ) : etapasDe ? (
-            <Etapas id={etapasDe} aoVoltar={() => setEtapasDe(null)} />
-          ) : tarefasDe ? (
-            <Tarefas id={tarefasDe} aoVoltar={() => setTarefasDe(null)} />
-          ) : pontuacaoDe ? (
-            <Pontuacao id={pontuacaoDe} aoVoltar={() => setPontuacaoDe(null)} />
-          ) : avaliacaoDe ? (
-            <Avaliacao id={avaliacaoDe} aoVoltar={() => setAvaliacaoDe(null)} />
-          ) : projetoAberto ? (
-            <Projeto
-              id={projetoAberto}
-              aoVoltar={() => setProjetoAberto(null)}
-              aoEditar={() => setEditando({ id: projetoAberto })}
-              aoAbrirEtapas={() => setEtapasDe(projetoAberto)}
-              aoAbrirTarefas={() => setTarefasDe(projetoAberto)}
-              aoAbrirPontuacao={() => setPontuacaoDe(projetoAberto)}
-              aoAbrirAvaliacao={() => setAvaliacaoDe(projetoAberto)}
-            />
-          ) : (
-            <Carteira aoAbrir={setProjetoAberto} aoNovo={() => setEditando({ id: null })} />
-          ))}
+        {pagina === 'carteira' && (telaDeProjeto() ?? (
+          <Carteira aoAbrir={setProjetoAberto} aoNovo={() => setEditando({ id: null })} />
+        ))}
         {pagina === 'conta' && <Conta />}
         {pagina === 'empresas' && <Empresas />}
         {pagina === 'equipe' && <Equipe />}

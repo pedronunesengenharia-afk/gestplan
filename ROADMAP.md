@@ -156,7 +156,28 @@ anterior fecha.
 `contrato`, `contrato_aditivo` e `fornecedor` existem e não têm tela. É também
 a base do portal do fornecedor, que é pós-virada.
 
-### 8 · Ocorrência e risco
+### 8 · Ocorrência e risco — **feito**, junto com a decisão
+
+Migração `20260901180000`. Duas telas, porque são duas perguntas:
+
+**Ocorrência** — o que aconteceu e o que se faz a respeito. Nasce ABERTA e
+precisa ser fechada; a tela serve para cobrar, e mostra há quantos dias cada
+uma está em aberto. A tabela já existia desde julho, sem uso e sem política de
+UPDATE — dava para abrir e nunca mais mexer.
+
+**Decisão** — o que ficou combinado, e por quê. Não tem situação: decisão não
+fica pendente, é tomada. O campo que justifica a tabela existir é **o que foi
+descartado** — guardar só a escolha faz a mesma discussão voltar do zero
+quando alguém novo chega. Quando ele está vazio, a tela diz que falta em vez
+de esconder.
+
+`DECISAO` saiu da lista de tipos de `ocorrencia`: com a tabela nova, registrar
+decisão em dois lugares daria duas listas incompletas.
+
+**Falta ainda:** o `projeto_fase_hist` continua sem tela — é a terceira perna
+do histórico e não custa migração, só uma view e uma lista. Ver o item 9.
+
+### 8b · Ocorrência e risco — o que era este item
 
 A tabela existe. É o que separa acompanhar de gerenciar: o que pode dar errado,
 quem cuida, o que foi feito.

@@ -1898,3 +1898,147 @@ export async function excluirSecao(id: string): Promise<number> {
   erroDeEscrita('Nao foi possivel apagar a secao', error)
   return (data ?? []).length
 }
+
+// -----------------------------------------------------------------------------
+// Historico do projeto: ocorrencia e decisao
+// -----------------------------------------------------------------------------
+//
+// Sao DUAS COISAS SEPARADAS porque respondem perguntas diferentes.
+//
+// OCORRENCIA: o que aconteceu e o que se faz a respeito. Tem gravidade,
+// probabilidade e SITUACAO — nasce aberta e precisa ser fechada. Serve para
+// cobrar.
+//
+// DECISAO: o que ficou combinado, e por que. Nao tem situacao: decisao nao
+// fica pendente, ela e tomada. O que ela tem e a ocorrencia nao e o que foi
+// DESCARTADO — e e isso que ninguem lembra seis meses depois.
+
+export const TIPOS_OCORRENCIA = ['NOTA', 'RISCO', 'PROBLEMA', 'REUNIAO', 'PARALISACAO'] as const
+export const SITUACOES_OCORRENCIA = ['ABERTA', 'EM_TRATATIVA', 'RESOLVIDA', 'ACEITA'] as const
+export const GRAUS = ['BAIXO', 'MEDIO', 'ALTO'] as const
+export const PROBABILIDADES = ['BAIXA', 'MEDIA', 'ALTA'] as const
+
+export type Ocorrencia = {
+  id: string
+  projeto_id: string
+  data: string
+  tipo: string
+  titulo: string
+  descricao: string | null
+  impacto: string | null
+  probabilidade: string | null
+  responsavel_id: string | null
+  status: string
+  resolvido_em: string | null
+  criado_em: string
+}
+
+const CAMPOS_OCORRENCIA =
+  'id, projeto_id, data, tipo, titulo, descricao, impacto, probabilidade,' +
+  ' responsavel_id, status, resolvido_em, criado_em'
+
+export async function ocorrenciasDoProjeto(projetoId: string): Promise<Ocorrencia[]> {
+  const { data, error } = await supabase
+    .from('ocorrencia')
+    .select(CAMPOS_OCORRENCIA)
+    .eq('projeto_id', projetoId)
+    .order('data', { ascending: false })
+    .order('criado_em', { ascending: false })
+  erro('Nao foi possivel carregar as ocorrencias', error)
+  return (data ?? []) as unknown as Ocorrencia[]
+}
+
+export type OcorrenciaEdicao = {
+  projeto_id?: string
+  data?: string
+  tipo?: string
+  titulo?: string
+  descricao?: string | null
+  impacto?: string | null
+  probabilidade?: string | null
+  responsavel_id?: string | null
+  status?: string
+  resolvido_em?: string | null
+}
+
+export async function criarOcorrencia(o: OcorrenciaEdicao): Promise<string> {
+  const { data, error } = await supabase.from('ocorrencia').insert(o).select('id').single()
+  erroDeEscrita('Nao foi possivel registrar a ocorrencia', error)
+  return (data as { id: string }).id
+}
+
+export async function atualizarOcorrencia(
+  id: string, dados: OcorrenciaEdicao,
+): Promise<number> {
+  const { data, error } = await supabase
+    .from('ocorrencia').update(dados).eq('id', id).select('id')
+  erroDeEscrita('Nao foi possivel salvar a ocorrencia', error)
+  return (data ?? []).length
+}
+
+export async function excluirOcorrencia(id: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('ocorrencia').delete().eq('id', id).select('id')
+  erroDeEscrita('Nao foi possivel apagar a ocorrencia', error)
+  return (data ?? []).length
+}
+
+// --- decisao ---------------------------------------------------------------
+
+export type Decisao = {
+  id: string
+  projeto_id: string
+  decidido_em: string
+  titulo: string
+  contexto: string | null
+  decisao: string
+  alternativas: string | null
+  decidido_por: string | null
+  quem_avulso: string | null
+  criado_em: string
+}
+
+const CAMPOS_DECISAO =
+  'id, projeto_id, decidido_em, titulo, contexto, decisao, alternativas,' +
+  ' decidido_por, quem_avulso, criado_em'
+
+export async function decisoesDoProjeto(projetoId: string): Promise<Decisao[]> {
+  const { data, error } = await supabase
+    .from('decisao')
+    .select(CAMPOS_DECISAO)
+    .eq('projeto_id', projetoId)
+    .order('decidido_em', { ascending: false })
+    .order('criado_em', { ascending: false })
+  erro('Nao foi possivel carregar as decisoes', error)
+  return (data ?? []) as unknown as Decisao[]
+}
+
+export type DecisaoEdicao = {
+  projeto_id?: string
+  decidido_em?: string
+  titulo?: string
+  contexto?: string | null
+  decisao?: string
+  alternativas?: string | null
+  decidido_por?: string | null
+  quem_avulso?: string | null
+}
+
+export async function criarDecisao(d: DecisaoEdicao): Promise<string> {
+  const { data, error } = await supabase.from('decisao').insert(d).select('id').single()
+  erroDeEscrita('Nao foi possivel registrar a decisao', error)
+  return (data as { id: string }).id
+}
+
+export async function atualizarDecisao(id: string, dados: DecisaoEdicao): Promise<number> {
+  const { data, error } = await supabase
+    .from('decisao').update(dados).eq('id', id).select('id')
+  erroDeEscrita('Nao foi possivel salvar a decisao', error)
+  return (data ?? []).length
+}
+
+export async function excluirDecisao(id: string): Promise<number> {
+  const { data, error } = await supabase.from('decisao').delete().eq('id', id).select('id')
+  erroDeEscrita('Nao foi possivel apagar a decisao', error)
+  return (data ?? []).length
+}
