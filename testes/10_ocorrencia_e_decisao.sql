@@ -212,6 +212,17 @@ select teste('e o gerente nao enxerga a trilha do projeto que nao alcanca',
 reset role;
 select set_config('app.usuario', '', false);
 
+-- Antes de apagar o projeto, a contraprova dos três recusados na suíte 01: a
+-- escrita que a tela passou a fazer ao arquivar — a data E o código, juntos —
+-- é aceita. Fica aqui, no fim de tudo, porque arquivar o projeto principal no
+-- meio da suíte mudaria o que as outras enxergam.
+update projeto
+   set arquivado_em = now(), motivo_arquivo = 'CANCELADO'
+ where id = 'dddddddd-0000-0000-0000-000000000001';
+select teste('a data de arquivo e o código juntos passam — é o que a tela manda agora',
+  (select arquivado_em is not null and motivo_arquivo = 'CANCELADO'
+     from projeto where id = 'dddddddd-0000-0000-0000-000000000001'));
+
 create temporary table antes as
 select (select count(*) from ocorrencia) o, (select count(*) from decisao) d;
 
