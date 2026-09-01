@@ -7,6 +7,7 @@ import {
 } from '../lib/banco'
 import { EsqueletoDeTabela } from '../componentes/Esqueleto'
 import { data as formatarData } from '../lib/formato'
+import { FeitoNoDia } from '../componentes/FeitoNoDia'
 import { guardarParametros, lerParametros } from '../lib/url'
 
 /**
@@ -378,6 +379,11 @@ export function Afazeres() {
       </header>
 
       {erro && <div className="aviso">{erro}</div>}
+
+      {/* Acima do quadro, e nao dentro da lateral: sao catorze barras, e a
+          lateral tem 12rem. No celular ela vira uma tira horizontal, onde
+          caberia menos ainda. */}
+      <FeitoNoDia itens={itens} />
 
       <div className="quadro-afazeres">
         <nav className="listas" aria-label="Listas">

@@ -593,6 +593,9 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
   align-items: start;
 }
 
+/* O gráfico do dia fica acima do quadro; sem isto os dois se encostam. */
+.cartao-grafico + .quadro-afazeres { margin-top: var(--e5); }
+
 .listas { display: flex; flex-direction: column; gap: 2px; }
 .listas button {
   font: inherit; text-align: left; cursor: pointer;
