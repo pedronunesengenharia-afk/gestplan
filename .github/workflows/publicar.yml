@@ -11,6 +11,21 @@
 #
 # E a suíte de permissão passa a rodar ANTES de todo deploy de verdade, como o
 # CLAUDE.md sempre mandou e nada impunha. Se ela falhar, o site não sobe.
+#
+# O QUE É SEGREDO E O QUE NÃO É. Só entra em `secrets` o que abre porta: as três
+# credenciais de FTP, o token do Supabase, a senha do banco e a chave anônima.
+#
+# O ref do projeto, a URL e a pasta do site NÃO são segredo — o ref e a URL
+# estão dentro do arquivo que todo navegador baixa, e a pasta é onde o site já
+# mora. Então eles vêm escritos aqui como padrão, com `vars.X || 'valor'`: quem
+# quiser apontar para outro ambiente cria a variável no repositório e ela
+# ganha; quem não criar, publica mesmo assim.
+#
+# Isso não é preguiça de configurar — é a primeira execução deste fluxo tendo
+# falhado exatamente por três variáveis vazias, com o erro aparecendo no
+# `supabase db push` e a causa estando três abas adiante. Valor que não é
+# segredo e tem um padrão óbvio não deveria ser um passo de instalação a mais
+# para errar.
 # =============================================================================
 
 name: Publicar
@@ -103,12 +118,12 @@ jobs:
           # `--yes`, os dois dependem de perceber que nao ha terminal para
           # perguntar. Um comando a menos e uma chance a menos de a publicacao
           # travar esperando alguem apertar Enter.
-          supabase db push             --project-ref ${{ vars.SUPABASE_PROJECT_REF }}             --password "$SENHA"
+          supabase db push             --project-ref ${{ vars.SUPABASE_PROJECT_REF || 'xsznzzvutdlulkhslcuz' }}             --password "$SENHA"
 
       # --- 2 · E SÓ ENTÃO A TELA -----------------------------------------
       - name: Build
         env:
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://xsznzzvutdlulkhslcuz.supabase.co' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
@@ -134,7 +149,7 @@ jobs:
           # A barra no fim importa nos dois: sem ela o FTP cria uma pasta
           # `dist` dentro do destino e o site abre em branco.
           local-dir: ./dist/
-          server-dir: ${{ vars.FTP_PASTA }}
+          server-dir: ${{ vars.FTP_PASTA || '/public_html/' }}
           # Envia só o que mudou, comparando com o que já está lá. A primeira
           # publicação sobe tudo; as seguintes, alguns kB.
           state-name: .ftp-deploy-sync-state.json

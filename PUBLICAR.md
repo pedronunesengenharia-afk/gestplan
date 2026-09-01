@@ -85,13 +85,18 @@ Na aba **Secrets** (escondidos até de você, depois de salvos):
 | `FTP_USUARIO` | `u308383962.gestplan.concrelab.net` |
 | `FTP_SENHA` | a senha da conta FTP |
 
-Na aba **Variables** (visíveis, porque não são segredo):
+**E só.** A aba *Variables* pode ficar vazia: o ref do projeto, a URL do
+Supabase e a pasta do site não são segredo e já estão escritos no
+`publicar.yml` como padrão.
 
-| Nome | Valor |
+Se um dia você quiser publicar noutro lugar — homologação, outro domínio —
+crie a variável correspondente e ela ganha do padrão, sem mexer no fluxo:
+
+| Nome | Padrão de hoje |
 |---|---|
 | `SUPABASE_PROJECT_REF` | `xsznzzvutdlulkhslcuz` |
 | `VITE_SUPABASE_URL` | `https://xsznzzvutdlulkhslcuz.supabase.co` |
-| `FTP_PASTA` | `/public_html/` — com barra no começo e no fim |
+| `FTP_PASTA` | `/public_html/` |
 
 ---
 
