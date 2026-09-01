@@ -190,7 +190,78 @@ select teste_recusa('prioridade inventada é recusada',
     values ('bbbbbbbb-0000-0000-0000-000000000003', 'Item', 'URGENTISSIMO')$$);
 
 -- -----------------------------------------------------------------------------
--- 6 · O lembrete sobrevive ao projeto
+-- 6 · As colunas do quadro
+-- -----------------------------------------------------------------------------
+select vestir('33333333-3333-3333-3333-333333333333');   -- ESTRUTURA
+
+insert into afazer_secao (id, pessoa_id, empresa_id, nome, ordem)
+values ('5ecaa000-0000-0000-0000-000000000001',
+        'bbbbbbbb-0000-0000-0000-000000000003',
+        'aaaaaaaa-0000-0000-0000-000000000001', 'Produção', 1);
+select teste('a pessoa cria coluna na própria lista',
+  conta('select id from afazer_secao') = 1);
+
+-- A lista "Pessoal" e a de uma empresa sao listas DIFERENTES, entao podem ter
+-- colunas de mesmo nome sem colidir.
+insert into afazer_secao (pessoa_id, empresa_id, nome, ordem)
+values ('bbbbbbbb-0000-0000-0000-000000000003', null, 'Produção', 1);
+select teste('o mesmo nome pode existir na lista Pessoal e na da empresa',
+  conta('select id from afazer_secao') = 2);
+
+select teste_recusa('mas não duas iguais na MESMA lista',
+  $$insert into afazer_secao (pessoa_id, empresa_id, nome, ordem)
+    values ('bbbbbbbb-0000-0000-0000-000000000003',
+            'aaaaaaaa-0000-0000-0000-000000000001', 'Produção', 2)$$);
+
+select teste_recusa('nem duas iguais na Pessoal, onde a empresa é nula',
+  $$insert into afazer_secao (pessoa_id, empresa_id, nome, ordem)
+    values ('bbbbbbbb-0000-0000-0000-000000000003', null, 'Produção', 2)$$);
+
+select teste_recusa('coluna sem nome é recusada',
+  $$insert into afazer_secao (pessoa_id, nome) values
+    ('bbbbbbbb-0000-0000-0000-000000000003', '  ')$$);
+
+-- O afazer entra na coluna.
+do $$
+declare n int;
+begin
+  update afazer set secao_id = '5ecaa000-0000-0000-0000-000000000001'
+   where id = 'a4a2e000-0000-0000-0000-000000000004';
+  get diagnostics n = row_count;
+  perform teste('o afazer entra numa coluna', n = 1);
+end $$;
+
+-- APAGAR A COLUNA NAO APAGA O QUE ESTAVA DENTRO. `on delete set null`: some a
+-- gaveta, nao o que estava guardado.
+delete from afazer_secao where id = '5ecaa000-0000-0000-0000-000000000001';
+select teste('apagada a coluna, o afazer continua',
+  conta($$select id from afazer where id='a4a2e000-0000-0000-0000-000000000004'$$) = 1);
+select teste('e volta para a faixa sem coluna',
+  conta($$select id from afazer
+           where id='a4a2e000-0000-0000-0000-000000000004' and secao_id is null$$) = 1);
+
+-- A coluna e tao privada quanto a lista.
+select vestir('11111111-1111-1111-1111-111111111111');   -- DONO
+select teste('nem o proprietário enxerga coluna alheia',
+  conta('select id from afazer_secao') = 0);
+
+do $$
+begin
+  begin
+    insert into afazer_secao (pessoa_id, nome)
+    values ('bbbbbbbb-0000-0000-0000-000000000003', 'Coluna posta na lista alheia');
+    raise exception 'FALHOU: criaram coluna na lista de outra pessoa';
+  exception
+    when insufficient_privilege then
+      perform teste('ninguém cria coluna na lista de outra pessoa', true);
+    when others then
+      if sqlerrm like 'FALHOU%' then raise; end if;
+      perform teste('ninguém cria coluna na lista de outra pessoa', true);
+  end;
+end $$;
+
+-- -----------------------------------------------------------------------------
+-- 7 · O lembrete sobrevive ao projeto
 -- -----------------------------------------------------------------------------
 -- `on delete set null`, e não cascade: "cobrar a nota fiscal" não deixa de
 -- precisar ser feito porque alguém arquivou o projeto.

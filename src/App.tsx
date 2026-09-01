@@ -6,6 +6,7 @@ import { Entrar } from './paginas/Entrar'
 import { FronteiraDeErro } from './componentes/FronteiraDeErro'
 import { Painel } from './paginas/Painel'
 import { MeuTrabalho } from './paginas/MeuTrabalho'
+import { Afazeres } from './paginas/Afazeres'
 import { Avisos } from './paginas/Avisos'
 import { Chamados } from './paginas/Chamados'
 import { Conta } from './paginas/Conta'
@@ -21,7 +22,7 @@ import { Empresas } from './paginas/Empresas'
 import { Equipe } from './paginas/Equipe'
 import { Marca } from './componentes/Marca'
 
-type Pagina = 'painel' | 'meu' | 'avisos' | 'carteira' | 'chamados' | 'empresas' | 'equipe' | 'conta'
+type Pagina = 'painel' | 'meu' | 'afazeres' | 'avisos' | 'carteira' | 'chamados' | 'empresas' | 'equipe' | 'conta'
 
 /**
  * `principal` decide quem cabe na barra de baixo do celular.
@@ -35,8 +36,9 @@ type Pagina = 'painel' | 'meu' | 'avisos' | 'carteira' | 'chamados' | 'empresas'
 const PAGINAS: { chave: Pagina; nome: string; curto?: string; principal?: boolean }[] = [
   { chave: 'painel', nome: 'Painel', principal: true },
   { chave: 'meu', nome: 'Meu trabalho', curto: 'Meu dia', principal: true },
+  { chave: 'afazeres', nome: 'Afazeres', principal: true },
   { chave: 'avisos', nome: 'Avisos', principal: true },
-  { chave: 'carteira', nome: 'Carteira', principal: true },
+  { chave: 'carteira', nome: 'Carteira' },
   { chave: 'chamados', nome: 'Chamados' },
   { chave: 'empresas', nome: 'Empresas' },
   { chave: 'equipe', nome: 'Equipe' },
@@ -275,6 +277,8 @@ export function App() {
           ) : (
             <Avisos aoAbrirProjeto={setProjetoAberto} aoMudarContagem={recontarAvisos} />
           ))}
+
+        {pagina === 'afazeres' && <Afazeres />}
 
         {pagina === 'chamados' &&
           (projetoAberto ? (

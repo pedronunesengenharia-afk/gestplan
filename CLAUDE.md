@@ -115,7 +115,7 @@ farol certo.
 
 ## Banco de dados
 
-Vinte e sete migrações em `supabase/migrations/`. Leia o cabeçalho de cada arquivo
+Vinte e oito migrações em `supabase/migrations/`. Leia o cabeçalho de cada arquivo
 antes de mexer — todos explicam as decisões que carregam.
 
 ### Regras inegociáveis
@@ -189,7 +189,7 @@ e `posso_assinar`. A tela pergunta; não reescreve a regra em TypeScript.
 rodar_testes.bat
 ```
 
-Apaga o banco de teste, aplica as migrações e roda as nove suítes — 250
+Apaga o banco de teste, aplica as migrações e roda as nove suítes — 260
 verificações:
 
 - `testes/01_regras.sql` — 40 de regra de negócio
@@ -202,7 +202,8 @@ verificações:
 - `testes/07_alocacao.sql` — 35 de alocação, capacidade e de quem enxerga a equipe
 - `testes/08_notificacao.sql` — 31 dos quatro gatilhos de aviso, e da porta fechada
   que obriga eles a existirem
-- `testes/09_afazer.sql` — 21 da lista pessoal, e da promessa de que ela é pessoal
+- `testes/09_afazer.sql` — 31 da lista pessoal e do quadro, e da promessa de que
+  ela é pessoal
 
 **A suíte de permissão roda antes de todo deploy.** Ela já pegou dois
 vazamentos que nenhum teste de tela pegaria. Ao acrescentar tabela, papel ou

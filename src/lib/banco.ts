@@ -1743,6 +1743,7 @@ export type Afazer = {
   detalhe: string | null
   projeto_id: string | null
   empresa_id: string | null
+  secao_id: string | null
   prazo: string | null
   prioridade: string
   feito_em: string | null
@@ -1753,7 +1754,8 @@ export type Afazer = {
 }
 
 const CAMPOS_AFAZER =
-  'id, titulo, detalhe, projeto_id, empresa_id, prazo, prioridade, feito_em, ordem, criado_em'
+  'id, titulo, detalhe, projeto_id, empresa_id, secao_id, prazo, prioridade,' +
+  ' feito_em, ordem, criado_em'
 
 export async function meusAfazeres(): Promise<Afazer[]> {
   const { data, error } = await supabase
@@ -1780,6 +1782,7 @@ export type AfazerEdicao = {
   detalhe?: string | null
   projeto_id?: string | null
   empresa_id?: string | null
+  secao_id?: string | null
   prazo?: string | null
   prioridade?: string
   ordem?: number
@@ -1828,4 +1831,70 @@ export async function projetosParaEscolha(): Promise<
     .order('codigo', { ascending: false })
   erro('Nao foi possivel carregar os projetos', error)
   return (data ?? []) as { id: string; codigo: string; nome: string }[]
+}
+
+// -----------------------------------------------------------------------------
+// Secoes do quadro de afazeres
+// -----------------------------------------------------------------------------
+//
+// As colunas de cada lista. Existem MESMO VAZIAS — e o que separa um quadro de
+// um agrupamento por texto: "Qualidade 0" e informacao, diz que ninguem anotou
+// nada ali ainda.
+//
+// Sao de cada pessoa e de cada lista: a minha Cimentpav nao precisa ter as
+// mesmas divisoes da sua. Privadas como o resto da lista.
+
+export type AfazerSecao = {
+  id: string
+  empresa_id: string | null
+  nome: string
+  ordem: number
+}
+
+/** As colunas de uma lista. `empresaId` nulo e a lista "Pessoal". */
+export async function secoesDaLista(empresaId: string | null): Promise<AfazerSecao[]> {
+  let q = supabase.from('afazer_secao').select('id, empresa_id, nome, ordem').order('ordem')
+  q = empresaId === null ? q.is('empresa_id', null) : q.eq('empresa_id', empresaId)
+  const { data, error } = await q
+  erro('Nao foi possivel carregar as secoes', error)
+  return (data ?? []) as AfazerSecao[]
+}
+
+export async function criarSecao(
+  pessoaId: string, empresaId: string | null, nome: string, ordem: number,
+): Promise<string> {
+  const { data, error } = await supabase
+    .from('afazer_secao')
+    .insert({ pessoa_id: pessoaId, empresa_id: empresaId, nome: nome.trim(), ordem })
+    .select('id')
+    .single()
+  erroDeEscrita('Nao foi possivel criar a secao', error)
+  return (data as { id: string }).id
+}
+
+export async function renomearSecao(id: string, nome: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('afazer_secao').update({ nome: nome.trim() }).eq('id', id).select('id')
+  erroDeEscrita('Nao foi possivel renomear a secao', error)
+  return (data ?? []).length
+}
+
+export async function reordenarSecoes(linhas: { id: string; ordem: number }[]): Promise<void> {
+  for (const l of linhas) {
+    const { error } = await supabase
+      .from('afazer_secao').update({ ordem: l.ordem }).eq('id', l.id)
+    erroDeEscrita('Nao foi possivel reordenar as secoes', error)
+  }
+}
+
+/**
+ * Apaga a coluna. O que estava dentro NAO some: `secao_id` e `on delete set
+ * null`, entao os itens voltam para a faixa sem coluna. Some a gaveta, nao o
+ * que estava guardado.
+ */
+export async function excluirSecao(id: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('afazer_secao').delete().eq('id', id).select('id')
+  erroDeEscrita('Nao foi possivel apagar a secao', error)
+  return (data ?? []).length
 }

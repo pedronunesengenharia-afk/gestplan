@@ -664,6 +664,115 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
    A lateral sai e entram duas barras FIXAS. A de antes rolava para fora com a
    pagina: depois de rolar a carteira, nao havia navegacao nenhuma.
    ------------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------
+   Quadro de afazeres
+   -------------------------------------------------------------------------
+   Duas partes: as listas a esquerda (uma por empresa, mais a Pessoal) e o
+   quadro a direita. `minmax(0, 1fr)` na coluna do quadro pela mesma razao de
+   sempre — `1fr` e `minmax(auto, 1fr)`, e um quadro largo esticaria a pagina
+   inteira em vez de rolar dentro de si.
+   ------------------------------------------------------------------------- */
+.quadro-afazeres {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: var(--e5);
+  align-items: start;
+}
+
+.listas { display: flex; flex-direction: column; gap: 2px; }
+.listas button {
+  font: inherit; text-align: left; cursor: pointer;
+  background: none; border: none;
+  color: var(--tinta-2); padding: var(--e2) var(--e3);
+  border-radius: var(--raio); border-left: 3px solid transparent;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--e2);
+}
+.listas button:hover { background: var(--superficie-2); color: var(--tinta); }
+.listas .lista-escolhida {
+  background: var(--superficie); color: var(--tinta); font-weight: 600;
+  border-left-color: var(--acao);
+}
+
+/* O quadro rola de lado DENTRO DE SI. A pagina nunca. */
+.colunas-afazer {
+  display: flex; gap: var(--e4); align-items: flex-start;
+  overflow-x: auto; padding-bottom: var(--e3);
+}
+
+.coluna-afazer {
+  flex: 0 0 17rem;
+  background: var(--superficie-2);
+  border: 1px solid var(--linha-suave);
+  border-radius: var(--raio-cartao);
+  padding: var(--e3);
+  display: flex; flex-direction: column; gap: var(--e2);
+}
+/* A coluna que vai receber o cartao se anuncia. Sem isso, arrastar e adivinhar
+   onde vai cair. */
+.coluna-afazer--alvo {
+  border-color: var(--acao);
+  box-shadow: 0 0 0 1px var(--acao) inset;
+  background: var(--azul-fundo);
+}
+.coluna-afazer--nova { background: none; border-style: dashed; }
+
+.coluna-afazer > header {
+  display: flex; align-items: center; gap: var(--e2);
+}
+.coluna-afazer h3 { font-size: .92rem; margin: 0; flex: 1; min-width: 0; }
+/* O nome da coluna e um campo o tempo todo, sem borda ate ser apontado:
+   renomear e frequente e nao merece um botao de editar. */
+.nome-da-coluna {
+  font: inherit; font-family: var(--fonte-titulo); font-weight: 600;
+  background: none; border: 1px solid transparent; border-radius: var(--raio);
+  color: var(--tinta); width: 100%; padding: 2px var(--e1);
+}
+.nome-da-coluna:hover { border-color: var(--linha); }
+.nome-da-coluna:focus { border-color: var(--acao); outline: none; background: var(--superficie); }
+.apagar-coluna { margin: 0; opacity: 0; font-size: 1rem; line-height: 1; }
+.coluna-afazer:hover .apagar-coluna, .apagar-coluna:focus-visible { opacity: 1; }
+
+.coluna-afazer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--e2); }
+
+.cartao-afazer {
+  display: flex; align-items: flex-start; gap: var(--e2);
+  background: var(--superficie);
+  border: 1px solid var(--linha-suave);
+  border-radius: var(--raio);
+  padding: var(--e2) var(--e3);
+  cursor: grab;
+  transition: box-shadow var(--transicao), transform var(--transicao);
+}
+.cartao-afazer:hover { box-shadow: var(--sombra); }
+.cartao-afazer:active { cursor: grabbing; }
+.cartao-afazer input[type='checkbox'] { accent-color: var(--acao); margin-top: .15rem; }
+.cartao-corpo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--e1); font-size: .88rem; }
+.cartao-marcas { display: flex; gap: var(--e2); align-items: center; font-size: .68rem; }
+.cartao-marcas i { font-style: normal; }
+
+.mais-cartao, .coluna-afazer--nova button { margin: 0; text-align: left; }
+.novo-cartao { display: flex; flex-direction: column; gap: var(--e2); }
+.novo-cartao .acoes-linha, .coluna-afazer--nova .acoes-linha {
+  display: flex; gap: var(--e2); align-items: center;
+}
+.coluna-afazer--nova form { display: flex; flex-direction: column; gap: var(--e2); }
+
+@media (max-width: 820px) {
+  /* No celular as listas viram uma faixa que rola de lado, em cima do quadro:
+     uma coluna de 12rem ao lado de um quadro nao cabe em 390px. */
+  .quadro-afazeres { grid-template-columns: minmax(0, 1fr); gap: var(--e3); }
+  .listas {
+    flex-direction: row; overflow-x: auto; gap: var(--e2);
+    padding-bottom: var(--e2);
+  }
+  .listas button {
+    flex: none; border-left: none; border-bottom: 3px solid transparent;
+    border-radius: var(--raio) var(--raio) 0 0; min-height: 44px;
+  }
+  .listas .lista-escolhida { border-left-color: transparent; border-bottom-color: var(--acao); }
+  .coluna-afazer { flex-basis: 15rem; }
+}
+
 @media (max-width: 820px) {
   .app { grid-template-columns: minmax(0, 1fr); }
   .lateral { display: none; }
