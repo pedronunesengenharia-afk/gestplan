@@ -1,0 +1,15 @@
+# O servidor não mandava Cache-Control nenhum para o index.html, e sem ele o
+# navegador inventa a validade por conta própria (uma fração do tempo desde o
+# last-modified). O resultado é que uma publicação nova sobe, o arquivo com
+# hash novo já está lá, e o navegador continua pedindo o bundle ANTIGO porque
+# o index.html que ele guardou aponta para aquele. Medido: o conserto do
+# arquivamento subiu às 12:45 e a tela continuou com o defeito.
+#
+# O index.html precisa ser revalidado sempre — ele é pequeno e é o único
+# arquivo que diz quais são os outros. Os assets não entram nesta regra: eles
+# têm o hash no nome, então nunca mudam de conteúdo, e o ETag já cuida deles.
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
