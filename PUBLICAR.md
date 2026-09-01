@@ -38,14 +38,21 @@ Tokens (classic)*, com a permissão `repo`.
 
 No **hPanel**, no site `gestplan.concrelab.net`:
 
-| Onde | O que anotar |
-|---|---|
-| **Arquivos → Contas FTP** | Servidor (algo como `ftp.concrelab.net` ou um IP), usuário e senha. Se não houver conta, crie uma. |
-| **Arquivos → Gerenciador de arquivos** | O caminho da pasta do site. Costuma ser `/public_html` no domínio principal e `/public_html/gestplan` ou `/domains/gestplan.concrelab.net/public_html` num subdomínio. |
+Os valores desta conta, tirados do hPanel em 01/09/2026:
 
-Para descobrir a pasta certa sem adivinhar: abra o Gerenciador de arquivos,
-entre na pasta onde está o `index.html` que hoje serve o site, e copie o
-caminho que aparece na barra de cima. **É essa pasta.**
+| Segredo | Valor |
+|---|---|
+| `FTP_SERVIDOR` | `46.17.175.131` — **sem o `ftp://`**. O prefixo é como o hPanel escreve para humano; a ferramenta espera só o endereço, e com ele na frente a conexão falha. |
+| `FTP_USUARIO` | `u308383962.gestplan.concrelab.net` |
+| `FTP_SENHA` | a senha da conta. Se não souber, *Alterar senha FTP* no hPanel. |
+| `FTP_PASTA` | `/public_html/` — **com barra no começo e no fim** |
+
+A porta 21 e o FTPS já estão fixos no fluxo; não precisam de segredo.
+
+**Se o site subir e abrir em branco, é a pasta.** A conta FTP é a do subdomínio,
+então a raiz dela já é a pasta do site e o `public_html` fica logo dentro — daí
+`/public_html/`. Para confirmar sem adivinhar: conecte com o FileZilla e veja
+onde está o `index.html` que hoje serve o site. É essa pasta, com barra no fim.
 
 ---
 
@@ -74,9 +81,9 @@ Na aba **Secrets** (escondidos até de você, depois de salvos):
 | `SUPABASE_ACCESS_TOKEN` | o token do passo 3 |
 | `SUPABASE_DB_PASSWORD` | a senha do banco |
 | `VITE_SUPABASE_ANON_KEY` | a chave anônima |
-| `FTP_SERVIDOR` | o servidor FTP |
-| `FTP_USUARIO` | o usuário FTP |
-| `FTP_SENHA` | a senha FTP |
+| `FTP_SERVIDOR` | `46.17.175.131` (sem `ftp://`) |
+| `FTP_USUARIO` | `u308383962.gestplan.concrelab.net` |
+| `FTP_SENHA` | a senha da conta FTP |
 
 Na aba **Variables** (visíveis, porque não são segredo):
 
@@ -84,7 +91,7 @@ Na aba **Variables** (visíveis, porque não são segredo):
 |---|---|
 | `SUPABASE_PROJECT_REF` | `xsznzzvutdlulkhslcuz` |
 | `VITE_SUPABASE_URL` | `https://xsznzzvutdlulkhslcuz.supabase.co` |
-| `FTP_PASTA` | o caminho do passo 2, **com barra no fim** — ex.: `/public_html/` |
+| `FTP_PASTA` | `/public_html/` — com barra no começo e no fim |
 
 ---
 
@@ -118,7 +125,9 @@ O log de cada passo fica na aba Actions. Os tropeços prováveis, na ordem:
 
 - **`supabase link` recusa** — o `SUPABASE_ACCESS_TOKEN` expirou ou a senha do
   banco está errada.
-- **FTP recusa a conexão** — a Hostinger às vezes bloqueia FTP de fora por
-  segurança. Em *Arquivos → Contas FTP*, confira se há restrição de IP.
+- **FTP recusa a conexão** — primeiro tente `protocol: ftps-legacy` e
+  `port: 990` no `publicar.yml`. Se ainda recusar, veja em *Arquivos → Contas
+  FTP* se há restrição de IP: o GitHub sai de um endereço diferente a cada
+  execução, então uma lista de IPs permitidos bloqueia a publicação.
 - **O site sobe mas abre em branco** — a `FTP_PASTA` aponta para o lugar
   errado, ou faltou a barra no fim e os arquivos foram parar numa subpasta.

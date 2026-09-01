@@ -111,6 +111,19 @@ jobs:
           server: ${{ secrets.FTP_SERVIDOR }}
           username: ${{ secrets.FTP_USUARIO }}
           password: ${{ secrets.FTP_SENHA }}
+          port: 21
+          # FTPS, e nao FTP puro. A porta e a mesma 21: o `ftps` aqui e o TLS
+          # explicito, em que a conexao comeca em claro e sobe para cifrada
+          # logo no inicio — que e o que a Hostinger oferece.
+          #
+          # Com `ftp` puro, usuario e senha viajam em texto aberto por toda a
+          # internet a cada publicacao. Numa credencial que pode escrever no
+          # site inteiro, isso nao e detalhe.
+          #
+          # Se algum dia recusar a conexao, `ftps-legacy` (TLS implicito, porta
+          # 990) e a segunda tentativa. Voltar para `ftp` e a ultima, e vale
+          # trocar a senha depois.
+          protocol: ftps
           # A barra no fim importa nos dois: sem ela o FTP cria uma pasta
           # `dist` dentro do destino e o site abre em branco.
           local-dir: ./dist/
