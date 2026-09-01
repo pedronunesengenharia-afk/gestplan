@@ -115,7 +115,7 @@ farol certo.
 
 ## Banco de dados
 
-Trinta migrações em `supabase/migrations/`. Leia o cabeçalho de cada arquivo
+Trinta e uma migrações em `supabase/migrations/`. Leia o cabeçalho de cada arquivo
 antes de mexer — todos explicam as decisões que carregam.
 
 ### Regras inegociáveis
@@ -142,7 +142,15 @@ antes de mexer — todos explicam as decisões que carregam.
    `projeto` nem de `etapa` — foi exatamente assim que o orçamento item a item
    ficou legível para quem não alcança dinheiro, até a migração 230000.
 
-6. **Exigência é sempre de SAÍDA de fase, nunca de entrada.** Vale para
+6. **Arquivado e finalizado são estados diferentes.** Arquivado é o que NÃO
+   VAI acontecer (`arquivado_em` + um dos quatro códigos de `motivo_arquivo`,
+   e os dois andam juntos — é a restrição `arquivado_tem_motivo`). Finalizado
+   é o que ACONTECEU, e quem responde isso é `tipo_fase.conclusiva`, nunca a
+   categoria `ENCERRAMENTO`: um tipo com "Entrega" **e** "Encerramento" tiraria
+   da carteira o projeto que ainda está sendo entregue. A carteira esconde os
+   dois por padrão, em fichas separadas.
+
+7. **Exigência é sempre de SAÍDA de fase, nunca de entrada.** Vale para
    `tipo_fase.exige_setores` e para `campo_definicao.exigido_para_sair_de`.
    Entra-se na Viabilidade justamente para preenchê-la.
 
@@ -189,10 +197,10 @@ e `posso_assinar`. A tela pergunta; não reescreve a regra em TypeScript.
 rodar_testes.bat
 ```
 
-Apaga o banco de teste, aplica as migrações e roda as dez suítes — 293
+Apaga o banco de teste, aplica as migrações e roda as dez suítes — 295
 verificações:
 
-- `testes/01_regras.sql` — 43 de regra de negócio
+- `testes/01_regras.sql` — 45 de regra de negócio
 - `testes/02_permissao.sql` — 41 de permissão, uma por papel
 - `testes/03_permissao_fase1.sql` — 18 das regras que a Fase 1 destapou
   (dinheiro da EAP, quem assina parecer, quem edita comentário alheio)

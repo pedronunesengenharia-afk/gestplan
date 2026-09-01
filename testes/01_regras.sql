@@ -321,6 +321,20 @@ select teste_recusa('motivo de arquivo em texto livre é recusado — a coluna g
   update projeto set arquivado_em = now(), motivo_arquivo = 'Reprovado pela engenharia'
    where id = 'dddddddd-0000-0000-0000-000000000001' $q$);
 
+-- Finalizado e arquivado sao dois estados diferentes, e a carteira precisa
+-- separar os dois: arquivado e o que NAO VAI acontecer, finalizado e o que
+-- ACONTECEU. Quem responde o segundo e `tipo_fase.conclusiva`, e nao a
+-- categoria ENCERRAMENTO — no dia em que um tipo tiver "Entrega" E
+-- "Encerramento", a categoria diria que acabou com o projeto ainda em entrega.
+select teste('a carteira espelha tipo_fase.conclusiva, e nao a categoria',
+  not exists (select 1 from vw_projeto v
+                join tipo_fase f on f.id = v.fase_id
+               where v.fase_conclusiva is distinct from f.conclusiva));
+
+select teste('projeto andando é ativo e não é finalizado — os dois são independentes',
+  (select ativo and not fase_conclusiva
+     from vw_projeto where id = 'dddddddd-0000-0000-0000-000000000001'));
+
 -- =============================================================================
 -- 9 · Dinheiro
 -- =============================================================================

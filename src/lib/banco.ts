@@ -31,7 +31,10 @@ export type Projeto = {
   data_fim_prev: string | null
   data_inicio_real: string | null
   data_fim_real: string | null
+  /** Nao foi arquivado. Diferente de `fase_conclusiva`: ver a nota da view. */
   ativo: boolean
+  /** A fase de agora e a conclusiva do tipo — o projeto chegou ao fim. */
+  fase_conclusiva: boolean
   // Vêm nulos para quem não tem alcance financeiro. Não é erro: é a RLS.
   valor_estimado: number | null
   valor_aprovado: number | null
@@ -128,8 +131,11 @@ export async function carteira(): Promise<Projeto[]> {
 /**
  * O que a carteira aceita filtrar. Tudo opcional; ausente = nao filtra.
  *
- * `arquivados` false esconde o que ja saiu de cena — `vw_projeto.ativo` e
- * `arquivado_em is null and categoria <> ARQUIVADO`, calculado na view.
+ * `arquivados` e `finalizados` escondem, cada um, uma forma de o projeto ter
+ * saido de cena — e sao coisas diferentes. Arquivado e o que NAO VAI
+ * acontecer; finalizado e o que ACONTECEU. Um projeto entregue nao e um
+ * projeto cancelado, e juntar os dois numa ficha so faria a carteira mentir
+ * sobre o que a equipe realizou.
  */
 export type FiltroCarteira = {
   empresa_id?: string
@@ -140,6 +146,7 @@ export type FiltroCarteira = {
   seguranca?: boolean
   busca?: string
   arquivados?: boolean
+  finalizados?: boolean
 }
 
 /**
@@ -158,6 +165,10 @@ export async function carteiraFiltrada(f: FiltroCarteira = {}): Promise<Projeto[
   if (f.frente) q = q.eq('frente', f.frente)
   if (f.seguranca) q = q.eq('seguranca', true)
   if (!f.arquivados) q = q.eq('ativo', true)
+  // Quem responde "isto acabou" e `tipo_fase.conclusiva`, na view. Nao e a
+  // categoria ENCERRAMENTO: um tipo com "Entrega" E "Encerramento" tiraria da
+  // carteira o projeto que ainda esta sendo entregue.
+  if (!f.finalizados) q = q.eq('fase_conclusiva', false)
 
   if (f.busca && f.busca.trim() !== '') {
     // Virgula e parentese sao a sintaxe do `or` do PostgREST; um nome de

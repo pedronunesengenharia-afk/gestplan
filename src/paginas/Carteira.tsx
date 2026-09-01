@@ -31,6 +31,7 @@ function filtroDaUrl(): FiltroCarteira {
     seguranca: p.seguranca === '1' ? true : undefined,
     busca: p.busca,
     arquivados: p.arquivados === '1' ? true : undefined,
+    finalizados: p.finalizados === '1' ? true : undefined,
   }
 }
 
@@ -44,6 +45,7 @@ function paraUrl(f: FiltroCarteira): Record<string, string | null> {
     seguranca: f.seguranca ? '1' : null,
     busca: f.busca ?? null,
     arquivados: f.arquivados ? '1' : null,
+    finalizados: f.finalizados ? '1' : null,
   }
 }
 
@@ -184,8 +186,20 @@ export function Carteira({
       remover: () => mudar({ arquivados: true }),
     })
   }
+  // Finalizado e arquivado sao duas fichas, e nao uma. Arquivado e o que nao
+  // vai acontecer; finalizado e o que aconteceu. Quem procura um projeto
+  // entregue nao vai pensar em pedir os cancelados junto.
+  if (!filtro.finalizados) {
+    fichas.push({
+      chave: 'finalizados',
+      texto: 'finalizados escondidos',
+      remover: () => mudar({ finalizados: true }),
+    })
+  }
 
-  const filtrando = fichas.length > (filtro.arquivados ? 0 : 1)
+  // As duas fichas de "escondido" nascem ligadas: elas nao contam como filtro.
+  const escondidos = (filtro.arquivados ? 0 : 1) + (filtro.finalizados ? 0 : 1)
+  const filtrando = fichas.length > escondidos
 
   return (
     <>
