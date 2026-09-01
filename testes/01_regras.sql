@@ -304,6 +304,23 @@ select teste_recusa('aguardo sem data de retorno é recusado', $q$
   update projeto set arquivado_em = now(), motivo_arquivo = 'EM_AGUARDO'
    where id = 'dddddddd-0000-0000-0000-000000000001' $q$);
 
+-- As duas metades do arquivamento andam juntas — `arquivado_tem_motivo`.
+select teste_recusa('data de arquivo sem motivo é recusada', $q$
+  update projeto set arquivado_em = now()
+   where id = 'dddddddd-0000-0000-0000-000000000001' $q$);
+
+select teste_recusa('e motivo de arquivo sem data também', $q$
+  update projeto set motivo_arquivo = 'CANCELADO'
+   where id = 'dddddddd-0000-0000-0000-000000000001' $q$);
+
+-- ESTA É A QUE FALTAVA. `motivo_arquivo` guarda um de quatro CÓDIGOS, e não a
+-- frase que a pessoa escreveu — a frase vai para `projeto_fase_hist.motivo`.
+-- A tela confundia os dois e escrevia o texto livre aqui, o que fazia o banco
+-- recusar toda transição com motivo, arquivamento incluído.
+select teste_recusa('motivo de arquivo em texto livre é recusado — a coluna guarda código', $q$
+  update projeto set arquivado_em = now(), motivo_arquivo = 'Reprovado pela engenharia'
+   where id = 'dddddddd-0000-0000-0000-000000000001' $q$);
+
 -- =============================================================================
 -- 9 · Dinheiro
 -- =============================================================================

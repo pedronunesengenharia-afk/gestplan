@@ -9,6 +9,9 @@ import {
   type Projeto as ProjetoDado, type Setor, type Transicao,
 } from '../lib/banco'
 import { ListaDePendencias } from '../componentes/Pendencias'
+import {
+  ARQUIVO_VAZIO, MotivoDeArquivo, arquivoCompleto, type EscolhaDeArquivo,
+} from '../componentes/MotivoDeArquivo'
 import { calcularPendencias, temPendencia } from '../lib/pendencias'
 import { data as formatarData } from '../lib/formato'
 
@@ -39,6 +42,9 @@ export function Avaliacao({ id, aoVoltar }: { id: string; aoVoltar: () => void }
   const [setorEmFoco, setSetorEmFoco] = useState<string>('')
   const [decisao, setDecisao] = useState<string>('CIENTE')
   const [texto, setTexto] = useState('')
+  const [abrindoArquivo, setAbrindoArquivo] = useState(false)
+  const [notaArquivo, setNotaArquivo] = useState('')
+  const [arquivo, setArquivo] = useState<EscolhaDeArquivo>({ ...ARQUIVO_VAZIO })
   const [retorno, setRetorno] = useState('')
 
   const [erro, setErro] = useState<string | null>(null)
@@ -174,17 +180,20 @@ export function Avaliacao({ id, aoVoltar }: { id: string; aoVoltar: () => void }
   }
 
   async function arquivarProjeto() {
-    if (!arquivar) return
-    const motivo = window.prompt(
-      `Arquivar ${projeto!.codigo}. O motivo fica no histórico de fase:`,
-      reprovou ? `Reprovado por ${nomeDoSetor(reprovou.setor_codigo)}` : '',
-    )
-    if (motivo === null) return
+    const destino = arquivar && destinoDe(arquivar)
+    if (!destino) return
     setOcupado(true)
     setErro(null)
     try {
-      await mudarFase(id, arquivar.para_fase_id, motivo || undefined)
+      await mudarFase(id, destino, {
+        motivo: notaArquivo.trim() || undefined,
+        motivoArquivo: arquivo.motivoArquivo || undefined,
+        retornoEm: arquivo.retornoEm || undefined,
+      })
       await recarregar()
+      setAbrindoArquivo(false)
+      setNotaArquivo('')
+      setArquivo({ ...ARQUIVO_VAZIO })
       setRecado('Projeto arquivado.')
     } catch (e) {
       setErro(e instanceof ErroDoBanco ? e.mensagem : e instanceof Error ? e.message : String(e))
@@ -219,12 +228,50 @@ export function Avaliacao({ id, aoVoltar }: { id: string; aoVoltar: () => void }
             modelo prevê é arquivar.
           </p>
           {reprovou.parecer && <p className="justificativa">{reprovou.parecer}</p>}
-          {arquivar && (
+          {arquivar && !abrindoArquivo && (
             <p className="acoes">
-              <button className="botao" onClick={arquivarProjeto} disabled={ocupado}>
+              <button
+                className="botao"
+                disabled={ocupado}
+                onClick={() => {
+                  setNotaArquivo(`Reprovado por ${nomeDoSetor(reprovou.setor_codigo)}`)
+                  setAbrindoArquivo(true)
+                }}
+              >
                 {arquivar.rotulo}
               </button>
             </p>
+          )}
+
+          {arquivar && abrindoArquivo && (
+            <>
+              <MotivoDeArquivo prefixo="avaliacao" valor={arquivo} aoMudar={setArquivo} />
+              <p>
+                <label htmlFor="nota-arquivo">O que aconteceu</label>
+                <br />
+                <textarea
+                  id="nota-arquivo" className="campo" rows={2} value={notaArquivo}
+                  onChange={(e) => setNotaArquivo(e.target.value)}
+                />
+                <span className="ajuda">Fica no histórico de fase do projeto.</span>
+              </p>
+              <p className="acoes">
+                <button
+                  className="botao botao--acao"
+                  disabled={ocupado || !arquivoCompleto(arquivo)}
+                  onClick={arquivarProjeto}
+                >
+                  {ocupado ? 'Arquivando…' : arquivar.rotulo}
+                </button>
+                <button
+                  className="botao"
+                  disabled={ocupado}
+                  onClick={() => { setAbrindoArquivo(false); setErro(null) }}
+                >
+                  cancelar
+                </button>
+              </p>
+            </>
           )}
         </div>
       )}

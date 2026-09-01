@@ -8,6 +8,9 @@ import {
   type Transicao,
 } from '../lib/banco'
 import { ListaDePendencias } from '../componentes/Pendencias'
+import {
+  ARQUIVO_VAZIO, MotivoDeArquivo, arquivoCompleto, type EscolhaDeArquivo,
+} from '../componentes/MotivoDeArquivo'
 import { calcularPendencias, temPendencia, type Pendencias } from '../lib/pendencias'
 import { guardarParametros, lerParametros } from '../lib/url'
 
@@ -37,6 +40,7 @@ type Proposta = {
   faseDestino: Fase
   pend: Pendencias
   motivo: string
+  arquivo: EscolhaDeArquivo
 }
 
 export function Kanban({ aoAbrir }: { aoAbrir: (id: string) => void }) {
@@ -145,11 +149,16 @@ export function Kanban({ aoAbrir }: { aoAbrir: (id: string) => void }) {
               ),
       })
 
-      if (temPendencia(pend) || transicao.exige_motivo) {
-        setProposta({ projeto, transicao, faseDestino: fase, pend, motivo: '' })
+      // Arquivar sempre passa pela caixa: o banco exige o codigo do motivo, e
+      // arrastar o cartao nao tem como perguntar por ele.
+      if (temPendencia(pend) || transicao.exige_motivo || fase.categoria === 'ARQUIVADO') {
+        setProposta({
+          projeto, transicao, faseDestino: fase, pend,
+          motivo: '', arquivo: { ...ARQUIVO_VAZIO },
+        })
         return
       }
-      await mover(projeto, transicao, fase, '')
+      await mover(projeto, fase, '', ARQUIVO_VAZIO)
     } catch (e) {
       setErro(e instanceof ErroDoBanco ? e.mensagem : e instanceof Error ? e.message : String(e))
     } finally {
@@ -157,7 +166,12 @@ export function Kanban({ aoAbrir }: { aoAbrir: (id: string) => void }) {
     }
   }
 
-  async function mover(projeto: Projeto, transicao: Transicao, destino: Fase, motivo: string) {
+  async function mover(
+    projeto: Projeto,
+    destino: Fase,
+    motivo: string,
+    arquivo: EscolhaDeArquivo,
+  ) {
     setOcupado(true)
     setErro(null)
     // Move o cartão na tela antes da resposta — e devolve se o banco recusar.
@@ -170,7 +184,11 @@ export function Kanban({ aoAbrir }: { aoAbrir: (id: string) => void }) {
       ),
     )
     try {
-      await mudarFase(projeto.id, transicao.para_fase_id, motivo.trim() || undefined)
+      await mudarFase(projeto.id, destino, {
+        motivo: motivo.trim() || undefined,
+        motivoArquivo: arquivo.motivoArquivo || undefined,
+        retornoEm: arquivo.retornoEm || undefined,
+      })
       setProjetos(await carteiraDoTipo(tipoId))
       setProposta(null)
     } catch (e) {
@@ -296,6 +314,14 @@ export function Kanban({ aoAbrir }: { aoAbrir: (id: string) => void }) {
             </>
           )}
 
+          {proposta.faseDestino.categoria === 'ARQUIVADO' && (
+            <MotivoDeArquivo
+              prefixo="kanban"
+              valor={proposta.arquivo}
+              aoMudar={(arquivo) => setProposta({ ...proposta, arquivo })}
+            />
+          )}
+
           {proposta.transicao.exige_motivo && (
             <p>
               <label htmlFor="motivo-kanban">Esta transição exige motivo</label>
@@ -311,12 +337,22 @@ export function Kanban({ aoAbrir }: { aoAbrir: (id: string) => void }) {
             <button
               className="botao botao--acao"
               disabled={
-                ocupado || (proposta.transicao.exige_motivo && proposta.motivo.trim() === '')
+                ocupado ||
+                (proposta.transicao.exige_motivo && proposta.motivo.trim() === '') ||
+                (proposta.faseDestino.categoria === 'ARQUIVADO' &&
+                  !arquivoCompleto(proposta.arquivo))
               }
               onClick={() =>
-                mover(proposta.projeto, proposta.transicao, proposta.faseDestino, proposta.motivo)}
+                mover(
+                  proposta.projeto, proposta.faseDestino,
+                  proposta.motivo, proposta.arquivo,
+                )}
             >
-              {temPendencia(proposta.pend) ? 'Mandar assim mesmo' : 'Mudar de fase'}
+              {temPendencia(proposta.pend)
+                ? 'Mandar assim mesmo'
+                : proposta.faseDestino.categoria === 'ARQUIVADO'
+                  ? 'Arquivar'
+                  : 'Mudar de fase'}
             </button>
             <button className="botao" onClick={() => setProposta(null)} disabled={ocupado}>
               Cancelar

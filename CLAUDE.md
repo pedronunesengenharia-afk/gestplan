@@ -189,10 +189,10 @@ e `posso_assinar`. A tela pergunta; não reescreve a regra em TypeScript.
 rodar_testes.bat
 ```
 
-Apaga o banco de teste, aplica as migrações e roda as dez suítes — 289
+Apaga o banco de teste, aplica as migrações e roda as dez suítes — 292
 verificações:
 
-- `testes/01_regras.sql` — 40 de regra de negócio
+- `testes/01_regras.sql` — 43 de regra de negócio
 - `testes/02_permissao.sql` — 41 de permissão, uma por papel
 - `testes/03_permissao_fase1.sql` — 18 das regras que a Fase 1 destapou
   (dinheiro da EAP, quem assina parecer, quem edita comentário alheio)

@@ -506,17 +506,103 @@ export async function atualizarProjeto(id: string, dados: Partial<ProjetoEdicao>
 }
 
 /**
+ * Os quatro motivos de arquivamento. Sao os que `projeto.motivo_arquivo`
+ * aceita — a lista esta no `check` da coluna, e esta aqui so para a tela poder
+ * oferece-los com nome de gente.
+ */
+export const MOTIVOS_ARQUIVO = [
+  { codigo: 'NAO_APROVADO', rotulo: 'Nao aprovado' },
+  { codigo: 'CANCELADO', rotulo: 'Cancelado' },
+  { codigo: 'DISTRATO', rotulo: 'Distrato' },
+  { codigo: 'EM_AGUARDO', rotulo: 'Em aguardo — volta depois' },
+] as const
+
+export type MotivoArquivo = (typeof MOTIVOS_ARQUIVO)[number]['codigo']
+
+export type MudancaDeFase = {
+  /** Texto livre: vai para o historico de fase, e e o que se le depois. */
+  motivo?: string
+  /** So ao entrar em fase da categoria ARQUIVADO. */
+  motivoArquivo?: MotivoArquivo
+  /** Obrigatorio quando o motivo e EM_AGUARDO. */
+  retornoEm?: string
+}
+
+/**
  * Move o projeto de fase.
  *
- * O motivo vai em `motivo_arquivo` porque e de la que `app.registrar_fase` o
- * copia para o historico — vale para arquivar e para qualquer transicao que
- * peca motivo.
+ * DUAS COISAS DIFERENTES SE CHAMAVAM "MOTIVO" AQUI, e por isso arquivar
+ * quebrava. `projeto.motivo_arquivo` NAO e texto livre: aceita quatro codigos
+ * e — pela restricao `arquivado_tem_motivo` — so pode estar preenchido junto
+ * com `arquivado_em`. Escrever a frase da pessoa nele fazia o banco recusar
+ * *toda* transicao com motivo, arquivamento incluso. Medido, e relatado como
+ * "new row for relation projeto violates check constraint arquivado_tem_motivo".
+ *
+ * Agora cada um vai para o seu lugar: o codigo e a data de arquivo na tabela
+ * `projeto`, o texto livre na linha que `app.registrar_fase` acabou de criar
+ * em `projeto_fase_hist` — que e onde ele sempre foi lido.
+ *
+ * Sair de uma fase arquivada limpa os tres campos: projeto que voltou a andar
+ * nao tem data de arquivamento. Sem isso a restricao recusaria a volta.
  */
-export async function mudarFase(id: string, paraFaseId: string, motivo?: string): Promise<void> {
-  const dados: Record<string, unknown> = { fase_id: paraFaseId }
-  if (motivo) dados.motivo_arquivo = motivo
+export async function mudarFase(
+  id: string,
+  paraFase: Fase,
+  opcoes: MudancaDeFase = {},
+): Promise<void> {
+  const arquivando = paraFase.categoria === 'ARQUIVADO'
+
+  if (arquivando && !opcoes.motivoArquivo) {
+    throw new Error(
+      'Arquivar exige o motivo: nao aprovado, cancelado, distrato ou em aguardo.',
+    )
+  }
+  // A mesma regra que o banco cobra em `aguardo_tem_retorno`, dita antes da
+  // viagem: projeto em aguardo sem data de retorno some da vista e ninguem
+  // volta nele.
+  if (opcoes.motivoArquivo === 'EM_AGUARDO' && !opcoes.retornoEm) {
+    throw new Error('Projeto em aguardo precisa da data em que se volta a olhar para ele.')
+  }
+
+  const dados = arquivando
+    ? {
+        fase_id: paraFase.id,
+        arquivado_em: new Date().toISOString(),
+        motivo_arquivo: opcoes.motivoArquivo,
+        retorno_em: opcoes.motivoArquivo === 'EM_AGUARDO' ? opcoes.retornoEm : null,
+      }
+    : { fase_id: paraFase.id, arquivado_em: null, motivo_arquivo: null, retorno_em: null }
+
   const { error } = await supabase.from('projeto').update(dados).eq('id', id)
   erroDeEscrita('Nao foi possivel mudar a fase', error)
+
+  const nota = opcoes.motivo?.trim()
+  if (!nota) return
+
+  // Segunda escrita, e nao ha como evitar sem uma funcao no banco: o gatilho
+  // grava a linha do historico DEPOIS do update, e um `update` do PostgREST
+  // nao tem onde carregar um texto que nao e coluna de `projeto`.
+  const { data, error: erroBusca } = await supabase
+    .from('projeto_fase_hist')
+    .select('id')
+    .eq('projeto_id', id)
+    .eq('para_fase_id', paraFase.id)
+    .order('em', { ascending: false })
+    .limit(1)
+  const linha = data?.[0]?.id
+  const { error: erroNota } = linha
+    ? await supabase.from('projeto_fase_hist').update({ motivo: nota }).eq('id', linha)
+    : { error: null }
+
+  if (erroBusca || erroNota || !linha) {
+    // A fase JA mudou. Dizer so "nao foi possivel" faria a pessoa tentar de
+    // novo uma coisa que ja aconteceu.
+    throw new Error(
+      `O projeto mudou de fase, mas o motivo nao ficou registrado: ${
+        (erroBusca ?? erroNota)?.message ?? 'a linha do historico nao foi encontrada'
+      }`,
+    )
+  }
 }
 
 /** As saidas possiveis de uma fase, na ordem em que se oferecem. */

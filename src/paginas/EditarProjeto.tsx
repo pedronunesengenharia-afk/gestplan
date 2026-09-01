@@ -11,6 +11,9 @@ import {
 } from '../lib/banco'
 import { CamposDoTipo } from '../componentes/CamposDoTipo'
 import { ListaDePendencias } from '../componentes/Pendencias'
+import {
+  ARQUIVO_VAZIO, MotivoDeArquivo, arquivoCompleto, type EscolhaDeArquivo,
+} from '../componentes/MotivoDeArquivo'
 import { calcularPendencias, temPendencia as temAlguma } from '../lib/pendencias'
 
 /**
@@ -77,6 +80,7 @@ export function EditarProjeto({
   const [erroTransicao, setErroTransicao] = useState<string | null>(null)
   const [transicaoEscolhida, setTransicaoEscolhida] = useState<string>('')
   const [motivo, setMotivo] = useState('')
+  const [arquivo, setArquivo] = useState<EscolhaDeArquivo>({ ...ARQUIVO_VAZIO })
   const [confirmarTransicao, setConfirmarTransicao] = useState(false)
 
   const criando = idAtual === null
@@ -322,10 +326,15 @@ export function EditarProjeto({
     setErroTransicao(null)
     setRecado(null)
     try {
-      await mudarFase(idAtual, transicao.para_fase_id, motivo.trim() || undefined)
+      await mudarFase(idAtual, faseDestino!, {
+        motivo: motivo.trim() || undefined,
+        motivoArquivo: arquivo.motivoArquivo || undefined,
+        retornoEm: arquivo.retornoEm || undefined,
+      })
       await recarregar(idAtual)
       setTransicaoEscolhida('')
       setMotivo('')
+      setArquivo({ ...ARQUIVO_VAZIO })
       setConfirmarTransicao(false)
       setRecado(`Projeto movido para ${faseDestino?.nome}.`)
     } catch (e) {
@@ -704,6 +713,15 @@ export function EditarProjeto({
               </dd>
             </div>
 
+            {faseDestino?.categoria === 'ARQUIVADO' && (
+              <div className="campo-linha campo-largo">
+                <dt>Arquivamento</dt>
+                <dd>
+                  <MotivoDeArquivo prefixo="editar" valor={arquivo} aoMudar={setArquivo} />
+                </dd>
+              </div>
+            )}
+
             {transicao?.exige_motivo && (
               <div className="campo-linha campo-largo">
                 <dt><label htmlFor="motivo">Motivo</label></dt>
@@ -747,10 +765,15 @@ export function EditarProjeto({
               disabled={
                 salvando ||
                 !transicao ||
-                (transicao.exige_motivo && motivo.trim() === '')
+                (transicao.exige_motivo && motivo.trim() === '') ||
+                (faseDestino?.categoria === 'ARQUIVADO' && !arquivoCompleto(arquivo))
               }
             >
-              {confirmarTransicao ? 'Mandar assim mesmo' : 'Mudar de fase'}
+              {confirmarTransicao
+                ? 'Mandar assim mesmo'
+                : faseDestino?.categoria === 'ARQUIVADO'
+                  ? 'Arquivar'
+                  : 'Mudar de fase'}
             </button>
           </p>
         </section>
