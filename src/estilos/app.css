@@ -577,94 +577,6 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
 .aviso-lado .marca-etapa { margin-left: 0; }
 
 /* -------------------------------------------------------------------------
-   Meus afazeres — a lista pessoal
-   ------------------------------------------------------------------------- */
-
-/* Uma linha so para anotar. O atrito entre lembrar e anotar e o que decide se
-   uma lista de afazeres e usada; data, prioridade e projeto ficam do lado,
-   opcionais, sem abrir formulario. */
-.afazer-caixa {
-  display: flex; flex-wrap: wrap; gap: var(--e2); margin-bottom: var(--e3);
-}
-.afazer-caixa .campo { flex: 1 1 14rem; }
-.afazer-caixa .campo--prazo      { flex: 0 0 9.5rem; }
-.afazer-caixa .campo--prioridade { flex: 0 0 7rem; }
-.afazer-caixa .campo--empresa    { flex: 0 1 10rem; min-width: 0; }
-.afazer-caixa .campo--projeto    { flex: 0 1 13rem; min-width: 0; }
-.afazer-caixa .botao { flex: none; }
-
-.afazer-grupo { margin-top: var(--e4); }
-.afazer-grupo h3 {
-  font-size: .78rem; text-transform: uppercase; letter-spacing: .08em;
-  color: var(--apagado); font-weight: 600; margin-bottom: var(--e1);
-}
-
-.lista-afazeres { list-style: none; margin: 0; padding: 0; }
-.afazer {
-  display: flex; align-items: flex-start; gap: var(--e3);
-  padding: var(--e2) 0; border-bottom: 1px solid var(--linha-suave);
-}
-.afazer:last-child { border-bottom: none; }
-.afazer-marca input { accent-color: var(--acao); width: 1.05rem; height: 1.05rem; margin-top: .2rem; }
-.afazer-corpo { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--e2); }
-.afazer-titulo {
-  font: inherit; background: none; border: none; padding: 0; cursor: text;
-  color: var(--tinta); text-align: left;
-}
-.afazer-titulo:hover { color: var(--acao); }
-.afazer-marcas { display: inline-flex; align-items: center; gap: var(--e2); font-size: .72rem; color: var(--apagado); }
-
-/* Feito continua a vista, riscado: some-lo perderia o registro do que foi
-   feito hoje, que e metade do valor de uma lista. */
-.afazer--feito .afazer-titulo { text-decoration: line-through; color: var(--apagado); }
-.afazer--feito .afazer-marcas { opacity: .6; }
-
-/* O prazo da linha e um botao que vira campo: e o que mais muda depois de
-   anotado. Sem prazo ele fica discreto, como um convite — nao como um erro. */
-.prazo-do-afazer {
-  font: inherit; font-size: .72rem; background: none; border: none;
-  padding: var(--e1) var(--e2); border-radius: var(--raio);
-  color: var(--apagado); cursor: pointer;
-}
-.prazo-do-afazer:hover { background: var(--superficie-2); color: var(--tinta); }
-
-/* Toda marca da linha e clicavel para trocar. `clicavel` da o affordance sem
-   mudar a aparencia: continua parecendo o selo que e, ate o cursor chegar. */
-.afazer-marcas .clicavel {
-  font: inherit; border: none; cursor: pointer;
-  font-family: var(--fonte-dado); font-size: .62rem; letter-spacing: .06em;
-  text-transform: uppercase;
-}
-.afazer-marcas .marca-etapa.clicavel { text-transform: none; letter-spacing: 0; }
-.afazer-marcas .clicavel:hover { outline: 1px solid var(--linha); }
-
-/* O campo ainda vazio fica invisivel ate a linha ser apontada: uma lista cheia
-   de "+ empresa  + projeto  + prazo" em cinza vira ruido em toda linha. Quem
-   navega por teclado alcanca pelo foco. */
-.discreto { opacity: 0; transition: opacity var(--transicao); }
-.afazer:hover .discreto, .discreto:focus-visible { opacity: 1; }
-
-.campo--linha { width: auto; padding: var(--e1) var(--e2); font-size: .78rem; }
-
-.prazo-vencido { color: var(--st-critico); font-weight: 500; }
-
-/* O apagar so aparece quando a linha e apontada: uma lista cheia de "x" pede
-   para ser apagada por engano. */
-.afazer-tirar { margin: 0; font-size: 1.1rem; line-height: 1; opacity: 0; color: var(--apagado); }
-.afazer:hover .afazer-tirar, .afazer-tirar:focus-visible { opacity: 1; }
-.afazer-tirar:hover { color: var(--vermelho-tinta); }
-
-/* ---------------------------------------------------------------------------
-   Celular e tablet de pe
-   ---------------------------------------------------------------------------
-   820px e nao 780: o iPad de pe tem 768, e com a lateral de 15rem sobrariam
-   558px de conteudo — apertado demais para a tabela da carteira. Abaixo daqui,
-   a tela inteira e conteudo e a navegacao vai para as bordas.
-
-   A lateral sai e entram duas barras FIXAS. A de antes rolava para fora com a
-   pagina: depois de rolar a carteira, nao havia navegacao nenhuma.
-   ------------------------------------------------------------------------ */
-/* -------------------------------------------------------------------------
    Quadro de afazeres
    -------------------------------------------------------------------------
    Duas partes: as listas a esquerda (uma por empresa, mais a Pessoal) e o
@@ -672,6 +584,8 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
    sempre — `1fr` e `minmax(auto, 1fr)`, e um quadro largo esticaria a pagina
    inteira em vez de rolar dentro de si.
    ------------------------------------------------------------------------- */
+.cabecalho-pagina .marcador { font-size: .82rem; color: var(--tinta-2); }
+
 .quadro-afazeres {
   display: grid;
   grid-template-columns: 12rem minmax(0, 1fr);
@@ -747,8 +661,53 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
 .cartao-afazer:active { cursor: grabbing; }
 .cartao-afazer input[type='checkbox'] { accent-color: var(--acao); margin-top: .15rem; }
 .cartao-corpo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--e1); font-size: .88rem; }
-.cartao-marcas { display: flex; gap: var(--e2); align-items: center; font-size: .68rem; }
-.cartao-marcas i { font-style: normal; }
+
+/* O titulo e um botao que vira campo: renomear e frequente e nao merece um
+   botao de editar do lado. */
+.cartao-titulo {
+  font: inherit; background: none; border: none; padding: 0; cursor: text;
+  color: var(--tinta); text-align: left;
+}
+.cartao-titulo:hover { color: var(--acao); }
+
+.cartao-marcas { display: flex; flex-wrap: wrap; gap: var(--e1); align-items: center; }
+
+/* Toda marca do cartao e clicavel para trocar. `clicavel` da o affordance sem
+   mudar a aparencia: continua parecendo o selo que e, ate o cursor chegar. */
+.cartao-marcas .clicavel {
+  font: inherit; border: none; cursor: pointer;
+  font-family: var(--fonte-dado); font-size: .6rem; letter-spacing: .05em;
+  text-transform: uppercase; padding: .1rem .35rem;
+}
+.cartao-marcas .marca-etapa.clicavel { text-transform: none; letter-spacing: 0; margin-left: 0; }
+.cartao-marcas .clicavel:hover { outline: 1px solid var(--linha); }
+
+/* O prazo, que e o que mais muda depois de anotado. */
+.prazo-do-afazer {
+  font: inherit; font-size: .66rem; background: none; border: none;
+  padding: .1rem .3rem; border-radius: var(--raio);
+  color: var(--apagado); cursor: pointer;
+}
+.prazo-do-afazer:hover { background: var(--superficie-2); color: var(--tinta); }
+.prazo-vencido { color: var(--st-critico); font-weight: 500; }
+
+/* O campo ainda vazio fica invisivel ate o cartao ser apontado: uma coluna
+   cheia de "+ projeto  + prazo" em cinza vira ruido em todo cartao. Quem
+   navega por teclado alcanca pelo foco. */
+.discreto { opacity: 0; transition: opacity var(--transicao); }
+.cartao-afazer:hover .discreto, .discreto:focus-visible { opacity: 1; }
+
+.campo--linha { width: auto; padding: 0 var(--e1); font-size: .72rem; min-height: auto; }
+
+/* Concluido continua a vista quando se pede para ver, riscado. */
+.cartao-afazer--feito { opacity: .65; }
+.cartao-afazer--feito .cartao-titulo { text-decoration: line-through; color: var(--apagado); }
+
+/* O apagar so aparece quando o cartao e apontado: uma coluna cheia de "x" pede
+   para ser apagada por engano. */
+.afazer-tirar { margin: 0; font-size: 1rem; line-height: 1; opacity: 0; color: var(--apagado); }
+.cartao-afazer:hover .afazer-tirar, .afazer-tirar:focus-visible { opacity: 1; }
+.afazer-tirar:hover { color: var(--vermelho-tinta); }
 
 .mais-cartao, .coluna-afazer--nova button { margin: 0; text-align: left; }
 .novo-cartao { display: flex; flex-direction: column; gap: var(--e2); }
@@ -760,7 +719,9 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
 @media (max-width: 820px) {
   /* No celular as listas viram uma faixa que rola de lado, em cima do quadro:
      uma coluna de 12rem ao lado de um quadro nao cabe em 390px. */
-  .quadro-afazeres { grid-template-columns: minmax(0, 1fr); gap: var(--e3); }
+  .cabecalho-pagina .marcador { font-size: .82rem; color: var(--tinta-2); }
+
+.quadro-afazeres { grid-template-columns: minmax(0, 1fr); gap: var(--e3); }
   .listas {
     flex-direction: row; overflow-x: auto; gap: var(--e2);
     padding-bottom: var(--e2);

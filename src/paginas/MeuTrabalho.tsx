@@ -4,7 +4,6 @@ import {
   STATUS_TAREFA, type Alocacao, type MinhaTarefa, type Pessoa,
 } from '../lib/banco'
 import { FichaDeNumero } from '../componentes/Grafico'
-import { MeusAfazeres } from '../componentes/MeusAfazeres'
 import { EsqueletoDeTabela } from '../componentes/Esqueleto'
 import { data as formatarData } from '../lib/formato'
 
@@ -14,6 +13,11 @@ import { data as formatarData } from '../lib/formato'
  * Toda outra tela do sistema parte do projeto: escolha um, veja o que há
  * dentro. Esta parte da pessoa, que é como o dia realmente funciona — ninguém
  * abre sete projetos de manhã para descobrir o que fazer.
+ *
+ * SÓ TAREFA DE PROJETO. A lista pessoal saiu daqui e mora inteira na aba
+ * Afazeres — duas telas para a mesma lista era um lugar a mais para perder
+ * item, e a pergunta desta tela é outra: o que vence, não onde as coisas
+ * ficam.
  *
  * A tarefa é agrupada por URGÊNCIA, não por projeto. Um atraso de dezesseis
  * dias e uma tarefa de novembro não pertencem à mesma lista só porque saíram
@@ -197,8 +201,6 @@ export function MeuTrabalho({ aoAbrir }: { aoAbrir: (projetoId: string) => void 
           compromisso assumido é maior que o tempo que existe.
         </div>
       )}
-
-      <MeusAfazeres pessoaId={pessoa.id} />
 
       {abertas.length === 0 ? (
         <p className="vazio">
