@@ -627,9 +627,24 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
   color: var(--apagado); cursor: pointer;
 }
 .prazo-do-afazer:hover { background: var(--superficie-2); color: var(--tinta); }
-.prazo-vazio { opacity: 0; transition: opacity var(--transicao); }
-.afazer:hover .prazo-vazio, .prazo-vazio:focus-visible { opacity: 1; }
-.campo--prazo-linha { width: auto; padding: var(--e1) var(--e2); font-size: .78rem; }
+
+/* Toda marca da linha e clicavel para trocar. `clicavel` da o affordance sem
+   mudar a aparencia: continua parecendo o selo que e, ate o cursor chegar. */
+.afazer-marcas .clicavel {
+  font: inherit; border: none; cursor: pointer;
+  font-family: var(--fonte-dado); font-size: .62rem; letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.afazer-marcas .marca-etapa.clicavel { text-transform: none; letter-spacing: 0; }
+.afazer-marcas .clicavel:hover { outline: 1px solid var(--linha); }
+
+/* O campo ainda vazio fica invisivel ate a linha ser apontada: uma lista cheia
+   de "+ empresa  + projeto  + prazo" em cinza vira ruido em toda linha. Quem
+   navega por teclado alcanca pelo foco. */
+.discreto { opacity: 0; transition: opacity var(--transicao); }
+.afazer:hover .discreto, .discreto:focus-visible { opacity: 1; }
+
+.campo--linha { width: auto; padding: var(--e1) var(--e2); font-size: .78rem; }
 
 .prazo-vencido { color: var(--st-critico); font-weight: 500; }
 

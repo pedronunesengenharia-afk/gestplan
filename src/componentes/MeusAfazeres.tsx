@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   atualizarAfazer, criarAfazer, empresas as carregarEmpresas, excluirAfazer,
-  meusAfazeres, projetosParaEscolha,
+  meusAfazeres, projetosParaEscolha, PRIORIDADES_AFAZER,
   type Afazer, type Empresa,
 } from '../lib/banco'
 import { data as formatarData } from '../lib/formato'
@@ -62,8 +62,14 @@ export function MeusAfazeres({ pessoaId }: { pessoaId: string }) {
   const [ocupado, setOcupado] = useState(false)
   const [mostrarFeitos, setMostrarFeitos] = useState(false)
   const [editando, setEditando] = useState<string | null>(null)
-  /** Qual linha esta com o prazo aberto para troca. */
-  const [editandoPrazo, setEditandoPrazo] = useState<string | null>(null)
+  /**
+   * Qual campo de qual linha esta aberto para troca, como "id:campo".
+   *
+   * Um estado so para os quatro campos, em vez de quatro estados: assim abrir
+   * um fecha o outro sozinho, que e o que se espera de uma linha onde os
+   * controles ficam lado a lado.
+   */
+  const [abertoParaTrocar, setAbertoParaTrocar] = useState<string | null>(null)
 
   // O que a caixa de escrita está montando.
   const [titulo, setTitulo] = useState('')
@@ -159,6 +165,21 @@ export function MeusAfazeres({ pessoaId }: { pessoaId: string }) {
       .sort((x, y) => x.ordem - y.ordem || x.criado_em.localeCompare(y.criado_em)),
   })).filter((g) => g.itens.length > 0)
 
+  const aberto = (a: Afazer, campo: string) => abertoParaTrocar === `${a.id}:${campo}`
+  const fechar = () => setAbertoParaTrocar(null)
+
+  /** Troca um campo e fecha. Nao grava se o valor for o mesmo. */
+  function trocar(a: Afazer, mudanca: Record<string, string | null>) {
+    fechar()
+    const [campo, valor] = Object.entries(mudanca)[0]
+    if ((a as unknown as Record<string, unknown>)[campo] === valor) return
+    comOBanco(async () => { await atualizarAfazer(a.id, mudanca) })
+  }
+
+  /** id da empresa -> nome, da lista que o seletor ja carregou. */
+  const nomeDaEmpresa = (id: string | null) =>
+    id ? listaEmpresas.find((e) => e.id === id)?.nome ?? null : null
+
   const linha = (a: Afazer) => (
     <li key={a.id} className={a.feito_em ? 'afazer afazer--feito' : 'afazer'}>
       <label className="afazer-marca">
@@ -195,42 +216,103 @@ export function MeusAfazeres({ pessoaId }: { pessoaId: string }) {
         )}
 
         <span className="afazer-marcas">
-          {a.prioridade !== 'NORMAL' && (
-            <span className={`selo selo--${a.prioridade === 'ALTA' ? 'urgente' : 'planejamento'}`}>
-              {ROTULO_PRIORIDADE[a.prioridade]}
-            </span>
+          {/* TODO CAMPO DA LINHA E TROCAVEL, e nao so o titulo e o prazo.
+              Anotar rapido significa anotar incompleto — "ligar para o
+              fornecedor" primeiro, de que empresa e depois. Se o que se
+              escolheu na pressa nao puder mudar, a pessoa apaga e reescreve,
+              e perde o que ja tinha marcado. */}
+
+          {aberto(a, 'prioridade') ? (
+            <select
+              className="campo campo--linha" autoFocus
+              defaultValue={a.prioridade}
+              aria-label={`Prioridade de ${a.titulo}`}
+              onBlur={fechar}
+              onChange={(e) => trocar(a, { prioridade: e.target.value })}
+            >
+              {PRIORIDADES_AFAZER.map((v) => (
+                <option key={v} value={v}>{ROTULO_PRIORIDADE[v]}</option>
+              ))}
+            </select>
+          ) : (
+            <button
+              className={
+                a.prioridade === 'ALTA' ? 'selo selo--urgente clicavel'
+                  : a.prioridade === 'BAIXA' ? 'selo selo--planejamento clicavel'
+                  : 'marca-etapa clicavel discreto'
+              }
+              onClick={() => setAbertoParaTrocar(`${a.id}:prioridade`)}
+              title="Mudar a prioridade"
+            >
+              {a.prioridade === 'NORMAL' ? 'prioridade' : ROTULO_PRIORIDADE[a.prioridade]}
+            </button>
           )}
-          {a.empresa_nome && <span className="marca-etapa">{a.empresa_nome}</span>}
-          {a.projeto_codigo && <span className="marca-etapa">{a.projeto_codigo}</span>}
+
+          {aberto(a, 'empresa') ? (
+            <select
+              className="campo campo--linha" autoFocus
+              defaultValue={a.empresa_id ?? ''}
+              aria-label={`Empresa de ${a.titulo}`}
+              onBlur={fechar}
+              onChange={(e) => trocar(a, { empresa_id: e.target.value || null })}
+            >
+              <option value="">sem empresa</option>
+              {listaEmpresas.map((e) => (
+                <option key={e.id} value={e.id}>{e.nome}</option>
+              ))}
+            </select>
+          ) : (
+            <button
+              className={a.empresa_id ? 'marca-etapa clicavel' : 'marca-etapa clicavel discreto'}
+              onClick={() => setAbertoParaTrocar(`${a.id}:empresa`)}
+              title="Mudar a empresa"
+            >
+              {nomeDaEmpresa(a.empresa_id) ?? '+ empresa'}
+            </button>
+          )}
+
+          {aberto(a, 'projeto') ? (
+            <select
+              className="campo campo--linha" autoFocus
+              defaultValue={a.projeto_id ?? ''}
+              aria-label={`Projeto de ${a.titulo}`}
+              onBlur={fechar}
+              onChange={(e) => trocar(a, { projeto_id: e.target.value || null })}
+            >
+              <option value="">sem projeto</option>
+              {projetos.map((p) => (
+                <option key={p.id} value={p.id}>{p.codigo} — {p.nome}</option>
+              ))}
+            </select>
+          ) : (
+            <button
+              className={a.projeto_id ? 'marca-etapa clicavel' : 'marca-etapa clicavel discreto'}
+              onClick={() => setAbertoParaTrocar(`${a.id}:projeto`)}
+              title="Mudar o projeto"
+            >
+              {a.projeto_codigo ?? '+ projeto'}
+            </button>
+          )}
 
           {/* O prazo e o que mais muda depois de anotado — "isso fica para
-              segunda" e a frase mais comum de uma lista de afazeres. Entao ele
-              e um botao que vira campo, e nao um texto morto. */}
-          {editandoPrazo === a.id ? (
+              segunda" e a frase mais comum de uma lista de afazeres. */}
+          {aberto(a, 'prazo') ? (
             <input
-              className="campo campo--prazo-linha"
-              type="date"
+              className="campo campo--linha" type="date" autoFocus
               defaultValue={a.prazo ?? ''}
-              autoFocus
               aria-label={`Prazo de ${a.titulo}`}
-              onBlur={() => setEditandoPrazo(null)}
-              onKeyDown={(e) => { if (e.key === 'Escape') setEditandoPrazo(null) }}
-              onChange={(e) => {
-                const novo = e.target.value || null
-                setEditandoPrazo(null)
-                if (novo !== a.prazo) {
-                  comOBanco(async () => { await atualizarAfazer(a.id, { prazo: novo }) })
-                }
-              }}
+              onBlur={fechar}
+              onKeyDown={(e) => { if (e.key === 'Escape') fechar() }}
+              onChange={(e) => trocar(a, { prazo: e.target.value || null })}
             />
           ) : (
             <button
               className={
                 ondeCai(a) === 'atrasado'
                   ? 'dado prazo-do-afazer prazo-vencido'
-                  : a.prazo ? 'dado prazo-do-afazer' : 'prazo-do-afazer prazo-vazio'
+                  : a.prazo ? 'dado prazo-do-afazer' : 'prazo-do-afazer discreto'
               }
-              onClick={() => setEditandoPrazo(a.id)}
+              onClick={() => setAbertoParaTrocar(`${a.id}:prazo`)}
               title="Mudar o prazo — apagar o campo tira o prazo"
             >
               {a.prazo ? formatarData(a.prazo) : '+ prazo'}

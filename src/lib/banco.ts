@@ -1748,9 +1748,8 @@ export type Afazer = {
   feito_em: string | null
   ordem: number
   criado_em: string
-  /** Preenchidos pela consulta, do embed — a tabela nao guarda. */
+  /** Preenchido pela consulta, do embed — a tabela nao guarda. */
   projeto_codigo?: string | null
-  empresa_nome?: string | null
 }
 
 const CAMPOS_AFAZER =
@@ -1759,21 +1758,20 @@ const CAMPOS_AFAZER =
 export async function meusAfazeres(): Promise<Afazer[]> {
   const { data, error } = await supabase
     .from('afazer')
-    .select(`${CAMPOS_AFAZER}, projeto(codigo), empresa(nome)`)
+    .select(`${CAMPOS_AFAZER}, projeto(codigo)`)
     .order('ordem')
     .order('criado_em')
   erro('Nao foi possivel carregar os seus afazeres', error)
 
+  // A EMPRESA NAO VEM POR EMBED, so o `empresa_id`. A tela ja carrega a lista
+  // de empresas para o seletor, entao o nome sai de la — uma juncao a menos, e
+  // uma dependencia a menos do cache de schema do PostgREST, que precisa
+  // conhecer a chave estrangeira para aceitar `empresa(nome)`.
   return (data ?? []).map((l) => {
     const linha = l as unknown as Record<string, unknown>
     const p = linha.projeto as { codigo: string } | null
-    const e = linha.empresa as { nome: string } | null
-    const { projeto: _p, empresa: _e, ...resto } = linha
-    return {
-      ...(resto as Afazer),
-      projeto_codigo: p?.codigo ?? null,
-      empresa_nome: e?.nome ?? null,
-    }
+    const { projeto: _p, ...resto } = linha
+    return { ...(resto as Afazer), projeto_codigo: p?.codigo ?? null }
   })
 }
 

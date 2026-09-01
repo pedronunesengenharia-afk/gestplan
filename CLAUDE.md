@@ -231,6 +231,44 @@ Mudou o schema? `supabase gen types typescript --local > src/lib/banco.types.ts`
 | homologação | projeto Supabase separado | conferir antes de subir |
 | produção | projeto Supabase em São Paulo | o que a equipe usa |
 
+### Ordem de publicação: banco primeiro, tela depois
+
+**Sempre `db push` antes de subir o `dist`.** Não é preferência — é a única
+ordem que não quebra:
+
+- coluna ou tabela NOVA não atrapalha a tela antiga: ela simplesmente não a
+  pede;
+- tela nova pedindo coluna que não existe **quebra na cara do usuário**, com
+  uma mensagem do PostgREST que não diz o que fazer.
+
+Já aconteceu três vezes — `pessoa_custo`, `afazer` e `afazer.empresa_id` — e
+das três a tela ficou com uma tarja de erro até a migração subir. A sequência é:
+
+```
+npm run build
+npx supabase db push --linked     # antes
+# e só então o conteúdo de dist/ para a Hostinger
+```
+
+### Ordem de publicação: banco primeiro, tela depois
+
+**Sempre `db push` antes de subir o `dist`.** Não é preferência, é a única
+ordem que não quebra:
+
+- coluna ou tabela NOVA não atrapalha a tela antiga — ela simplesmente não a
+  pede;
+- tela nova pedindo coluna que não existe **quebra na cara de quem usa**, com
+  uma mensagem do PostgREST que não diz o que fazer.
+
+Já aconteceu três vezes — `pessoa_custo`, `afazer` e `afazer.empresa_id` — e
+das três a tela ficou com tarja de erro até a migração subir.
+
+```
+npm run build
+npx supabase db push --linked     # ANTES
+# e só então o conteúdo de dist/ para a Hostinger
+```
+
 **Não desenvolva direto em produção.** Funcionou enquanto o único prejudicado
 por um erro era você; com dez pessoas dentro, virou risco operacional.
 
