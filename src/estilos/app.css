@@ -750,6 +750,47 @@ td.principal, th.principal { min-width: 13rem; white-space: normal; }
    justamente o que se quer cobrar. */
 .decisao-falta { color: var(--apagado); font-style: italic; }
 
+/* -------------------------------------------------------------------------
+   Trilha de fases
+   -------------------------------------------------------------------------
+   Lista vertical com um fio ligando os pontos. Nao e um grafico: sao poucos
+   passos, e texto com data se le mais rapido que barra em tela pequena.
+   ------------------------------------------------------------------------- */
+.trilha { list-style: none; margin: 0; padding: 0; position: relative; }
+
+.passo {
+  display: flex; gap: var(--e3); align-items: flex-start;
+  padding: 0 0 var(--e4); position: relative;
+}
+/* O fio que liga um ponto ao proximo. O ultimo nao tem: nao ha para onde ir. */
+.passo:not(:last-child)::before {
+  content: ''; position: absolute; left: .3rem; top: 1rem; bottom: 0;
+  width: 1px; background: var(--linha);
+}
+.passo:last-child { padding-bottom: 0; }
+
+.passo-marca {
+  width: .68rem; height: .68rem; border-radius: 50%; flex: none;
+  margin-top: .28rem; position: relative; z-index: 1;
+  box-shadow: 0 0 0 3px var(--superficie);
+}
+/* A fase de agora pulsa como o farol: e a linha que interessa quando alguem
+   pergunta "e esse projeto, como esta?". */
+.passo--aberto .passo-marca { box-shadow: 0 0 0 3px var(--superficie), 0 0 10px currentColor; }
+.passo--aberto { opacity: 1; }
+.passo--aberto .passo-fase { color: var(--tinta); font-size: .95rem; }
+
+.passo-corpo { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.passo-fase { font-size: .9rem; color: var(--tinta-2); }
+.passo-fase strong { color: var(--tinta); }
+.passo-de { color: var(--apagado); }
+
+.passo-quando { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2); font-size: .72rem; color: var(--apagado); }
+.passo-quando .marca-etapa { margin-left: 0; }
+/* A duracao e a informacao que a tabela nao tinha: e ela que muda decisao. */
+.passo-duracao { color: var(--tinta-2); font-weight: 500; }
+.passo-motivo { font-size: .82rem; color: var(--tinta-2); font-style: italic; }
+
 @media (max-width: 820px) {
   /* No celular as listas viram uma faixa que rola de lado, em cima do quadro:
      uma coluna de 12rem ao lado de um quadro nao cabe em 390px. */

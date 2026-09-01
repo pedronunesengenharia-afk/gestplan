@@ -168,6 +168,42 @@ begin
 end $$;
 
 -- -----------------------------------------------------------------------------
+-- 4b · A trilha de fases: dado que sempre existiu e ninguem via
+-- -----------------------------------------------------------------------------
+select vestir('22222222-2222-2222-2222-222222222222');   -- GERENTE
+
+select teste('a trilha de fases do projeto tem passos',
+  conta($$select id from vw_fase_hist
+           where projeto_id = 'dddddddd-0000-0000-0000-000000000001'$$) > 0);
+
+select teste('o primeiro passo nao tem duracao anterior — nao havia fase antes',
+  (select dias_na_anterior from vw_fase_hist
+    where projeto_id = 'dddddddd-0000-0000-0000-000000000001'
+    order by em limit 1) is null);
+
+select teste('e os passos seguintes tem, mesmo que zero dia',
+  conta($$select id from vw_fase_hist
+           where projeto_id = 'dddddddd-0000-0000-0000-000000000001'
+             and dias_na_anterior is not null$$) > 0);
+
+select teste('a trilha diz de onde para onde',
+  conta($$select id from vw_fase_hist
+           where projeto_id = 'dddddddd-0000-0000-0000-000000000001'
+             and para_fase is not null$$) > 0);
+
+-- A view e `security_invoker`: sem isso ela rodaria com os direitos de quem a
+-- criou e devolveria a trilha de projeto que a pessoa nao alcanca. Ja
+-- aconteceu neste sistema uma vez.
+select vestir('55555555-5555-5555-5555-555555555555');   -- EXTERNO
+select teste('o externo nao enxerga trilha de fase nenhuma',
+  conta('select id from vw_fase_hist') = 0);
+
+select vestir('22222222-2222-2222-2222-222222222222');
+select teste('e o gerente nao enxerga a trilha do projeto que nao alcanca',
+  conta($$select id from vw_fase_hist
+           where projeto_id = '99999999-0000-0000-0000-000000000001'$$) = 0);
+
+-- -----------------------------------------------------------------------------
 -- 5 · Os dois somem com o projeto
 -- -----------------------------------------------------------------------------
 -- `on delete cascade` nos dois: histórico de projeto que não existe mais não é

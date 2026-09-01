@@ -8,6 +8,7 @@ import {
 import { CamposDoTipo } from '../componentes/CamposDoTipo'
 import { AcompanhamentoDoProjeto } from '../componentes/AcompanhamentoDoProjeto'
 import { EquipeDoProjeto } from '../componentes/EquipeDoProjeto'
+import { TrilhaDeFases } from '../componentes/TrilhaDeFases'
 import { BotaoImprimir, CabecalhoImpresso } from '../componentes/Imprimir'
 import { ConversaEArquivos } from '../componentes/ConversaEArquivos'
 import { EsqueletoDeTabela } from '../componentes/Esqueleto'
@@ -187,6 +188,11 @@ export function Projeto({
           <AcompanhamentoDoProjeto projeto={projeto} etapas={etapas} tarefas={tarefas} />
         </section>
       )}
+
+      {/* Por onde o projeto passou. Vem antes da equipe porque responde a
+          primeira pergunta de quem abre um projeto que nao conhece: em que pe
+          isto esta, e ha quanto tempo. */}
+      <TrilhaDeFases projetoId={projeto.id} />
 
       <EquipeDoProjeto
         projetoId={projeto.id}

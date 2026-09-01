@@ -182,7 +182,24 @@ do histórico e não custa migração, só uma view e uma lista. Ver o item 9.
 A tabela existe. É o que separa acompanhar de gerenciar: o que pode dar errado,
 quem cuida, o que foi feito.
 
-### 9 · Tempo de fase
+### 9 · Tempo de fase — **feito**
+
+Migração `20260901200000`: `vw_fase_hist`. O dado estava sendo gravado desde a
+primeira migração e nunca tinha sido lido por tela nenhuma.
+
+O que a view acrescenta à tabela é a **duração**: a tabela guarda instantes, e
+a pergunta que se faz do histórico é quanto tempo. Sai de `lag` sobre a janela
+do projeto — e não de um join da tabela com ela mesma, porque a mesma fase pode
+ser visitada mais de uma vez (projeto volta para a Viabilidade) e o join
+casaria a visita errada.
+
+Aparece como "Por onde passou" no detalhe do projeto, com a fase de agora
+aberta e os dias correndo.
+
+**Falta:** a média por fase na carteira inteira — "Viabilidade leva 40 dias em
+média" — que é uma agregação sobre a mesma view e um gráfico no Painel.
+
+### 9b · Tempo de fase — o que era este item
 
 O dado já está sendo gravado em `projeto_fase_hist` desde o primeiro dia e
 nunca foi mostrado. "Viabilidade leva em média 40 dias" é o número que muda

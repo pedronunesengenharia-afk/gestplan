@@ -2042,3 +2042,35 @@ export async function excluirDecisao(id: string): Promise<number> {
   erroDeEscrita('Nao foi possivel apagar a decisao', error)
   return (data ?? []).length
 }
+
+// -----------------------------------------------------------------------------
+// A trilha de fases
+// -----------------------------------------------------------------------------
+//
+// `projeto_fase_hist` era escrita desde a primeira migracao e nunca foi lida
+// por tela nenhuma. A view acrescenta o que a tabela nao tem: quanto tempo o
+// projeto ficou em cada fase — a tabela guarda instantes, e a pergunta que se
+// faz e duracao.
+
+export type PassoDeFase = {
+  id: string
+  em: string
+  de_fase: string | null
+  para_fase: string
+  para_cor: string
+  para_categoria: string
+  motivo: string | null
+  observacao: string | null
+  pessoa_nome: string | null
+  dias_na_anterior: number | null
+}
+
+export async function trilhaDeFases(projetoId: string): Promise<PassoDeFase[]> {
+  const { data, error } = await supabase
+    .from('vw_fase_hist')
+    .select('id, em, de_fase, para_fase, para_cor, para_categoria, motivo, observacao, pessoa_nome, dias_na_anterior')
+    .eq('projeto_id', projetoId)
+    .order('em')
+  erro('Nao foi possivel carregar o historico de fases', error)
+  return (data ?? []) as unknown as PassoDeFase[]
+}
